@@ -239,13 +239,18 @@ def main():
         offset = 1
     args = parser.parse_args(sys.argv[offset:])
     
+    # Load and standardize each tooth image
     alignedimg = []
     Nx, Ny = [], []
+    age = []
     
     for i,fname in enumerate(args.images):
         print 'Processing %s ...' % fname
         
         img = load_image(fname)
+        
+        # Extract age from filename
+        age.append(float(fname[1:4]))
         
         # Generate a spline for each tooth edge
         
@@ -293,13 +298,14 @@ def main():
         #nonzero = [np.sum(img > 0.) for img in alignedimg]
         Nx = np.array(Nx)
         Ny = np.array(Ny)
-        print Nx
+        age = np.array(age, dtype='f8')
+        
         idx = np.argsort(Nx, kind='mergesort')
         alignedimgSorted = [alignedimg[i] for i in idx]
         alignedimg = alignedimgSorted
         Nx = Nx[idx]
         Ny = Ny[idx]
-        print Nx
+        age = age[idx]
     
     # Combine images into one 3-dimensional array
     nImages = len(alignedimg)
@@ -308,10 +314,45 @@ def main():
         imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:]
     imgDiff = np.diff(imgStack, axis=0)
     
+    # Relate image length to day: output for time x-axis is 'age_plt'
+    img_idx = np.arange(nImages)
+    age_coeff = np.polyfit(Nx, age, 3)
+    length_plt = np.linspace(0., max(Nx), 1000)
+    age_plt = np.zeros(length_plt.size, dtype='f8')
+    
+    for i in xrange(len(age_coeff)):
+        age_plt += age_coeff[i] * length_plt**(len(age_coeff)-i-1)
+    
+    Nx_age = np.zeros(Nx.size, dtype='f8')
+    for i in xrange(len(age_coeff)):
+        Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.scatter(Nx, age)
+    ax.scatter(Nx, Nx_age, c='r')
+    ax.plot(length_plt, age_plt)
+    plt.show()
+
+    # Calculate what will become the x-axis, time, from my sample
+    days = ( (0.0000108903 * (img_idx**5.))
+           - (0.0007536029 * (img_idx**4.))
+           + (0.0205452339 * (img_idx**3.))
+           - (0.3011589382 * (img_idx**2.))
+           + (6.4346533632 * img_idx)
+           - 4.4667)
+    
     vmin_l, vmax_l = np.min(imgStack), np.max(imgStack)
     vmin_r, vmax_r = np.min(imgDiff), np.max(imgDiff)
-    
 
+    '''
+    # Generate monotonically increasing model for each coordinate in tooth
+    for x in xrange(Nx):
+        for y in xrange(Ny):
+            # Fit image index
+            pass
+    '''
+    
     fig = plt.figure()
     xcor = 60
     ycor = 100
@@ -325,7 +366,7 @@ def main():
     ys = s(xs)
     percent = ((.4327 * (ys*increase)) - .3414)
     days = ((0.0000108903 * (xs**5)) - (0.0007536029 * (xs**4)) + (0.0205452339 * (xs**3)) - (0.3011589382 * (xs**2)) + (6.4346533632 * xs) - 4.4667)
-    ax1.plot(days, percent, 'b-', lw=1.5)
+    ax1.plot(age_plt, percent, 'b-', lw=1.5)
     ax1.set_ylim(0., 1.)
     ax1.set_xlim(0., 220.)
     ax1.set_xlabel('Time (days)')
@@ -336,7 +377,7 @@ def main():
 
     #x = np.arange(nImages-1)
     dy = np.diff(percent)
-    dx = np.diff(days)
+    dx = np.diff(age_plt)
     rate = (dy/dx)*3/4.54
     #y = imgDiff[:,xcor,ycor]
     #ax.plot(x, y)
@@ -345,7 +386,7 @@ def main():
     #xz = linspace(x[0], x[-1], 1000)
     #yz = z(xz)
     ax2 = ax1.twinx()
-    ax2.plot(days[1:], rate, 'r--', lw=2.)
+    ax2.plot(age_plt[1:], rate, 'r--', lw=2.)
     ax2.set_ylabel(r'Density increase ($g/cm^3/day$)', color='r')
     ax2.set_ylim(0., 1.1*np.max(rate))
     ax2.set_xlim(0., 220.)
