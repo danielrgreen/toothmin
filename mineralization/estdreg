@@ -1,0 +1,59 @@
+# Enamel standard regressions
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.interpolate as interp
+from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import spline
+from numpy import linspace
+import scipy.ndimage.interpolation as imginterp
+import scipy.ndimage.filters as filters
+from os.path import abspath, expanduser
+import argparse, sys
+
+x2 = [56.21962, 58.30071, 64.71261, 80.02926, 124.8818, 130.2464, 141.7281, 167.4438]
+y2 = [1.19, 1.26, 1.39, 1.65, 2.13, 2.24, 2.37, 3.09]
+fit = polyfit(x, y, 1)
+fit_fn = poly1d(fit)
+plot(x,y, 'yo', x, fit_fn(x), '--k')
+plt.show()
+
+
+'''
+fig = plt.figure()
+ax1 = fig.add_subplot(1,1,1)
+x = np.arange(nImages)
+y = imgStack[:,120,30]
+#ax1.plot(x, y)
+ax1.set_ylim(0., 1.1*np.max(y))
+s = UnivariateSpline(x,y,s=0.00085)
+xs = linspace(x[0], x[-1], 1000)
+ys = s(xs)
+ax1.plot(xs,ys, 'b-')
+ax1.set_xlabel('Time (days)')
+ax1.set_ylabel('Cumulative density', color='b')
+ax1.set_title('Cervical mineratlization')
+for tl in ax1.get_yticklabels():
+    tl.set_color('b')
+    
+x = np.arange(nImages-1)
+y = imgDiff[:,120,30]
+#ax.plot(x, y)
+ax.set_ylim(0., 1.1*np.max(y))
+z = UnivariateSpline(x,y,s=0.002)
+xz = linspace(x[0], x[-1], 1000)
+yz = z(xz)
+ax2 = ax1.twinx()
+ax2.plot(xz, yz, 'r.')
+ax2.set_ylabel('Density increase', color='r')
+ax2.set_ylim(0., 1.1*np.max(y))
+for tl in ax2.get_yticklabels():
+    tl.set_color('r')
+plt.grid(True)
+plt.show()
+fig.savefig('120x30y.png', dpi=500, edgecolor='none')
+'''
+
+return 0

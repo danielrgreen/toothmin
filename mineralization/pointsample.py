@@ -33,6 +33,7 @@ import scipy.ndimage.filters as filters
 from os.path import abspath, expanduser
 import argparse, sys
 from matplotlib.ticker import FuncFormatter
+import emcee
 
 # Load image
 
