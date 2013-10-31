@@ -78,11 +78,11 @@ class TMonotonicPointModel:
 		
 		log_likelihood = -0.5 * np.sum(Delta_y * Delta_y * self.inv_variance)
 		log_prior = np.sum(log_Delta_y_mod)
-
+                
 		if self.use_prior == True:
-                        Delta_y = (np.exp(log_Delta_y_mod) - self.mu_prior) / self.sigma_prior
+                        Delta_y = (log_Delta_y_mod - self.mu_prior) / self.sigma_prior
                         log_prior -= 0.5 * np.sum(Delta_y * Delta_y)
-		
+                
 		return log_likelihood + log_prior
 
 	def guess(self, n_guesses, min_delta=0.001):
