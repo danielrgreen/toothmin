@@ -25,6 +25,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
+import scipy.special
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import spline
 from numpy import linspace
@@ -220,6 +221,13 @@ def get_image_values_2(img, markerPos, DeltaMarker, step=0.1):
     
     return resampImg.T[:,:]
 
+
+def min_pct_prior(log_Delta_y):
+    y_final = np.sum(np.exp(log_Delta_y))
+
+    return 1. - scipy.special.erf(1.25 * (y_final - 0.9) / 0.05)
+
+
 # Main section of code in which defined functions are used
 '''
 Loads image
@@ -399,6 +407,13 @@ def main():
     
     plt.show()
 
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    xx = np.linspace(0., 1.2, 1000)
+    yy = 1. - scipy.special.erf(1.25 * (xx - 0.9) / 0.05)
+    ax.plot(xx, yy)
+    plt.show()
+
     loc_store = []
     mask_store = []
     samples_store = []
@@ -421,11 +436,12 @@ def main():
             #sigma_prior = 0.02 * np.ones(pct_min.size, dtype='f8')
             
             model = TMonotonicPointModel(pct_min, sigma)
-            #                             mu_prior, sigma_prior)
+            lnprob = lambda log_dy: model(log_dy) + np.log(min_pct_prior(log_dy))
+            
             guess = model.guess(n_walkers)
             n_points = np.sum(idx)
             
-            sampler = emcee.EnsembleSampler(n_walkers, n_points, model)
+            sampler = emcee.EnsembleSampler(n_walkers, n_points, lnprob)
             
             pos, prob, state = sampler.run_mcmc(guess, n_steps)
             sampler.reset()
