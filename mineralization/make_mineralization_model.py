@@ -230,8 +230,20 @@ def min_pct_prior(log_Delta_y):
     return 1. - scipy.special.erf(1.25 * (y_final - 0.8) / 0.075)
 
 
-def lnprob(log_Delta_y, model):
-    return model(log_Delta_y) + np.log(min_pct_prior(log_Delta_y))
+def lnprob(log_Delta_y, y, sigma, mu_prior, sigma_prior):
+    y_mod = np.cumsum(np.exp(log_Delta_y_mod))
+    
+    Delta_y = (y_mod - y_obs) / sigma
+    
+    log_likelihood = -0.5 * np.sum(Delta_y * Delta_y)
+    log_prior = np.sum(log_Delta_y_mod)
+    
+    Delta_y = (log_Delta_y_mod - mu_prior) / sigma_prior
+    log_prior -= 0.5 * np.sum(Delta_y * Delta_y)
+    
+    log_prior += np.log(1. - scipy.special.erf(1.25 * (y_mod[-1] - 0.8) / 0.075))
+    
+    return log_likelihood + log_prior
 
 
 # Main section of code in which defined functions are used
@@ -396,7 +408,7 @@ def main():
             
             sampler = emcee.EnsembleSampler(n_walkers, n_points,
                                             lnprob, threads=args.threads,
-                                            args=[model])
+                                            args=[y, sigma, mu_prior, sigma_prior])
             
             pos, prob, state = sampler.run_mcmc(guess, n_steps)
             sampler.reset()
@@ -413,7 +425,7 @@ def main():
             del sampler
             del model
 
-            '''
+            
             # Plot results
             fig = plt.figure()
             ax = fig.add_subplot(1,1,1)
@@ -425,7 +437,7 @@ def main():
                         fmt='o')
 
             plt.show()
-            '''
+            
 
     t2 = time.time()
     print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
