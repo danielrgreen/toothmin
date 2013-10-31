@@ -407,11 +407,8 @@ def main():
     n_steps = 250
     n_store = 100
     
-    for x in xrange(imgStack.shape[0]):
-        for y in xrange(imgStack.shape[1]):
-
-            x = 30
-            y = 50
+    for x in xrange(30,32):#imgStack.shape[0]):
+        for y in xrange(40, 42):#imgStack.shape[1]):
             
             # Fit monotonically increasing mineralization model
             # to time series in this pixel
@@ -453,8 +450,6 @@ def main():
                         fmt='o')
 
             plt.show()
-            
-            return 0
     
     #x = np.arange(nImages-1)
     dy = np.diff(imgStack)
