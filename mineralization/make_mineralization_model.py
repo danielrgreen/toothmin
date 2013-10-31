@@ -230,12 +230,8 @@ def min_pct_prior(log_Delta_y):
     return 1. - scipy.special.erf(1.25 * (y_final - 0.8) / 0.075)
 
 
-class TLnProb:
-    def __init__(self, model):
-        self.model = model
-
-    def __call__(self, log_Delta_y):
-        return self.model(log_Delta_y) + np.log(min_pct_prior(log_Delta_y))
+def lnprob(log_Delta_y, model):
+    return model(log_Delta_y) + np.log(min_pct_prior(log_Delta_y))
 
 
 # Main section of code in which defined functions are used
@@ -385,6 +381,10 @@ def main():
             
             pct_min = pct_min[idx]
 
+            print pct_min
+            print idx
+            print n_points
+
             # MCMC sampling
             sigma = 0.025 * np.ones(pct_min.size, dtype='f8')
             mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
@@ -393,10 +393,10 @@ def main():
             model = TMonotonicPointModel(pct_min, sigma,
                                          mu_prior, sigma_prior)
             guess = model.guess(n_walkers)
-
-            lnprob = TLnProb(model)
             
-            sampler = emcee.EnsembleSampler(n_walkers, n_points, lnprob, threads=args.threads)
+            sampler = emcee.EnsembleSampler(n_walkers, n_points,
+                                            lnprob, threads=args.threads,
+                                            args=[model])
             
             pos, prob, state = sampler.run_mcmc(guess, n_steps)
             sampler.reset()
@@ -409,6 +409,9 @@ def main():
             loc_store.append([x, y])
             mask_store.append(idx)
             samples_store.append(pct_min_samples)
+
+            del sampler
+            del model
 
             '''
             # Plot results
