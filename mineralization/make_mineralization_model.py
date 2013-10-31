@@ -367,8 +367,8 @@ def main():
 
     t1 = time.time()
     
-    for x in xrange(30,32):#imgStack.shape[0]):
-        for y in xrange(40, 42):#imgStack.shape[1]):
+    for x in xrange(imgStack.shape[0]):
+        for y in xrange(imgStack.shape[1]):
             
             # Fit monotonically increasing mineralization model
             # to time series in this pixel
@@ -410,6 +410,7 @@ def main():
             mask_store.append(idx)
             samples_store.append(pct_min_samples)
 
+            '''
             # Plot results
             fig = plt.figure()
             ax = fig.add_subplot(1,1,1)
@@ -421,6 +422,7 @@ def main():
                         fmt='o')
 
             plt.show()
+            '''
 
     t2 = time.time()
     print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
