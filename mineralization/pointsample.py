@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  cells.py
+#  pointsample.py
 #  
-#  Copyright 2013 Greg Green <greg@greg-UX31A>
+#  Copyright 2013 Daniel Green, Greg Green
 #  
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@ from os.path import abspath, expanduser
 import argparse, sys
 from matplotlib.ticker import FuncFormatter
 import emcee
+
+from fit_positive_function import TMonotonicPointModel
 
 # Load image
 
@@ -286,14 +288,7 @@ def main():
         tmp_y, tmp_x = alignedimg[-1].shape
         Nx.append(tmp_x)
         Ny.append(tmp_y)
-        
-        # Pretty pictures!
-        #ax = fig.add_subplot(2,1,2)
-        #ax.imshow(alignedimg[-1], alpha=0.3, aspect='auto', interpolation='nearest')
-        
-        #if args.output != None:
-        #    fig.savefig(args.output, dpi=300)
-    
+            
     # Sort images by length
     if args.order_by_length:
         #nonzero = [np.sum(img > 0.) for img in alignedimg]
@@ -313,84 +308,162 @@ def main():
     imgStack = np.zeros((nImages, max(Nx), max(Ny)), dtype='f8')
     for i,img in enumerate(alignedimg):
         imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:]
-    imgDiff = np.diff(imgStack, axis=0)
+    
+    # Convert from pixel value to total density
+    imgStack *= 2.**16
+    imgStack *= 0.000182009
+    imgStack -= 0.077402903
+    imgStack[imgStack < .79] = np.nan
+
+    # Convert from total to mineral fraction by weight
+    imgStack = (3.15 - 3.15 * 0.79 / imgStack) / (3.15 - 0.79)
+    idx = (imgStack < -0.2)
+    imgStack[idx] = np.nan
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.hist(imgStack[np.isfinite(imgStack)].flatten(), 100)
+    plt.show()
     
     # Relate image length to day: output for time x-axis is 'age_plt'
-    img_idx = np.arange(nImages)
     age_coeff = np.polyfit(Nx, age, 3)
-    length_plt = np.linspace(0., max(Nx), 1000)
-    age_plt = np.zeros(length_plt.size, dtype='f8')
-    
-    for i in xrange(len(age_coeff)):
-        age_plt += age_coeff[i] * length_plt**(len(age_coeff)-i-1)
     
     Nx_age = np.zeros(Nx.size, dtype='f8')
     for i in xrange(len(age_coeff)):
         Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
-    ax.scatter(Nx, age)
-    ax.scatter(Nx, Nx_age, c='r')
-    ax.plot(length_plt, age_plt)
-    plt.show()
+    # Make Nx_age monotonically increasing
+    increasing = np.linspace(0., .1, len(Nx_age))
+    Nx_age = np.add(Nx_age, increasing)
 
-    # Calculate what will become the x-axis, time, from my sample
-    days = ( (0.0000108903 * (img_idx**5.))
-           - (0.0007536029 * (img_idx**4.))
-           + (0.0205452339 * (img_idx**3.))
-           - (0.3011589382 * (img_idx**2.))
-           + (6.4346533632 * img_idx)
-           - 4.4667)
-    
-    vmin_l, vmax_l = np.min(imgStack), np.max(imgStack)
-    vmin_r, vmax_r = np.min(imgDiff), np.max(imgDiff)
+    # Plot length-age relation
+    length_plt = np.linspace(0., max(Nx), 1000)
+    age_plt = np.zeros(length_plt.size, dtype='f8')    
+    for i in xrange(len(age_coeff)):
+        age_plt += age_coeff[i] * length_plt**(len(age_coeff)-i-1)
 
-    '''
-    # Generate monotonically increasing model for each coordinate in tooth
-    for x in xrange(Nx):
-        for y in xrange(Ny):
-            # Fit image index
-            pass
-    '''
-    
+    print 'Nx_age', Nx_age
+    print 'imgStack', imgStack[:, 60, 100]
+
+    # Plot raw mineralization vs. time at one point
     fig = plt.figure()
-    xcor = 60
-    ycor = 100
-    increase = 14.
+    xcor = 30
+    ycor = 50
     ax1 = fig.add_subplot(1,1,1)
-    x = np.arange(nImages)
+    x = Nx_age
     y = imgStack[:,xcor,ycor]
-    #ax1.plot(x, y)
     s = UnivariateSpline(x,y,s=0.00085)
     xs = linspace(x[0], x[-1], 1000)
     ys = s(xs)
-    percent = ((.4327 * (ys*increase)) - .3414)
-    days = ((0.0000108903 * (xs**5)) - (0.0007536029 * (xs**4)) + (0.0205452339 * (xs**3)) - (0.3011589382 * (xs**2)) + (6.4346533632 * xs) - 4.4667)
-    ax1.plot(age_plt, percent, 'b-', lw=1.5)
-    ax1.set_ylim(0., 1.)
-    ax1.set_xlim(0., 220.)
+    ax1.plot(x, y, 'b-', lw=1.5)
+    #ax1.set_ylim(0., 1.)
+    #ax1.set_xlim(0., 220.)
     ax1.set_xlabel('Time (days)')
     ax1.set_ylabel(r'Total mineralization (%)', color='b')
     ax1.set_title(r'Midcusp mineralization near surface')
     for tl in ax1.get_yticklabels():
         tl.set_color('b')
+    
+    #vmin_l, vmax_l = np.min(imgStack), np.max(imgStack)
+    #vmin_r, vmax_r = np.min(imgDiff), np.max(imgDiff)
+    
+    
+    #
+    # Generate monotonically increasing model for each coordinate in tooth
+    #
 
+    # Standard deviation in each measurement
+
+    fig = plt.figure()
+
+    for i in xrange(6):
+        ax = fig.add_subplot(3,2,i+1)
+        
+        img_tmp = imgStack[i, :80, :120]
+        
+        '''
+        idx = (img_tmp <= 0.) & (img_tmp > -0.45)
+        img_tmp[idx] = 0.
+        idx = (img_tmp > 0.)
+        img_tmp[idx] = 1.
+        idx = (img_tmp <= -0.45)
+        img_tmp[idx] = -1.
+        '''
+        
+        img = ax.imshow(img_tmp.T,
+                        origin='lower',
+                        aspect='auto',
+                        interpolation='nearest',
+                        vmin=0., vmax=1.)
+        cbar = plt.colorbar(img, ax=ax)
+    
+    plt.show()
+
+    loc_store = []
+    mask_store = []
+    samples_store = []
+    
+    n_walkers = 6 * Nx_age.size
+    n_steps = 250
+    n_store = 100
+    
+    for x in xrange(imgStack.shape[0]):
+        for y in xrange(imgStack.shape[1]):
+
+            x = 30
+            y = 50
+            
+            # Fit monotonically increasing mineralization model
+            # to time series in this pixel
+            pct_min = imgStack[:, x, y]
+            idx = np.isfinite(pct_min)
+            pct_min = pct_min[idx]
+            
+            sigma = 0.05 * np.ones(pct_min.size, dtype='f8')
+            #mu_prior = np.zeros(pct_min.size, dtype='f8')
+            #sigma_prior = 0.02 * np.ones(pct_min.size, dtype='f8')
+            
+            model = TMonotonicPointModel(pct_min, sigma)
+            #                             mu_prior, sigma_prior)
+            guess = model.guess(n_walkers)
+            n_points = np.sum(idx)
+            
+            sampler = emcee.EnsembleSampler(n_walkers, n_points, model)
+            
+            pos, prob, state = sampler.run_mcmc(guess, n_steps)
+            sampler.reset()
+            pos, prob, state = sampler.run_mcmc(pos, n_steps)
+            
+            np.random.shuffle(sampler.flatchain)
+            pct_min_samples = np.cumsum(np.exp(sampler.flatchain[:n_store]), axis=1)
+            
+            # Store results for pixel
+            loc_store.append([x, y])
+            mask_store.append(idx)
+            samples_store.append(pct_min_samples)
+            
+            # Plot results
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+
+            for s in pct_min_samples:
+                ax.plot(Nx_age[idx], s, 'b-', alpha=0.05)
+            
+            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
+                        fmt='o')
+
+            plt.show()
+            
+            return 0
+    
     #x = np.arange(nImages-1)
-    dy = np.diff(percent)
+    dy = np.diff(imgStack)
     dx = np.diff(age_plt)
-    rate = (dy/dx)*3/4.54
-    #y = imgDiff[:,xcor,ycor]
-    #ax.plot(x, y)
-    #ax.set_ylim(0., 1.1*np.max(dy/dx))
-    #z = UnivariateSpline(x,y,s=0.002)
-    #xz = linspace(x[0], x[-1], 1000)
-    #yz = z(xz)
     ax2 = ax1.twinx()
-    ax2.plot(age_plt[1:], rate, 'r--', lw=2.)
+    ax2.plot(dx, dy, 'r--', lw=2.)
     ax2.set_ylabel(r'Density increase ($g/cm^3/day$)', color='r')
-    ax2.set_ylim(0., 1.1*np.max(rate))
-    ax2.set_xlim(0., 220.)
+    #ax2.set_ylim(0., 1.1*np.max(rate))
+    #ax2.set_xlim(0., 220.)
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
     plt.grid(True)

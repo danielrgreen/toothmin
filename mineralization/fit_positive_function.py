@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  fitline.py
+#  fit_positive_function.py
 #  
-#  Copyright 2012 Greg Green <greg@greg-UX31A>
+#  Copyright 2013 Greg Green <greg@greg-UX31A>
 #  
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -47,7 +47,9 @@ class TMonotonicPointModel:
 	where p_a is the likelihood of the model parameters taking on values a.
 	'''
 	
-	def __init__(self, y, sigma):
+	def __init__(self, y, sigma,
+                           mu_prior=None,
+                           sigma_prior=None):
 		self.y = np.array(y)
 		self.sigma = np.array(sigma)
 		
@@ -58,9 +60,16 @@ class TMonotonicPointModel:
 			raise ValueError('''sigma must have the same shape as y.''')
 		
 		# Compute useful quantities
-		n_dim = float(self.y.size)
+		self.n_dim = self.y.size
 		self.variance = self.sigma * self.sigma
 		self.inv_variance = 1. / self.variance
+
+                if (mu_prior != None) and (sigma_prior != None):
+                        self.use_prior = True
+                        self.mu_prior = np.array(mu_prior)
+                        self.sigma_prior = np.array(sigma_prior)
+                else:
+                        self.use_prior = False
 	
 	def __call__(self, log_Delta_y_mod, *args, **kwargs):
 		y_mod = np.cumsum(np.exp(log_Delta_y_mod))
@@ -69,8 +78,34 @@ class TMonotonicPointModel:
 		
 		log_likelihood = -0.5 * np.sum(Delta_y * Delta_y * self.inv_variance)
 		log_prior = np.sum(log_Delta_y_mod)
+
+		if self.use_prior == True:
+                        Delta_y = (np.exp(log_Delta_y_mod) - self.mu_prior) / self.sigma_prior
+                        log_prior -= 0.5 * np.sum(Delta_y * Delta_y)
 		
 		return log_likelihood + log_prior
+
+	def guess(self, n_guesses, min_delta=0.001):
+                # Generate a central guess
+                y_0 = np.empty(self.n_dim, dtype='f8')
+                
+                for i in xrange(self.n_dim):
+                        y_0[i] = np.max(self.y[:i+1])
+
+                delta_y_0 = np.hstack([[y_0[0]], np.diff(y_0)])
+
+                idx = (delta_y_0 < min_delta)
+                delta_y_0[idx] = min_delta
+
+                log_delta_y_0 = np.log(delta_y_0)
+
+                # Add in scatter
+                log_delta_y_0.shape = (1, self.n_dim)
+                log_delta_y_guess = np.repeat(log_delta_y_0, n_guesses, axis=0)
+                log_delta_y_guess += np.random.normal(scale=0.05, size=log_delta_y_guess.shape)
+
+                return log_delta_y_guess
+
 
 
 class TMCMC:
@@ -149,7 +184,70 @@ class TMCMC:
 		return stats.gaussian_kde(chain)
 
 
-def main():
+def test_emcee():
+        import emcee
+
+        n_points = 10
+        n_walkers = 24
+        n_steps = 5000
+        
+        # True parameters
+	x = np.arange(n_points)
+	Delta_y_true =  np.sin(x * 2. * np.pi / (n_points - 1.)) #np.random.random(size=n_points)
+	Delta_y_true = Delta_y_true * Delta_y_true * Delta_y_true * Delta_y_true
+	y_true = np.cumsum(Delta_y_true)
+	
+	# Generate data
+	sigma = 0.1 * np.ones(n_points, dtype='f8')
+	errs = sigma * np.random.normal(size=n_points)
+	y_obs = y_true + errs
+	
+	# Initialize model
+	model = TMonotonicPointModel(y_obs, sigma)
+	
+	# Initial guess
+	Delta_y_guess = np.random.random(size=n_points)
+	cov_guess = np.diag(sigma)
+	
+	# Set up emcee sampler
+	sampler = emcee.EnsembleSampler(n_walkers, n_points, model)
+        
+	# Generate guesses
+	guess = model.guess(n_walkers)
+        
+	# Sample
+	pos, prob, state = sampler.run_mcmc(guess, n_steps)
+	sampler.reset()
+        pos, prob, state = sampler.run_mcmc(pos, n_steps)
+
+        # Plot histograms
+        '''
+        for i in range(n_points):
+                fig = plt.figure()
+                ax = fig.add_subplot(1,1,1)
+                ax.hist(np.exp(sampler.flatchain[:,i]), 100, color='k', histtype='step')
+                ax.set_title('Dimension %d' % i)
+        '''
+        
+        # Plot samples
+        fig = plt.figure()
+        ax1 = fig.add_subplot(2,1,1)
+        ax2 = fig.add_subplot(2,1,2)
+        
+        for sample in np.exp(sampler.flatchain[::120]):
+                ax1.plot(x, sample, color='b', alpha=0.01)
+        
+        for sample in np.cumsum(np.exp(sampler.flatchain[::120]), axis=1):
+                ax2.plot(x, sample, color='b', alpha=0.01)
+
+        ax1.plot(x, Delta_y_true, 'k-', lw=2, alpha=0.5)
+        ax2.plot(x, np.cumsum(Delta_y_true), 'k-', lw=2, alpha=0.5)
+        
+        plt.show()
+
+
+
+def test_MCMC():
 	n_points = 10
 	
 	# True parameters
@@ -216,7 +314,10 @@ def main():
 	
 	plt.show()
 	
-	
+
+def main():
+        test_emcee()
+        
 	return 0
 
 if __name__ == '__main__':
