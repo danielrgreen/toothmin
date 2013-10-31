@@ -230,15 +230,15 @@ def min_pct_prior(log_Delta_y):
     return 1. - scipy.special.erf(1.25 * (y_final - 0.8) / 0.075)
 
 
-def lnprob(log_Delta_y, y, sigma, mu_prior, sigma_prior):
-    y_mod = np.cumsum(np.exp(log_Delta_y_mod))
+def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior):
+    y_mod = np.cumsum(np.exp(log_Delta_y))
     
-    Delta_y = (y_mod - y_obs) / sigma
+    Delta_y = (y_mod - y_obs) / y_sigma
     
     log_likelihood = -0.5 * np.sum(Delta_y * Delta_y)
-    log_prior = np.sum(log_Delta_y_mod)
+    log_prior = np.sum(log_Delta_y)
     
-    Delta_y = (log_Delta_y_mod - mu_prior) / sigma_prior
+    Delta_y = (log_Delta_y - mu_prior) / sigma_prior
     log_prior -= 0.5 * np.sum(Delta_y * Delta_y)
     
     log_prior += np.log(1. - scipy.special.erf(1.25 * (y_mod[-1] - 0.8) / 0.075))
@@ -393,10 +393,6 @@ def main():
             
             pct_min = pct_min[idx]
 
-            print pct_min
-            print idx
-            print n_points
-
             # MCMC sampling
             sigma = 0.025 * np.ones(pct_min.size, dtype='f8')
             mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
@@ -405,10 +401,24 @@ def main():
             model = TMonotonicPointModel(pct_min, sigma,
                                          mu_prior, sigma_prior)
             guess = model.guess(n_walkers)
+
+            '''
+            # Plot guesses
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+            
+            for s in guess:
+                ax.plot(Nx_age[idx], np.cumsum(np.exp(s)), 'b-', alpha=0.05)
+            
+            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
+                        fmt='o')
+
+            plt.show()
+            '''
             
             sampler = emcee.EnsembleSampler(n_walkers, n_points,
                                             lnprob, threads=args.threads,
-                                            args=[y, sigma, mu_prior, sigma_prior])
+                                            args=[pct_min, sigma, mu_prior, sigma_prior])
             
             pos, prob, state = sampler.run_mcmc(guess, n_steps)
             sampler.reset()
@@ -425,7 +435,7 @@ def main():
             del sampler
             del model
 
-            
+            '''
             # Plot results
             fig = plt.figure()
             ax = fig.add_subplot(1,1,1)
@@ -437,6 +447,7 @@ def main():
                         fmt='o')
 
             plt.show()
+            '''
             
 
     t2 = time.time()

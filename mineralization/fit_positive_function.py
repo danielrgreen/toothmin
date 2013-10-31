@@ -102,7 +102,7 @@ class TMonotonicPointModel:
                 # Add in scatter
                 log_delta_y_0.shape = (1, self.n_dim)
                 log_delta_y_guess = np.repeat(log_delta_y_0, n_guesses, axis=0)
-                log_delta_y_guess += np.random.normal(scale=0.05, size=log_delta_y_guess.shape)
+                log_delta_y_guess += np.random.normal(scale=0.01, size=log_delta_y_guess.shape)
 
                 return log_delta_y_guess
 
