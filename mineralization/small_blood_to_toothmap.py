@@ -61,7 +61,7 @@ def smoothListGaussian(list,degree=20):
 
 def main():
 
-    f = h5py.File('simple_fit.h5', 'r') #read in file
+    f = h5py.File('simple_fit2.h5', 'r') #read in file
     dset1 = f['/age']
     age = dset1[:]
     dset2 = f['/img_mon']
@@ -93,6 +93,7 @@ def main():
             # Store the total d18O in this pixel to the map
             d18O_map[x, y] = d18O_total
 
+    '''
     shape_map = d18O_map.shape
     print 'shape_map', shape_map
     flat_map = d18O_map.ravel()
@@ -111,6 +112,7 @@ def main():
     smoothed = np.append(smoothed, added2)
     print 'smoothed shape3', smoothed.shape
     d18O_map = smoothed.reshape(shape_map)
+    '''
     
     # Show the map with matplotlib
     fig = plt.figure()

@@ -47,7 +47,7 @@ voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
 calibration_type = 'undefined' # pixel to density calibration method
 y_resampling = 0.1 # y pixel size of model compared to voxel size
-x_resampling = 5.0 # x pixel size of model compared to voxel size
+x_resampling = 2.0 # x pixel size of model compared to voxel size
 
 # Load image
     
@@ -280,7 +280,7 @@ def main():
     imgStack[idx] = np.nan
     
     # Relate image length to day: output for time x-axis is 'age_plt'
-    age_coeff = np.polyfit(Nx, age, 3)
+    age_coeff = np.polyfit(Nx, age, 5)
     
     Nx_age = np.zeros(Nx.size, dtype='f8')
     for i in xrange(len(age_coeff)):
@@ -383,7 +383,7 @@ def main():
         plt.close(fig)
     
     # Save images to HDF5 file
-    f = h5py.File(dirname + '/simple_fit.h5', 'w')
+    f = h5py.File(dirname + '/simple_fit2.h5', 'w')
 
     dset = f.create_dataset('img_raw', shape=imgStack.shape, dtype='f4',
                                        compression='gzip', compression_opts=9)
