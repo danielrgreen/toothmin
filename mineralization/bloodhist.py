@@ -80,10 +80,10 @@ def calc_d2(start, finish, air, h, bloodA, water2, feed2):
     
     return (dvalue, finish, bloodA, water2)
 
-def main():
+def calc_blood_hist():
 
     # phase 1: start, finish, air, h, water1, feed1, water2, feed2
-    dvalue, finish, bloodA, water2 = calc_d1(0., 9., 0., 14., 0., -3., 0., -3.)
+    dvalue, finish, bloodA, water2 = calc_d1(0., 49., -2., 14., 0., -3., 0., -3.)
 
     dvalue1 = dvalue
     finish1 = finish
@@ -91,7 +91,7 @@ def main():
     waterA = np.empty(finish1+1); waterA.fill(water2)
     
     # phase 2: start, finish, air, h, bloodA, water3, feed3
-    dvalue, finish, bloodA, water2 = calc_d2(0., 19., 0., 14., blood1, 11., -3.)
+    dvalue, finish, bloodA, water2 = calc_d2(0., 29., -2., 14., blood1, 3., -1)
 
     dvalue2 = dvalue
     finish2 = finish
@@ -99,7 +99,7 @@ def main():
     waterB = np.empty(finish2+1); waterB.fill(water2)
 
     # phase 3: start, finish, air, h, bloodA, water4, feed4
-    dvalue, finish, bloodA, water2 = calc_d2(0., 41., 0., 14., blood2, 0., -3.)
+    dvalue, finish, bloodA, water2 = calc_d2(0., 119., -2., 14., blood2, 0., -3.)
 
     dvalue3 = dvalue
     finish3 = finish
@@ -107,7 +107,7 @@ def main():
     waterC = np.empty(finish3+1); waterC.fill(water2)
 
     # phase 4: start, finish, air, h, bloodA, water5, feed5
-    dvalue, finish, bloodA, water2 = calc_d2(0., 19., 0., 14., blood3, 11., -3.)
+    dvalue, finish, bloodA, water2 = calc_d2(0., 49., -2., 14., blood3, 2., -2.)
 
     dvalue4 = dvalue
     finish4 = finish
@@ -115,7 +115,7 @@ def main():
     waterD = np.empty(finish4+1); waterD.fill(water2)
 
     # phase 5: start, finish, air, h, bloodA, water6, feed6
-    dvalue, finish, bloodA, water2 = calc_d2(0., 79., 0., 14., blood4, 0., -3.)
+    dvalue, finish, bloodA, water2 = calc_d2(0., 109., -2., 14., blood4, 0., -3.)
 
     dvalue5 = dvalue
     finish5 = finish
@@ -137,19 +137,30 @@ def main():
     water_history = np.append(cd, waterE)
 
     # create history for feed, air
-    feed_history = np.empty(finish1+finish2+finish3+finish4+finish5+5); feed_history.fill(-3)
-    air_history = np.empty(finish1+finish2+finish3+finish4+finish5+5); air_history.fill(2)
+    feed_history = np.empty(finish1+finish2+finish3+finish4+finish5+5); feed_history.fill(3.5)
+    air_history = np.empty(finish1+finish2+finish3+finish4+finish5+5); air_history.fill(-3)
+
+    return (d18O_history, water_history, feed_history, air_history)
+
+def main():
+
+    d18O_history, water_history, feed_history, air_history = calc_blood_hist()
 
     # plot blood d18O over time
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(9,8), edgecolor='none')
     ax = fig.add_subplot(1,1,1)
     ax.plot(d18O_history, c='r', alpha=1, label='blood')
     ax.plot(water_history, c='b', alpha=1, label='water')
     ax.plot(feed_history, c='g', alpha=1, label='feed')
     ax.plot(air_history, c='y', alpha=1, label='air')
-    ax.set_title(b'Blood d18O per mil over time in days')
+    ax.set_title(b'2b: MCMC varies water $\delta^{18}$O history to match measured tooth $\delta^{18}$O profiles')
+    ax.set_ylim(-4., 4.)
+    ax.set_xlim(1., 360.)
     ax.legend(loc='best')
+    ax.set_ylabel(r'$ \mathrm{density} \ \mathrm{increase} \ g/cm^{3}/day$', color='r')
+    ax.set_xlabel(r'$ \mathrm{cumulative} \ g/cm^{3}$', color='r')
+    fig.savefig('figtitle3.png', dpi=500)
     plt.show()
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  pointsample.py
+#  make_mineralization_model.py
 #  
 #  Copyright 2013 Daniel Green, Greg Green
 #  
@@ -346,7 +346,7 @@ def main():
     imgStack -= 0.077402903
     imgStack[imgStack < .79] = np.nan
 
-    # Convert from total to mineral fraction by weight
+    # Convert from total density to mineral fraction by weight
     imgStack = (3.15 - 3.15 * 0.79 / imgStack) / (3.15 - 0.79)
     idx = (imgStack < -0.2)
     imgStack[idx] = np.nan
@@ -359,8 +359,18 @@ def main():
         Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
 
     # Make Nx_age monotonically increasing
-    increasing = np.linspace(0., .1, len(Nx_age))
-    Nx_age = np.add(Nx_age, increasing)
+    #increasing = np.linspace(0., 0.1, len(Nx_age))
+    #Nx_age = Nx_age + increasing
+
+    Nx_age = np.around(Nx_age)
+    Nx_age[Nx_age < 1.] = 1
+    
+    for k in xrange(1, len(Nx_age)):
+        if Nx_age[k] <= Nx_age[k-1]:
+            Nx_age[k] = Nx_age[k-1] + 1
+
+    Nx_age = Nx_age.astype('u2')
+    print Nx_age
     
     # Generate monotonically increasing model for each coordinate in tooth
     # Standard deviation in each measurement
@@ -375,8 +385,8 @@ def main():
 
     t1 = time.time()
     
-    for x in xrange(imgStack.shape[0]):
-        for y in xrange(imgStack.shape[1]):
+    for x in xrange(imgStack.shape[1]): #was shape[0]
+        for y in xrange(imgStack.shape[2]): #was shape[1]
             
             # Fit monotonically increasing mineralization model
             # to time series in this pixel
@@ -477,6 +487,9 @@ def main():
                                           compression_opts=9)
     dset[:] = loc_store[:]
 
+    dset = f.create_dataset('/ages', Nx_age.shape, 'u2')
+    dset[:] = Nx_age
+    
     dset = f.create_dataset('/age_mask', mask_store.shape, 'u1',
                                          compression='gzip',
                                          compression_opts=9)

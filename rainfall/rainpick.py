@@ -168,7 +168,7 @@ def main():
     ax.plot(np.arange(12)+1, s, c='r', alpha=1)
     for xx in np.exp(x1):
         ax.plot(np.arange(12)+1, xx, c='b', alpha=0.1)
-    ax.set_ylim(0., 800.)
+    ax.set_ylim(0., 500.)
     ax.set_xlim(1., 12.)
     ax.set_title(r'Addis')
 
@@ -179,7 +179,7 @@ def main():
     ax.plot(np.arange(12)+1, s, c='r', alpha=1)
     for xx in np.exp(x2):
         ax.plot(np.arange(12)+1, xx, c='b', alpha=0.1)
-    ax.set_ylim(0., 800.)
+    ax.set_ylim(0., 500.)
     ax.set_xlim(1., 12.)
     ax.set_title(r'Marsabit')
 
@@ -189,7 +189,7 @@ def main():
     ax.plot(np.arange(12)+1, s, c='r', alpha=1)
     for xx in np.exp(x3):
         ax.plot(np.arange(12)+1, xx, c='b', alpha=0.1)
-    ax.set_ylim(0., 800.)
+    ax.set_ylim(0., 500.)
     ax.set_xlim(1., 12.)
     ax.set_title(r'Moyale')
 
@@ -199,7 +199,7 @@ def main():
     ax.plot(np.arange(12)+1, s, c='r', alpha=1)
     for xx in np.exp(x4):
         ax.plot(np.arange(12)+1, xx, c='b', alpha=0.1)
-    ax.set_ylim(0., 800.)
+    ax.set_ylim(0., 500.)
     ax.set_xlim(1., 12.)
     ax.set_title(r'Kitale')
 
@@ -210,7 +210,7 @@ def main():
     ax.plot(np.arange(12)+1, s, c='r', alpha=1)
     for xx in np.exp(x5):
         ax.plot(np.arange(12)+1, xx, c='b', alpha=0.1)
-    ax.set_ylim(0., 800.)
+    ax.set_ylim(0., 500.)
     ax.set_xlim(1., 12.)
     ax.set_title(r'Eldoret')
 
@@ -221,7 +221,7 @@ def main():
     ax.plot(np.arange(12)+1, s, c='r', alpha=1)
     for xx in np.exp(x6):
         ax.plot(np.arange(12)+1, xx, c='b', alpha=0.1)
-    ax.set_ylim(0., 800.)
+    ax.set_ylim(0., 500.)
     ax.set_xlim(1., 12.)
     ax.set_title(r'Lodwar')
 
@@ -232,7 +232,7 @@ def main():
     ax.plot(np.arange(12)+1, s, c='r', alpha=1)
     for xx in np.exp(x7):
         ax.plot(np.arange(12)+1, xx, c='b', alpha=0.1)
-    ax.set_ylim(0., 800.)
+    ax.set_ylim(0., 600.)
     ax.set_xlim(1., 12.)
     ax.set_title(r'Wajir')
 
