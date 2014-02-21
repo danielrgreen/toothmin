@@ -293,19 +293,44 @@ def main():
 
     Nx_age = Nx_age.astype('u2')
 
-    Nx = Nx * voxelsize / x_resampling / 1000
+    # calculate model information for save file
+
+    xpixelsize = voxelsize * args.spacing
+    ypixelsize = voxelsize * y_resampling
+    tooth_length = xpixelsize * Nx / 1000
+
+    # calculate um/day
     
+    for t, c in zip(np.diff(Nx_age), np.diff(tooth_length)):
+        print "days =", t, "length =", c
+     
+    print np.mean(np.diff(Nx_age)), np.mean(np.diff(tooth_length))
+
+    increase_per_day = np.repeat(np.diff(tooth_length), np.diff(Nx_age))
+    increase_per_day = increase_per_day / np.repeat(np.diff(Nx_age), np.diff(Nx_age))
+    increase_per_day = increase_per_day * 1000
+
+    for i in xrange(0, 209):
+        if increase_per_day[i] > 200:
+            increase_per_day[i] = 200
+
+    days = np.linspace(1, 210, 210)
+    w = np.ones(210)
+    exact = .0018
+    s = UnivariateSpline(days, increase_per_day, w=w, s=210/exact)
+    xs = linspace(days[0], days[-1], 1000)
+    ys = s(xs)
+
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(age, Nx, marker='o', linestyle='none', color='b', label='age')
-    ax.plot(Nx_age, Nx, marker='o', linestyle='none', color='r', label='fitted age')
+    ax.plot(age, tooth_length, marker='o', linestyle='none', color='b', label='age')
+    ax.plot(Nx_age, tooth_length, marker='o', linestyle='none', color='r', label='fitted age')
+    ax2 = ax.twinx()
+    ax2.plot(xs, ys, color='g')
     plt.xlabel('age or Nx_age in days')
     plt.ylabel('length in mm')
-    plt.title('Age & Nx_age vs. Nx: tooth length by age at death')
+    plt.title('Age & Nx_age vs. tooth_length: tooth length by age at death')
     plt.show()
-
-    for i, k in zip(Nx_age, Nx):
-        print 'age=', i, 'length=', k
            
     return 0
 

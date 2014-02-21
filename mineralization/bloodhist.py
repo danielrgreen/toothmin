@@ -11,8 +11,35 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+start = 0.
 
-def calc_d1(start, finish, air, h, water1, feed1, water2, feed2):
+initial_water_d18O = 0.
+initial_feed_d18O = 3.
+air_d18O = -4.
+blood_halflife = 14. 
+
+day_of_first_switch = 40.
+length_of_first_switch = 30.
+first_H2O_switch_d18O = -3.
+first_feed_switch_d18O = 3.
+
+length_of_second_switch = 50.
+second_H20_switch_d18O = 0.
+second_feed_switch_d18O = 3.
+
+length_of_third_switch = 50.
+third_H2O_switch_d18O = 1.
+third_feed_switch_d18O = 3.
+
+length_of_fourth_switch = 50.
+fourth_H2O_switch_d18O = 0.
+fourth_feed_switch_d18O = 3.
+
+length_of_fifth_switch = 50.
+fifth_H2O_switch_d18O = 0.
+fifth_feed_switch_d18O = 3.
+
+def calc_d1(start, day_of_first_switch, air_d18O, blood_half_life, initial_water_d18O, initial_feed_d18O, first_switch_d18O, second_feed_d18O):
     '''
     calculates evolving isotope ratios (d18O per mil) in blood given
     information about air, blood, water and feed isotope ratios, and
@@ -31,12 +58,12 @@ def calc_d1(start, finish, air, h, water1, feed1, water2, feed2):
     '''
 
     # Initial and equilibrium blood d18O
-    bloodA = (.60*water1 + .30*feed1 + .10*air) # starting blood d18O
-    bloodB = (.60*water2 + .30*feed2 + .1*air) # blood equilibrium d18O
+    bloodA = (.60*initial_water_d18O + .30*initial_feed_d18O + .1*air_d18O) # starting blood d18O
+    bloodB = (.60*first_H2O_switch_d18O + .30*first_feed_switch_d18O + .1*air_d18O) # blood equilibrium d18O
 
     # create time series (days) and vector for d18O
-    t = np.linspace(start, finish, num=(finish-start+1)) # time t in days
-    dvalue = np.empty(finish-start+1) # empty vector for isotope ratio
+    t = np.linspace(start, day_of_first_switch, num=(day_of_first_switch - start + 1)) # time t in days
+    dvalue = np.empty(day_of_first_switch - start + 1) # empty vector for isotope ratio
 
     # calculate changing d18O over time
     for d in dvalue:
