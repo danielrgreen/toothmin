@@ -12,33 +12,37 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 start = 0.
-days_initial_period = 20.
+days_initial_period = 30.
 
 initial_water_d18O = 0.
 initial_feed_d18O = 3.
 air_d18O = -4.
 blood_halflife = 14. 
 
-length_of_first_switch = 80.
+length_of_first_switch = 20.
 first_H2O_switch_d18O = -8.
 first_feed_switch_d18O = 3.
 
-length_of_second_switch = 50.
+length_of_second_switch = 40.
 second_H20_switch_d18O = 0.
 second_feed_switch_d18O = 3.
 
-length_of_third_switch = 50.
+length_of_third_switch = 20.
 third_H2O_switch_d18O = -8.
 third_feed_switch_d18O = 3.
 
-length_of_fourth_switch = 50.
+length_of_fourth_switch = 100.
 fourth_H2O_switch_d18O = 0.
 fourth_feed_switch_d18O = 3.
 
-length_of_fifth_switch = 50.
+length_of_fifth_switch = 100.
 fifth_H2O_switch_d18O = 0.
 fifth_feed_switch_d18O = 3.
 
+likely_variance_blood = .5
+measurement_error = .15
+samples_per_point = 10
+sample_frequency = 2.
     
 
 def calc_d1(start, finish, air, h, water1, feed1, water2, feed2):
@@ -110,6 +114,11 @@ def calc_d2(start, finish, air, h, bloodA, water2, feed2):
     return (dvalue, finish, bloodA, water2)
 
 def calc_blood_hist():
+    '''
+    Takes initial inputs, calc_d1 and calc_d2 functions, and calculates
+    overall blood, water, air and feed isotope histories.
+    '''
+
 
     # phase 0: start, finish, air, h, water1, feed1, water1, feed1
     dvalue, finish, bloodA, water1 = calc_d1(0., days_initial_period, air_d18O,
@@ -197,18 +206,61 @@ def calc_blood_hist():
 
     return (d18O_history, water_history, feed_history, air_history)
 
+def noise(d18O_history, likely_variance_blood, measurement_error, samples_per_point, sample_frequency):
+    '''
+    Generates likely sample points at a given frequency around an estimated
+    blood profile, using likely variance and measurement error
+    '''
+
+    sigma = ((likely_variance_blood**2)+(measurement_error**2))**.5
+    samples = samples_per_point
+    profile = d18O_history
+    sigma_profile = []
+
+    for i in profile:                    
+        d = np.random.normal(i, sigma, samples)
+        sigma_profile = np.append(sigma_profile, d)
+
+    sigma_profile = np.reshape(sigma_profile, (profile.size, samples))
+    
+    return (sigma_profile, sigma)
+
 def main():
 
     d18O_history, water_history, feed_history, air_history = calc_blood_hist()
 
     # plot blood d18O over time
+
+
+    sigma_profile, sigma = noise(d18O_history, likely_variance_blood, measurement_error, samples_per_point, sample_frequency)
+    apts = sigma_profile[:,0]
+    apts[1::sample_frequency] = np.nan
+    bpts = sigma_profile[:,1]
+    bpts[1::sample_frequency] = np.nan
+    cpts = sigma_profile[:,2]
+    cpts[1::sample_frequency] = np.nan
+    dpts = sigma_profile[:,3]
+    dpts[1::sample_frequency] = np.nan
+    epts = sigma_profile[:,4]
+    epts[1::sample_frequency] = np.nan
+    fpts = sigma_profile[:,5]
+    fpts[1::sample_frequency] = np.nan
+    gpts = sigma_profile[:,6]
+    gpts[1::sample_frequency] = np.nan
+    hpts = sigma_profile[:,7]
+    hpts[1::sample_frequency] = np.nan
+    ipts = sigma_profile[:,8]
+    ipts[1::sample_frequency] = np.nan
+    jpts = sigma_profile[:,9]
+    jpts[1::sample_frequency] = np.nan
+
+    print 'sigma =', sigma
     
     max1, max2, max3, max4 = np.amax(d18O_history), np.amax(water_history), np.amax(feed_history), np.amax(air_history)
     maximum = np.amax(np.array([max1, max2, max3, max4]))
 
     min1, min2, min3, min4 = np.amin(d18O_history), np.amin(water_history), np.amin(feed_history), np.amin(air_history)
     minimum = np.amin(np.array([min1, min2, min3, min4]))
-
     
     fig = plt.figure(figsize=(9,8), edgecolor='none')
     ax = fig.add_subplot(1,1,1)
@@ -216,6 +268,16 @@ def main():
     ax.plot(water_history, c='b', alpha=1, label='water')
     ax.plot(feed_history, c='g', alpha=1, label='feed')
     ax.plot(air_history, c='y', alpha=1, label='air')
+    ax.plot(apts, c='r', marker='.', linestyle='none', label='sampled')
+    ax.plot(bpts, c='r', marker='.', linestyle='none')
+    ax.plot(cpts, c='r', marker='.', linestyle='none')
+    ax.plot(dpts, c='r', marker='.', linestyle='none')
+    ax.plot(epts, c='r', marker='.', linestyle='none')
+    ax.plot(fpts, c='r', marker='.', linestyle='none')
+    ax.plot(gpts, c='r', marker='.', linestyle='none')
+    ax.plot(hpts, c='r', marker='.', linestyle='none')
+    ax.plot(ipts, c='r', marker='.', linestyle='none')
+    ax.plot(jpts, c='r', marker='.', linestyle='none')
     ax.set_title(b'Sheep blood $\delta^{18}$O varies with inputs & predicts tooth $\delta^{18}$O profiles')
     ax.set_ylim(minimum*1.1, maximum*1.1)
     ax.set_xlim(1., d18O_history.size)
