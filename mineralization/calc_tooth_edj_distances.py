@@ -301,11 +301,6 @@ def main():
 
     # calculate um/day
     
-    for t, c in zip(np.diff(Nx_age), np.diff(tooth_length)):
-        print "days =", t, "length =", c
-     
-    print np.mean(np.diff(Nx_age)), np.mean(np.diff(tooth_length))
-
     increase_per_day = np.repeat(np.diff(tooth_length), np.diff(Nx_age))
     increase_per_day = increase_per_day / np.repeat(np.diff(Nx_age), np.diff(Nx_age))
     increase_per_day = increase_per_day * 1000
@@ -321,14 +316,22 @@ def main():
     xs = linspace(days[0], days[-1], 1000)
     ys = s(xs)
 
+    # Kierdorf 2013 data
+
+    kday = np.array([13, 27, 41, 55, 75, 154, 168, 185, 200, 212, 230, 245])
+    kext = np.array([177, 168, 180, 132, 110, 40, 36, 35, 33, 27, 28, 29])
+
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(age, tooth_length, marker='o', linestyle='none', color='b', label='age')
     ax.plot(Nx_age, tooth_length, marker='o', linestyle='none', color='r', label='fitted age')
     ax2 = ax.twinx()
-    ax2.plot(xs, ys, color='g')
-    plt.xlabel('age or Nx_age in days')
-    plt.ylabel('length in mm')
+    ax2.plot(xs, ys, color='g', label='radiograph extension, smooth')
+    ax2.plot(days, increase_per_day, color='y', label='radiograph extension, raw')
+    ax2.plot(kday, kext, color='k', mfc='none', marker='o', linestyle='none', label='histology extension')
+    ax.set_xlabel('age or Nx_age in days')
+    ax.set_ylabel('length in mm')
+    ax2.set_ylabel('extension in um/day')
     plt.title('Age & Nx_age vs. tooth_length: tooth length by age at death')
     plt.show()
            
