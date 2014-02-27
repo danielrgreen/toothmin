@@ -84,19 +84,27 @@ def main():
     #d18O_total = d18O_pixel(age, increase, blood_hist, x, y)
     #print d_age, increase_x, daily_increase , d18O_addition, d18O_total
 
-    '''
+    
     # Loop over x-coordinate
     for x in xrange(map_x):
         # Loop over y-coordinate
         for y in xrange(map_y):
             d18O_total, daily_increase, d18O_addition = d18O_pixel(age, increase, blood_hist, x, y)
-                       
+            if d18O_total == 0:
+                d18O_total = np.nan
+                
             # Store the total d18O in this pixel to the map
             d18O_map[x, y] = d18O_total
-    '''
+
+    d18O_map = d18O_map.T
+
+    d18O_map = np.delete(d18O_map, np.s_[185:-1], 0)
+
     
-    d18O_total, daily_increase, d18O_addition = d18O_pixel(age, increase, blood_hist, 20, 20)
- 
+    
+    d18O_total, daily_increase, d18O_addition = d18O_pixel(age, increase, blood_hist, 80, 15)
+
+    '''
     print 'daily increase:'
     for i in zip(np.arange(daily_increase.size), daily_increase):
         print 'min increase', i
@@ -104,17 +112,17 @@ def main():
     print 'daily d18O addition:' 
     for j in zip(np.arange(d18O_addition.size), d18O_addition):
         print 'd18O addition', j
-
     '''
+    
     # Show the map with matplotlib
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     
-    cimg = ax.imshow(d18O_map.T, origin='lower', aspect='auto', interpolation='none')
+    cimg = ax.imshow(d18O_map, origin='lower', aspect='auto', interpolation='none')
     cax = fig.colorbar(cimg)
     
     plt.show()
-    '''
+    
     
     return 0
 

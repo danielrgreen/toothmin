@@ -303,8 +303,8 @@ def main():
     ax = fig.add_subplot(1, 1, 1)
     
     for n in xrange(100):
-        x = np.random.randint(70, 80)
-        y = np.random.randint(10, 20)
+        x = np.random.randint(5, 30)
+        y = np.random.randint(11, 20)
         m = imgStack[:, x, y]
 
         idx = (m > 1.)
@@ -343,7 +343,9 @@ def main():
     img_monotonic[idx] = np.nan
     img_mon_diff[idx] = np.nan
 
+    
 
+    ''' # Blocking to troubleshoot
     dirname = args.output_dir
 
     if dirname == None:
@@ -381,6 +383,7 @@ def main():
                      fontsize=24)
         fig.savefig('%s/img_monotonic_diff_%.2d.png' % (dirname, a), dpi=300)
         plt.close(fig)
+
     
     # Save images to HDF5 file
     f = h5py.File(dirname + '/simple_fit2.h5', 'w')
@@ -422,6 +425,7 @@ def main():
     f = open(dirname + '/info.txt', 'w')
     f.write(txt)
     f.close()
+    '''
     
     return 0
 
