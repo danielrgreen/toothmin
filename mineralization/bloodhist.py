@@ -7,35 +7,35 @@
 #
 #
 
-
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
 start = 0.
-days_initial_period = 30.
+days_initial_period = 160.
 
 initial_water_d18O = 0.
 initial_feed_d18O = 3.
 air_d18O = -4.
 blood_halflife = 14. 
 
-length_of_first_switch = 20.
-first_H2O_switch_d18O = -8.
+length_of_first_switch = 60.
+first_H2O_switch_d18O = -3.5
 first_feed_switch_d18O = 3.
 
-length_of_second_switch = 40.
+length_of_second_switch = 15.
 second_H20_switch_d18O = 0.
 second_feed_switch_d18O = 3.
 
-length_of_third_switch = 20.
-third_H2O_switch_d18O = -8.
+length_of_third_switch = 1.
+third_H2O_switch_d18O = 0.
 third_feed_switch_d18O = 3.
 
-length_of_fourth_switch = 100.
+length_of_fourth_switch = 1.
 fourth_H2O_switch_d18O = 0.
 fourth_feed_switch_d18O = 3.
 
-length_of_fifth_switch = 100.
+length_of_fifth_switch = 1.
 fifth_H2O_switch_d18O = 0.
 fifth_feed_switch_d18O = 3.
 
@@ -253,7 +253,7 @@ def main():
     ipts[1::sample_frequency] = np.nan
     jpts = sigma_profile[:,9]
     jpts[1::sample_frequency] = np.nan
-
+    
     print 'sigma =', sigma
     
     max1, max2, max3, max4 = np.amax(d18O_history), np.amax(water_history), np.amax(feed_history), np.amax(air_history)
@@ -270,14 +270,14 @@ def main():
     ax.plot(air_history, c='y', alpha=1, label='air')
     ax.plot(apts, c='r', marker='.', linestyle='none', label='sampled')
     ax.plot(bpts, c='r', marker='.', linestyle='none')
-    ax.plot(cpts, c='r', marker='.', linestyle='none')
-    ax.plot(dpts, c='r', marker='.', linestyle='none')
-    ax.plot(epts, c='r', marker='.', linestyle='none')
-    ax.plot(fpts, c='r', marker='.', linestyle='none')
-    ax.plot(gpts, c='r', marker='.', linestyle='none')
-    ax.plot(hpts, c='r', marker='.', linestyle='none')
-    ax.plot(ipts, c='r', marker='.', linestyle='none')
-    ax.plot(jpts, c='r', marker='.', linestyle='none')
+    #ax.plot(cpts, c='r', marker='.', linestyle='none')
+    #ax.plot(dpts, c='r', marker='.', linestyle='none')
+    #ax.plot(epts, c='r', marker='.', linestyle='none')
+    #ax.plot(fpts, c='r', marker='.', linestyle='none')
+    #ax.plot(gpts, c='r', marker='.', linestyle='none')
+    #ax.plot(hpts, c='r', marker='.', linestyle='none')
+    #ax.plot(ipts, c='r', marker='.', linestyle='none')
+    #ax.plot(jpts, c='r', marker='.', linestyle='none')
     ax.set_title(b'Sheep blood $\delta^{18}$O varies with inputs & predicts tooth $\delta^{18}$O profiles')
     ax.set_ylim(minimum*1.1, maximum*1.1)
     ax.set_xlim(1., d18O_history.size)

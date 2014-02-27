@@ -41,7 +41,7 @@ def d18O_pixel(age, increase, blood_hist, x, y):
 
     d18O_total = np.sum(d18O_addition)
 
-    return d18O_total
+    return (d18O_total, daily increase)
 
 def smoothListGaussian(list,degree=20):  
 
@@ -88,7 +88,7 @@ def main():
     for x in xrange(map_x):
         # Loop over y-coordinate
         for y in xrange(map_y):
-            d18O_total = d18O_pixel(age, increase, blood_hist, x, y)
+            d18O_total, daily_increase = d18O_pixel(age, increase, blood_hist, x, y)
                        
             # Store the total d18O in this pixel to the map
             d18O_map[x, y] = d18O_total
