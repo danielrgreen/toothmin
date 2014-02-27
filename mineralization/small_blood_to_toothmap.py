@@ -41,7 +41,7 @@ def d18O_pixel(age, increase, blood_hist, x, y):
 
     d18O_total = np.sum(d18O_addition)
 
-    return (d18O_total, daily increase)
+    return (d18O_total, daily_increase, d18O_addition)
 
 def smoothListGaussian(list,degree=20):  
 
@@ -84,36 +84,28 @@ def main():
     #d18O_total = d18O_pixel(age, increase, blood_hist, x, y)
     #print d_age, increase_x, daily_increase , d18O_addition, d18O_total
 
+    '''
     # Loop over x-coordinate
     for x in xrange(map_x):
         # Loop over y-coordinate
         for y in xrange(map_y):
-            d18O_total, daily_increase = d18O_pixel(age, increase, blood_hist, x, y)
+            d18O_total, daily_increase, d18O_addition = d18O_pixel(age, increase, blood_hist, x, y)
                        
             # Store the total d18O in this pixel to the map
             d18O_map[x, y] = d18O_total
-
-    '''
-    shape_map = d18O_map.shape
-    print 'shape_map', shape_map
-    flat_map = d18O_map.ravel()
-    print 'flat_map shape', flat_map.shape
-    list = flat_map
-    print 'list shape', list.shape
-    smoothed = smoothListGaussian(list, degree=20)
-    print 'smoothed type1', type(smoothed)
-    smoothed = np.asarray(smoothed)
-    minus = smoothed.shape
-    print 'smoothed shape2', smoothed.shape
-    added1 = flat_map.shape[0] - minus[0]
-    print 'added', added1
-    added2 = np.zeros(added1)
-    print 'added2', added2
-    smoothed = np.append(smoothed, added2)
-    print 'smoothed shape3', smoothed.shape
-    d18O_map = smoothed.reshape(shape_map)
     '''
     
+    d18O_total, daily_increase, d18O_addition = d18O_pixel(age, increase, blood_hist, 20, 20)
+ 
+    print 'daily increase:'
+    for i in zip(np.arange(daily_increase.size), daily_increase):
+        print 'min increase', i
+
+    print 'daily d18O addition:' 
+    for j in zip(np.arange(d18O_addition.size), d18O_addition):
+        print 'd18O addition', j
+
+    '''
     # Show the map with matplotlib
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -122,6 +114,7 @@ def main():
     cax = fig.colorbar(cimg)
     
     plt.show()
+    '''
     
     return 0
 
