@@ -24,6 +24,8 @@
 
 
 import numpy as np
+import matplotlib
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import h5py
 from bloodhist import calc_blood_hist
@@ -73,22 +75,32 @@ def imresize(x, shape, method=Image.BILINEAR):
 
 def z_calc(x_resized):
 
-    data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 11.57, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.74, 12.29, 12.38, 12.31, 12.24, 12.26, 11.79, 12.07, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 10.90, 10.17, 10.06, 0.00, 0.00, 0.00, 12.17, 11.95, 11.00, 11.92, 12.55, 12.29, 12.39, 12.08, 12.91, 10.38, 12.70, 12.69, 12.23, 12.56, 11.53, 12.82, 12.36, 12.51, 10.69, 11.33, 13.33, 13.12, 13.21, 13.07, 13.76, 13.53, 14.63, 11.81, 9.76, 9.95, 10.07, 10.42, 0.00, 0.00, 12.40, 12.17, 12.21, 11.04, 12.81, 12.20, 12.69, 12.31, 12.44, 13.11, 10.84, 12.85, 12.90, 13.13, 13.74, 13.18, 11.91, 12.53, 13.10, 12.28, 12.92, 10.95, 12.83, 13.20, 13.25, 12.10, 11.95, 12.08, 11.65, 8.45, 10.18, 11.02, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 10.19, 11.24, 10.55, 11.33, 12.09, 12.56, 13.71, 12.03, 10.78, 12.75, 12.67, 12.50, 12.48, 12.50, 11.96, 12.21, 12.28, 9.88, 11.85, 12.44, 11.07, 11.18, 10.68, 11.42, 12.39, 10.08])
+    data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 11.57, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.74, 12.29, 12.38, 12.31, 12.24, 12.26, 11.79, 12.07, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 10.90, 10.17, 10.06, 0.00, 0.00, 0.00, 12.17, 11.95, 11.00, 11.92, 12.55, 12.29, 12.39, 12.08, 12.91, 10.38, 12.70, 12.69, 12.23, 12.56, 11.53, 12.82, 12.36, 12.51, 10.69, 11.33, 13.33, 13.12, 13.21, 13.07, 13.76, 13.53, 13.63, 11.81, 9.76, 9.95, 10.07, 10.42, 0.00, 0.00, 12.40, 12.17, 12.21, 11.04, 12.81, 12.20, 12.69, 12.31, 12.44, 13.11, 10.84, 12.85, 12.90, 13.13, 13.74, 13.18, 11.91, 12.53, 13.10, 12.28, 12.92, 10.95, 12.83, 13.20, 13.25, 12.10, 11.95, 12.08, 11.65, 8.45, 10.18, 11.02, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 10.19, 11.24, 10.55, 11.33, 12.09, 12.56, 13.71, 12.03, 10.78, 12.75, 12.67, 12.50, 12.48, 12.50, 11.96, 12.21, 12.28, 9.88, 11.85, 12.44, 11.07, 11.18, 10.68, 11.42, 12.39, 10.08])
     data_mean = np.mean(data)
     data = np.reshape(data, (5,34))
     data = np.flipud(data)
     data[data==0] = np.nan
 
-    x_resized = x_resized + 100.
+    #x_resized = x_resized + 100.
     idx = np.isnan(x_resized)
     x_resized[idx] = 0
     model_mean = np.mean(x_resized)
 
     factor = data_mean / model_mean
-    x_resized = factor*x_resized #!!!!!!!!!!!!!!!!!!!!!!!!
+    #x_resized = factor*x_resized #!!!!!!!!!!!!!!!!!!!!!!!!
     two = np.mean(x_resized)
     x_resized[x_resized==0.] = np.nan
     
+
+    x_resized_small = np.delete(x_resized, np.s_[0:7], 1)
+    data_small = np.delete(data, np.s_[0:7], 1)
+    compare_s = np.absolute(data_small - x_resized_small)
+    idx = np.isnan(compare_s)
+    compare_s[idx] = 0.
+    compare_s2 = np.square(compare_s)
+    z_s_raw = np.sum(compare_s2)
+    z_s = z_s_raw**.5
+
     compare = np.absolute(data - x_resized)
 
     idx = np.isnan(compare)
@@ -99,7 +111,7 @@ def z_calc(x_resized):
 
     compare[compare==0.] = np.nan
     
-    return (data, compare, z, x_resized, data_mean, model_mean, factor, two)
+    return (data, compare, z, x_resized, data_mean, model_mean, factor, two, z_s)
 
 def main():
 
@@ -149,7 +161,7 @@ def main():
     x_resized = x_resized.T
     x_resized = np.delete(x_resized, np.s_[0:1], 0)
 
-    data, compare, z, x_resized, data_mean, model_mean, factor, two = z_calc(x_resized)
+    data, compare, z, x_resized, data_mean, model_mean, factor, two, z_s = z_calc(x_resized)
     
     d18O_total, daily_increase, d18O_addition = d18O_pixel(age, increase, blood_hist, 80, 15)
 
@@ -162,31 +174,34 @@ def main():
 
     
     # Show the map with matplotlib
-    fig = plt.figure(figsize=(6, 3), dpi=100, facecolor='w', edgecolor='k')
+    fig = plt.figure(dpi=300)#figsize=(6, 3), dpi=300, facecolor='w', edgecolor='k')
 
-    ax1 = fig.add_subplot(2,2,1)
+    #ax1 = fig.add_subplot(2,2,1)
+    ax1 = plt.subplot2grid((2,4), (0,0), colspan=2)
     ax1.set_title('Modeled high-res d18O tooth map')
     cimg1 = ax1.imshow(d18O_map, origin='lower', aspect='auto', interpolation='none')
     cax1 = fig.colorbar(cimg1)
     
-    ax2 = fig.add_subplot(2,2,2)
+    #ax2 = fig.add_subplot(2,2,2)
+    ax2 = plt.subplot2grid((2,4), (0,2), colspan=2)
     ax2.set_title('Modeled sample-res d18O tooth map')
     cimg2 = ax2.imshow(x_resized, origin='lower', aspect='auto', interpolation='none')
     cax2 = fig.colorbar(cimg2)
 
-    ax3 = fig.add_subplot(2,2,3)
+    #ax3 = fig.add_subplot(2,2,3)
+    ax3 = plt.subplot2grid((2,4), (1,0), colspan=2)
     ax3.set_title('Data: sampled tooth d18O')
     cimg3 = ax3.imshow(data, origin='lower', aspect='auto', interpolation='none')
     cax3 = fig.colorbar(cimg3)
 
-    ax4 = fig.add_subplot(2,2,4)
+    #ax4 = fig.add_subplot(2,2,4)
+    ax4 = plt.subplot2grid((2,4), (1,2), colspan=2)
     ax4.set_title('Magnitude divergence modeled - measured')
     cimg4 = ax4.imshow(compare, origin='lower', aspect='auto', interpolation='none')
     cax4 = fig.colorbar(cimg4)
 
-    fig.suptitle('Modeled vs. real: 60 day switch @ 6 months post germination, z = %.2f' % z)
-    plt.show()
-    
+    plt.tight_layout()
+    fig.savefig('20day 4permil switch at 40 days*, z = %.3f.png' % z_s)
     
     return 0
 
