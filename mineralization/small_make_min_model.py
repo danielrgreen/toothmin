@@ -191,7 +191,7 @@ def main():
     parser.add_argument('-l', '--order-by-length', action='store_true',
                               help='Order teeth according to length.')
     parser.add_argument('-s', '--show', action='store_true', help='Show plot.')
-    parser.add_argument('-o', '--output-dir', type=str, default=None,
+    parser.add_argument('-o', '--output-dir', type=str, default='.',
                               help='Directory in which to store output.')
     if 'python' in sys.argv[0]:
         offset = 2
@@ -256,6 +256,11 @@ def main():
         age = np.array(age, dtype='f8')
         
         idx = np.argsort(Nx, kind='mergesort')
+
+        print 'Rearranging using:'
+        print idx
+        print ''
+        
         alignedimgSorted = [alignedimg[i] for i in idx]
         alignedimg = alignedimgSorted
         Nx = Nx[idx]
@@ -286,6 +291,13 @@ def main():
     for i in xrange(len(age_coeff)):
         Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
 
+    print 'Real ages:'
+    print age
+    print ''
+    print 'Ages based on length:'
+    print Nx_age
+    print ''
+    
     # Make Nx_age monotonically increasing
     #increasing = np.linspace(0., 0.1, len(Nx_age))
     #Nx_age = Nx_age + increasing
@@ -299,6 +311,10 @@ def main():
 
     Nx_age = Nx_age.astype('u2')
 
+    print 'Corrected ages based on length:'
+    print Nx_age
+    print ''
+    
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     
@@ -343,9 +359,24 @@ def main():
     img_monotonic[idx] = np.nan
     img_mon_diff[idx] = np.nan
 
-    
+    print 'Ex. img/diff:'
+    print img_monotonic[:,10,10]
+    print img_mon_diff[:,10,10]
 
-    ''' # Blocking to troubleshoot
+    print ''
+
+    print img_monotonic[:,20,20]
+    print img_mon_diff[:,20,20]
+
+    for n, (t, img) in enumerate(zip(Nx_age, img_mon_diff)):
+        fig = plt.figure(figsize=(10,3), dpi=300)
+        ax = fig.add_subplot(1,1,1)
+        ax.imshow(img.T, origin='lower', aspect='auto',
+                         vmin=0., vmax=1., interpolation='none')
+        fig.suptitle(r'$t = %d \ \mathrm{days}$' % t, fontsize=18)
+        fig.savefig('%s/img_mon_diff_%.3d.png' % (args.output_dir, t), dpi=300)
+
+    '''
     dirname = args.output_dir
 
     if dirname == None:

@@ -19,11 +19,11 @@ initial_feed_d18O = 16.
 air_d18O = 6.
 blood_halflife = 14. 
 
-length_of_first_switch = 20.
+length_of_first_switch = 120.
 first_H2O_switch_d18O = 10.
-first_feed_switch_d18O = 14.5
+first_feed_switch_d18O = 16.
 
-length_of_second_switch = 285.
+length_of_second_switch = 120.
 second_H20_switch_d18O = 14.5
 second_feed_switch_d18O = 16.
 

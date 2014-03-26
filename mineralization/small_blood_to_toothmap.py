@@ -34,12 +34,22 @@ from PIL import Image
 
 def d18O_pixel(age, increase, blood_hist, x, y):
 
+    #print '(x, y) = %d, %d' % (x, y)
+    #print ''
     d_age = np.diff(age)
-    increase_x = increase[1:, x, y]
-    increase_x = increase_x / d_age
-    daily_increase = np.repeat(increase_x, d_age)
+    add = np.array([1], dtype='uint16')
+    d_age = np.insert(d_age, 0, add)
+    increase_rate = increase[0:, x, y]
+    increase_rate /= d_age
+    daily_increase = np.repeat(increase_rate, d_age)
+    #print 'Daily increase:'
+    #print daily_increase
+    #print ''
     stop = daily_increase.size
-    d18O_addition = daily_increase * blood_hist[:stop]   
+    d18O_addition = daily_increase * blood_hist[:stop]
+    #print 'Blood history:'
+    #print blood_hist[:stop]
+    #print ''
     idx = np.isnan(d18O_addition)
     d18O_addition[idx] = 0.
 
@@ -115,7 +125,7 @@ def z_calc(x_resized):
 
 def main():
 
-    f = h5py.File('simple_fit2.h5', 'r') #read in file
+    f = h5py.File('simple_fit.h5', 'r') #read in file
     dset1 = f['/age']
     age = dset1[:]
     dset2 = f['/img_mon']
@@ -125,7 +135,36 @@ def main():
     f.close()
     
     blood_hist, water_history, feed_history, air_history = calc_blood_hist()
+    '''
+    d_age = np.diff(age)
+    add = np.array([1], dtype='uint16')
+    d_age = np.insert(d_age, 0, add)
+    print 'd_age size', d_age.size
+    increase_rate = increase[0:, 10, 10]
+    print 'increase_rate size', increase_rate.size
+    increase_rate /= d_age
+    daily_increase = np.repeat(increase_rate, d_age)
+    stop = daily_increase.size
+    d18O_addition = daily_increase * blood_hist[:stop]
+    idx = np.isnan(d18O_addition)
+    d18O_addition[idx] = 0.
+    d18O_total = np.sum(d18O_addition)
 
+    print 'd_age', d_age
+    print d_age.size
+    print ''
+    print 'increase_rate:', increase_rate
+    print increase_rate.size
+    print ''
+    print 'daily_increase:', daily_increase
+    print daily_increase.size
+    print ''
+    print 'd18O_addition:', d18O_addition
+    print d18O_addition.size
+    print ''
+    print 'd18O_total:', d18O_total
+    return 0
+    '''
     # increase.shape is a tuple containing
     # (# of time samples, # of x samples, # of y samples),
     # so we need elements 1 and 2 of the tuple (remember that there's also
@@ -177,31 +216,31 @@ def main():
     fig = plt.figure(dpi=300)#figsize=(6, 3), dpi=300, facecolor='w', edgecolor='k')
 
     #ax1 = fig.add_subplot(2,2,1)
-    ax1 = plt.subplot2grid((2,4), (0,0), colspan=2)
+    ax1 = plt.subplot2grid((4,4), (0,0), colspan=4)
     ax1.set_title('Modeled high-res d18O tooth map')
     cimg1 = ax1.imshow(d18O_map, origin='lower', aspect='auto', interpolation='none')
     cax1 = fig.colorbar(cimg1)
     
     #ax2 = fig.add_subplot(2,2,2)
-    ax2 = plt.subplot2grid((2,4), (0,2), colspan=2)
+    ax2 = plt.subplot2grid((4,4), (1,0), colspan=4)
     ax2.set_title('Modeled sample-res d18O tooth map')
     cimg2 = ax2.imshow(x_resized, origin='lower', aspect='auto', interpolation='none')
     cax2 = fig.colorbar(cimg2)
 
     #ax3 = fig.add_subplot(2,2,3)
-    ax3 = plt.subplot2grid((2,4), (1,0), colspan=2)
+    ax3 = plt.subplot2grid((4,4), (2,0), colspan=4)
     ax3.set_title('Data: sampled tooth d18O')
     cimg3 = ax3.imshow(data, origin='lower', aspect='auto', interpolation='none')
     cax3 = fig.colorbar(cimg3)
 
     #ax4 = fig.add_subplot(2,2,4)
-    ax4 = plt.subplot2grid((2,4), (1,2), colspan=2)
+    ax4 = plt.subplot2grid((4,4), (3,0), colspan=4)
     ax4.set_title('Magnitude divergence modeled - measured')
     cimg4 = ax4.imshow(compare, origin='lower', aspect='auto', interpolation='none')
     cax4 = fig.colorbar(cimg4)
 
     plt.tight_layout()
-    fig.savefig('20day 4permil switch at 40 days*, z = %.3f.png' % z_s)
+    fig.savefig('20day 4permil switch at 40 days*, z = %.3f c.png' % z_s)
     
     return 0
 
