@@ -42,16 +42,13 @@ def d18O_pixel(age, increase, blood_hist, x, y):
     increase_rate = increase[0:, x, y]
     increase_rate /= d_age
     daily_increase = np.repeat(increase_rate, d_age)
-    #print 'Daily increase:'
-    #print daily_increase
-    #print ''
+    daily_increase[np.isnan(daily_increase)] = 0.
+    di_sum = np.sum(daily_increase)
+    daily_increase /= di_sum
+    daily_increase[daily_increase==0.] = np.nan
     stop = daily_increase.size
     d18O_addition = daily_increase * blood_hist[:stop]
-    #print 'Blood history:'
-    #print blood_hist[:stop]
-    #print ''
-    idx = np.isnan(d18O_addition)
-    d18O_addition[idx] = 0.
+    d18O_addition[np.isnan(d18O_addition)] = 0.
 
     d18O_total = np.sum(d18O_addition)
 
@@ -125,7 +122,7 @@ def z_calc(x_resized):
 
 def main():
 
-    f = h5py.File('simple_fit.h5', 'r') #read in file
+    f = h5py.File('simple_fit2.h5', 'r') #read in file
     dset1 = f['/age']
     age = dset1[:]
     dset2 = f['/img_mon']
@@ -135,36 +132,7 @@ def main():
     f.close()
     
     blood_hist, water_history, feed_history, air_history = calc_blood_hist()
-    '''
-    d_age = np.diff(age)
-    add = np.array([1], dtype='uint16')
-    d_age = np.insert(d_age, 0, add)
-    print 'd_age size', d_age.size
-    increase_rate = increase[0:, 10, 10]
-    print 'increase_rate size', increase_rate.size
-    increase_rate /= d_age
-    daily_increase = np.repeat(increase_rate, d_age)
-    stop = daily_increase.size
-    d18O_addition = daily_increase * blood_hist[:stop]
-    idx = np.isnan(d18O_addition)
-    d18O_addition[idx] = 0.
-    d18O_total = np.sum(d18O_addition)
-
-    print 'd_age', d_age
-    print d_age.size
-    print ''
-    print 'increase_rate:', increase_rate
-    print increase_rate.size
-    print ''
-    print 'daily_increase:', daily_increase
-    print daily_increase.size
-    print ''
-    print 'd18O_addition:', d18O_addition
-    print d18O_addition.size
-    print ''
-    print 'd18O_total:', d18O_total
-    return 0
-    '''
+ 
     # increase.shape is a tuple containing
     # (# of time samples, # of x samples, # of y samples),
     # so we need elements 1 and 2 of the tuple (remember that there's also
