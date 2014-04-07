@@ -208,7 +208,7 @@ def main():
     cax4 = fig.colorbar(cimg4)
 
     plt.tight_layout()
-    fig.savefig('20day 4permil switch at 40 days*, z = %.3f c.png' % z_s)
+    fig.savefig('complex003*, z = %.3f a.png' % z_s)
     
     return 0
 
