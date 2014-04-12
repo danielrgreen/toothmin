@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  calc_tooth_edj_distances.py
+#  small_make_min_model.py
 #  
 #  Copyright 2014 Daniel Green, Greg Green
 #  
@@ -76,7 +76,7 @@ def get_baseline(img, exactness=15.):
     locates nonzero pixels to find the enamel in the image and
     makes arrays for the upper and lowwer enamel edges.
     '''
-    
+    img = np.flipud(img)
     Ny, Nx = img.shape
     edge = np.empty((2,Nx), dtype='i4')
     edge[:,:] = -1
@@ -136,6 +136,7 @@ def place_markers(x, spl, spacing=2.):
     return markerPos, markerDeriv
 
 def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
+    img = np.flipud(img)
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -177,6 +178,12 @@ def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior):
     
     return log_likelihood + log_prior
 
+
+# Main section of code in which defined functions are used
+'''
+Loads image
+'''
+
 def main():
     parser = argparse.ArgumentParser(prog='enamelsample',
                   description='Resample image of enamel to standard grid',
@@ -187,7 +194,7 @@ def main():
     parser.add_argument('-l', '--order-by-length', action='store_true',
                               help='Order teeth according to length.')
     parser.add_argument('-s', '--show', action='store_true', help='Show plot.')
-    parser.add_argument('-o', '--output-dir', type=str, default=None,
+    parser.add_argument('-o', '--output-dir', type=str, default='.',
                               help='Directory in which to store output.')
     if 'python' in sys.argv[0]:
         offset = 2
@@ -230,8 +237,8 @@ def main():
         DeltaMarker = -np.ones((len(markerDeriv), 2), dtype='f8')
         DeltaMarker[:,0] = markerDeriv[:]
         markerPos2 = markerPos + 80. * DeltaMarker
-
-                
+        
+        
         # Goal: take our x positions, step along the y positions, and get the
         # values from the image.
         # Plot everything
@@ -251,7 +258,7 @@ def main():
         Ny = np.array(Ny)
         age = np.array(age, dtype='f8')
         
-        idx = np.argsort(Nx, kind='mergesort')
+        idx = np.argsort(Nx, kind='mergesort')        
         alignedimgSorted = [alignedimg[i] for i in idx]
         alignedimg = alignedimgSorted
         Nx = Nx[idx]
@@ -281,7 +288,7 @@ def main():
     Nx_age = np.zeros(Nx.size, dtype='f8')
     for i in xrange(len(age_coeff)):
         Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
-
+    
     # Make Nx_age monotonically increasing
     #increasing = np.linspace(0., 0.1, len(Nx_age))
     #Nx_age = Nx_age + increasing
@@ -294,50 +301,244 @@ def main():
             Nx_age[k] = Nx_age[k-1] + 1
 
     Nx_age = Nx_age.astype('u2')
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    
+    for n in xrange(80):
+        x = np.random.randint(69, 72)
+        y = np.random.randint(19, 22)
+        m = imgStack[:, x, y]
+
+        idx = (m > 1.)
+        m[idx] = np.nan
+        
+        ax.plot(Nx_age, m, alpha=0.5)
+
+    plt.show()
+
+    ############# start MCMC #####
+
+    loc_store = []
+    mask_store = []
+    samples_store = []
+    
+    n_walkers = 10 * Nx_age.size
+    n_steps = 3000
+    n_store = 100
+
+    t1 = time.time()
+    
+    for x in xrange(69,72):#imgStack.shape[1]): #was shape[0]
+        for y in xrange(19,22):#imgStack.shape[2]): #was shape[1]
+            
+            # Fit monotonically increasing mineralization model
+            # to time series in this pixel
+            pct_min = imgStack[:, x, y]
+
+            idx = np.isfinite(pct_min)
+            n_points = np.sum(idx)
+
+            # Skip pixel if too few time slices have data
+            if n_points < 3:
+                continue
+
+            print 'Pixel %d, %d ...' % (x, y)
+            
+            pct_min = pct_min[idx]
+
+            # MCMC sampling
+            sigma = 0.025 * np.ones(pct_min.size, dtype='f8')
+            mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
+            sigma_prior = 3. * np.ones(pct_min.size, dtype='f8')
+            
+            model = TMonotonicPointModel(pct_min, sigma,
+                                         mu_prior, sigma_prior)
+            guess = model.guess(n_walkers)
+
+            for g in guess:
+                print lnprob(g, pct_min, sigma, mu_prior, sigma_prior)
+
+            
+            # Plot guesses
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+            
+            for s in guess:
+                ax.plot(Nx_age[idx], np.cumsum(np.exp(s)), 'b-', alpha=0.05)
+            
+            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
+                        fmt='o')
+
+            plt.show()
+            
+            
+            sampler = emcee.EnsembleSampler(n_walkers, n_points,
+                                            lnprob, threads=args.threads,
+                                            args=[pct_min, sigma, mu_prior, sigma_prior])
+            
+            pos, prob, state = sampler.run_mcmc(guess, n_steps)
+            sampler.reset()
+            pos, prob, state = sampler.run_mcmc(pos, n_steps)
+            
+            np.random.shuffle(sampler.flatchain)
+            pct_min_samples = np.cumsum(np.exp(sampler.flatchain[:n_store]), axis=1)
+            
+            # Store results for pixel
+            loc_store.append([x, y])
+            mask_store.append(idx)
+            samples_store.append(pct_min_samples)
+
+            del sampler
+            del model
+
+            
+            # Plot results
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+
+            for s in pct_min_samples:
+                ax.plot(Nx_age[idx], s, 'b-', alpha=0.05)
+            
+            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
+                        fmt='o')
+
+            plt.show()
+            
+            
+
+    t2 = time.time()
+    print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
+
+    return 0
+    
+    ############# End MCMC #####
+
+    s = imgStack.shape
+    imgStack.shape = (s[0], s[1]*s[2])
+    
+    img_monotonic = np.empty(imgStack.shape, dtype='f8')
+    img_monotonic[:] = -np.inf
+    
+    img_monotonic[0, :] = imgStack[0, :]
+    idx = ~np.isfinite(img_monotonic[0, :])
+    img_monotonic[0, idx] = -np.inf
+
+    for n in xrange(1, s[0]):
+        idx = (imgStack[n,:] > img_monotonic[n-1,:]) & np.isfinite(imgStack[n,:])
+        img_monotonic[n, idx] = imgStack[n, idx]
+        img_monotonic[n, ~idx] = img_monotonic[n-1, ~idx]
+
+    #img_monotonic[~np.isfinite(img_monotonic)] = np.nan
+    imgStack.shape = s
+    img_monotonic.shape = s
+
+    idx = ~np.isfinite(img_monotonic)
+    img_monotonic[idx] = 0.
+    
+    img_mon_diff = np.diff(img_monotonic, axis=0)
+    img_mon_diff = np.concatenate([np.reshape(img_monotonic[0], (1, s[1], s[2])),
+                                   img_mon_diff], axis=0)
+    
+    img_monotonic[idx] = np.nan
+    img_mon_diff[idx] = np.nan
+
+    '''
+    for n, (t, img) in enumerate(zip(Nx_age, img_mon_diff)):
+        fig = plt.figure(figsize=(10,3), dpi=300)
+        ax = fig.add_subplot(1,1,1)
+        ax.imshow(img.T, origin='lower', aspect='auto',
+                         vmin=0., vmax=1., interpolation='none')
+        fig.suptitle(r'$t = %d \ \mathrm{days}$' % t, fontsize=18)
+        fig.savefig('%s/img_mon_diff_%.3d.png' % (args.output_dir, t), dpi=300)
+
+    
+    dirname = args.output_dir
+
+    if dirname == None:
+        return 0
+
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    
+    for a, img in zip(Nx_age, imgStack):
+        fig = plt.figure(figsize=(8,4), dpi=300)
+        ax = fig.add_subplot(1,1,1)
+        ax.imshow(img.T, origin='lower', aspect='auto',
+                       vmin=0., vmax=1., interpolation='none')
+        fig.suptitle(r'$\mathrm{Age} = %d \ \mathrm{days}$' % a,
+                     fontsize=24)
+        fig.savefig('%s/img_raw_%.2d.png' % (dirname, a), dpi=300)
+        plt.close(fig)
+
+    for a, img in zip(Nx_age, img_monotonic):
+        fig = plt.figure(figsize=(8,4), dpi=300)
+        ax = fig.add_subplot(1,1,1)
+        ax.imshow(img.T, origin='lower', aspect='auto',
+                       vmin=0., vmax=1., interpolation='none')
+        fig.suptitle(r'$\mathrm{Age} = %d \ \mathrm{days}$' % a,
+                     fontsize=24)
+        fig.savefig('%s/img_monotonic_%.2d.png' % (dirname, a), dpi=300)
+        plt.close(fig)
+
+    for a, img in zip(Nx_age, img_mon_diff):
+        fig = plt.figure(figsize=(8,4), dpi=300)
+        ax = fig.add_subplot(1,1,1)
+        ax.imshow(img.T, origin='lower', aspect='auto',
+                       vmin=0., vmax=1., interpolation='none')
+        fig.suptitle(r'$\mathrm{Age} = %d \ \mathrm{days}$' % a,
+                     fontsize=24)
+        fig.savefig('%s/img_monotonic_diff_%.2d.png' % (dirname, a), dpi=300)
+        plt.close(fig)
+
+    
+    # Save images to HDF5 file
+    f = h5py.File(dirname + '/simple_fit3.h5', 'w')
+
+    dset = f.create_dataset('img_raw', shape=imgStack.shape, dtype='f4',
+                                       compression='gzip', compression_opts=9)
+    dset[:] = imgStack[:]
+
+    dset = f.create_dataset('img_mon', shape=img_monotonic.shape, dtype='f4',
+                                       compression='gzip', compression_opts=9)
+    dset[:] = img_monotonic[:]
+
+    dset = f.create_dataset('img_mon_diff', shape=img_mon_diff.shape, dtype='f4',
+                                       compression='gzip', compression_opts=9)
+    dset[:] = img_mon_diff[:]
+
+    dset = f.create_dataset('age', shape=Nx_age.shape, dtype='u2')
+    dset[:] = Nx_age[:]
+
+    f.close()
 
     # calculate model information for save file
 
     xpixelsize = voxelsize * args.spacing
     ypixelsize = voxelsize * y_resampling
-    tooth_length = xpixelsize * Nx / 1000
+    tooth_length = xpixelsize * s[1]
+    tooth_height = ypixelsize * s[2]
 
-    # calculate um/day
+    # Save text file with model information
+    txt = 'date: %s\n' % (datetime.now().strftime('%c'))
+    txt += 'species: %s\n' % (species)
+    txt += 'x_pix_size: %.3f\n' % (xpixelsize)
+    txt += 'y_pix_size: %.3f\n' % (ypixelsize)
+    txt += 'tooth_length: %.3f\n' % (tooth_length)
+    txt += 'tooth_height: %.3f\n' % (tooth_height)
+    txt += 'image_shape: %d x %d\n' % (s[1], s[2])
+    txt += 'n_time_samples: %d\n' % (s[0])
     
-    increase_per_day = np.repeat(np.diff(tooth_length), np.diff(Nx_age))
-    increase_per_day = increase_per_day / np.repeat(np.diff(Nx_age), np.diff(Nx_age))
-    increase_per_day = increase_per_day * 1000
-
-    for i in xrange(0, 209):
-        if increase_per_day[i] > 200:
-            increase_per_day[i] = 200
-
-    days = np.linspace(1, 210, 210)
-    w = np.ones(210)
-    exact = .0018
-    s = UnivariateSpline(days, increase_per_day, w=w, s=210/exact)
-    xs = linspace(days[0], days[-1], 1000)
-    ys = s(xs)
-
-    # Kierdorf 2013 data
-
-    kday = np.array([13, 27, 41, 55, 75, 154, 168, 185, 200, 212, 230, 245])
-    kext = np.array([177, 168, 180, 132, 110, 40, 36, 35, 33, 27, 28, 29])
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(age, tooth_length, marker='o', linestyle='none', color='b', label='age')
-    ax.plot(Nx_age, tooth_length, marker='o', linestyle='none', color='r', label='fitted age')
-    ax2 = ax.twinx()
-    ax2.plot(xs, ys, color='g', label='radiograph extension, smooth')
-    ax2.plot(days, increase_per_day, color='y', label='radiograph extension, raw')
-    ax2.plot(kday, kext, color='k', mfc='none', marker='o', linestyle='none', label='histology extension')
-    ax.set_xlabel('age or Nx_age in days')
-    ax.set_ylabel('length in mm')
-    ax2.set_ylabel('extension in um/day')
-    plt.title('Age & Nx_age vs. tooth_length: tooth length by age at death')
-    plt.show()
-           
+    f = open(dirname + '/info.txt', 'w')
+    f.write(txt)
+    f.close()
+    '''
+    
     return 0
 
 if __name__ == '__main__':
     main()
+
+
+
+

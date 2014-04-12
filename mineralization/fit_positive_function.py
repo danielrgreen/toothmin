@@ -187,8 +187,8 @@ class TMCMC:
 def test_emcee():
         import emcee
 
-        n_points = 10
-        n_walkers = 24
+        n_points = 20
+        n_walkers = 48
         n_steps = 5000
         
         # True parameters
@@ -248,7 +248,7 @@ def test_emcee():
 
 
 def test_MCMC():
-	n_points = 10
+	n_points = 20
 	
 	# True parameters
 	x = np.arange(n_points)
@@ -270,7 +270,7 @@ def test_MCMC():
 	
 	# Sample using MCMC
 	sampler = TMCMC(model, Delta_y_guess, cov_guess/10.)
-	N = 100000
+	N = 10000
 	for i in range(N):
 		sampler.step()
 	sampler.flush()
@@ -310,7 +310,7 @@ def test_MCMC():
 		ax.plot(x, np.hstack([c[0], np.diff(c)]), 'b-', alpha=0.01)
 	
 	ax.errorbar(x, y_obs+1., yerr=sigma, fmt='g.')
-	ax.scatter(x, Delta_y_true, c='g', s=10)
+	ax.scatter(x, Delta_y_true, c='g', s=n_points)
 	
 	plt.show()
 	

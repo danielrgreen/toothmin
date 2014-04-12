@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  calc_tooth_edj_distances.py
+# point_min_increase.py
 #  
 #  Copyright 2014 Daniel Green, Greg Green
 #  
@@ -76,7 +76,7 @@ def get_baseline(img, exactness=15.):
     locates nonzero pixels to find the enamel in the image and
     makes arrays for the upper and lowwer enamel edges.
     '''
-    
+    img = np.flipud(img)
     Ny, Nx = img.shape
     edge = np.empty((2,Nx), dtype='i4')
     edge[:,:] = -1
@@ -136,6 +136,7 @@ def place_markers(x, spl, spacing=2.):
     return markerPos, markerDeriv
 
 def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
+    img = np.flipud(img)
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -177,6 +178,12 @@ def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior):
     
     return log_likelihood + log_prior
 
+
+# Main section of code in which defined functions are used
+'''
+Loads image
+'''
+
 def main():
     parser = argparse.ArgumentParser(prog='enamelsample',
                   description='Resample image of enamel to standard grid',
@@ -187,7 +194,7 @@ def main():
     parser.add_argument('-l', '--order-by-length', action='store_true',
                               help='Order teeth according to length.')
     parser.add_argument('-s', '--show', action='store_true', help='Show plot.')
-    parser.add_argument('-o', '--output-dir', type=str, default=None,
+    parser.add_argument('-o', '--output-dir', type=str, default='.',
                               help='Directory in which to store output.')
     if 'python' in sys.argv[0]:
         offset = 2
@@ -230,8 +237,8 @@ def main():
         DeltaMarker = -np.ones((len(markerDeriv), 2), dtype='f8')
         DeltaMarker[:,0] = markerDeriv[:]
         markerPos2 = markerPos + 80. * DeltaMarker
-
-                
+        
+        
         # Goal: take our x positions, step along the y positions, and get the
         # values from the image.
         # Plot everything
@@ -251,7 +258,7 @@ def main():
         Ny = np.array(Ny)
         age = np.array(age, dtype='f8')
         
-        idx = np.argsort(Nx, kind='mergesort')
+        idx = np.argsort(Nx, kind='mergesort')        
         alignedimgSorted = [alignedimg[i] for i in idx]
         alignedimg = alignedimgSorted
         Nx = Nx[idx]
@@ -281,7 +288,7 @@ def main():
     Nx_age = np.zeros(Nx.size, dtype='f8')
     for i in xrange(len(age_coeff)):
         Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
-
+    
     # Make Nx_age monotonically increasing
     #increasing = np.linspace(0., 0.1, len(Nx_age))
     #Nx_age = Nx_age + increasing
@@ -294,50 +301,27 @@ def main():
             Nx_age[k] = Nx_age[k-1] + 1
 
     Nx_age = Nx_age.astype('u2')
-
-    # calculate model information for save file
-
-    xpixelsize = voxelsize * args.spacing
-    ypixelsize = voxelsize * y_resampling
-    tooth_length = xpixelsize * Nx / 1000
-
-    # calculate um/day
     
-    increase_per_day = np.repeat(np.diff(tooth_length), np.diff(Nx_age))
-    increase_per_day = increase_per_day / np.repeat(np.diff(Nx_age), np.diff(Nx_age))
-    increase_per_day = increase_per_day * 1000
-
-    for i in xrange(0, 209):
-        if increase_per_day[i] > 200:
-            increase_per_day[i] = 200
-
-    days = np.linspace(1, 210, 210)
-    w = np.ones(210)
-    exact = .0018
-    s = UnivariateSpline(days, increase_per_day, w=w, s=210/exact)
-    xs = linspace(days[0], days[-1], 1000)
-    ys = s(xs)
-
-    # Kierdorf 2013 data
-
-    kday = np.array([13, 27, 41, 55, 75, 154, 168, 185, 200, 212, 230, 245])
-    kext = np.array([177, 168, 180, 132, 110, 40, 36, 35, 33, 27, 28, 29])
-
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(age, tooth_length, marker='o', linestyle='none', color='b', label='age')
-    ax.plot(Nx_age, tooth_length, marker='o', linestyle='none', color='r', label='fitted age')
-    ax2 = ax.twinx()
-    ax2.plot(xs, ys, color='g', label='radiograph extension, smooth')
-    ax2.plot(days, increase_per_day, color='y', label='radiograph extension, raw')
-    ax2.plot(kday, kext, color='k', mfc='none', marker='o', linestyle='none', label='histology extension')
-    ax.set_xlabel('age or Nx_age in days')
-    ax.set_ylabel('length in mm')
-    ax2.set_ylabel('extension in um/day')
-    plt.title('Age & Nx_age vs. tooth_length: tooth length by age at death')
+    
+    for n in xrange(80):
+        x = np.random.randint(40, 45)
+        y = np.random.randint(10, 20)
+        m = imgStack[:, x, y]
+
+        idx = (m > 1.)
+        m[idx] = np.nan
+        
+        ax.plot(Nx_age, m, alpha=0.5)
+
     plt.show()
-           
+
     return 0
 
 if __name__ == '__main__':
     main()
+
+
+
+

@@ -154,7 +154,6 @@ def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
     resampImg = resampImg.T
-    #resampImg = np.flipud(resampImg)
     
     return resampImg[:,:]
 

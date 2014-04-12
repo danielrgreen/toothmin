@@ -76,6 +76,7 @@ def get_baseline(img, exactness=15.):
     locates nonzero pixels to find the enamel in the image and
     makes arrays for the upper and lowwer enamel edges.
     '''
+    img = np.flipud(img)
     Ny, Nx = img.shape
     edge = np.empty((2,Nx), dtype='i4')
     edge[:,:] = -1
@@ -135,6 +136,7 @@ def place_markers(x, spl, spacing=2.):
     return markerPos, markerDeriv
 
 def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
+    img = np.flipud(img)
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -150,8 +152,9 @@ def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
     samplePos.shape = (nMarkers*(nSteps+1),2)
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
+    resampImg = resampImg.T
     
-    return resampImg.T[:,:]
+    return resampImg[:,:]
 
 
 def min_pct_prior(log_Delta_y):
@@ -417,7 +420,7 @@ def main():
 
     
     # Save images to HDF5 file
-    f = h5py.File(dirname + '/simple_fit2.h5', 'w')
+    f = h5py.File(dirname + '/simple_fit3.h5', 'w')
 
     dset = f.create_dataset('img_raw', shape=imgStack.shape, dtype='f4',
                                        compression='gzip', compression_opts=9)

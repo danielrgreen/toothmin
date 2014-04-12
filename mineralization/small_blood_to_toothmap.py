@@ -160,13 +160,14 @@ def main():
     d18O_map = d18O_map.T
 
     d18O_map = np.delete(d18O_map, np.s_[185:-1], 0)
+    d18O_map = np.delete(d18O_map, np.s_[0:8], 0)
 
-    shape = (34, 6)
+    shape = (34, 5)
     
     x_resized = imresize(d18O_map, shape, method=Image.BILINEAR)
     #testmap = imresize(d18O_map, new_dimension, interp='bilinear', mode=none)
     x_resized = x_resized.T
-    x_resized = np.delete(x_resized, np.s_[0:1], 0)
+    #x_resized = np.delete(x_resized, np.s_[0:1], 0)
 
     data, compare, z, x_resized, data_mean, model_mean, factor, two, z_s = z_calc(x_resized)
     
@@ -208,7 +209,7 @@ def main():
     cax4 = fig.colorbar(cimg4)
 
     plt.tight_layout()
-    fig.savefig('complex003*, z = %.3f a.png' % z_s)
+    fig.savefig('complex003*, z = %.3f b.png' % z_s)
     
     return 0
 
