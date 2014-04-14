@@ -302,35 +302,20 @@ def main():
 
     Nx_age = Nx_age.astype('u2')
     
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    
-    for n in xrange(80):
-        x = np.random.randint(69, 72)
-        y = np.random.randint(19, 22)
-        m = imgStack[:, x, y]
-
-        idx = (m > 1.)
-        m[idx] = np.nan
-        
-        ax.plot(Nx_age, m, alpha=0.5)
-
-    plt.show()
-
     ############# start MCMC #####
 
     loc_store = []
     mask_store = []
     samples_store = []
     
-    n_walkers = 10 * Nx_age.size
-    n_steps = 3000
-    n_store = 100
+    n_walkers = 4 * Nx_age.size
+    n_steps = 2000
+    n_store = 10
 
     t1 = time.time()
     
-    for x in xrange(69,72):#imgStack.shape[1]): #was shape[0]
-        for y in xrange(19,22):#imgStack.shape[2]): #was shape[1]
+    for x in xrange(19,20):#imgStack.shape[1]): #was shape[0]
+        for y in xrange(19,20):#imgStack.shape[2]): #was shape[1]
             
             # Fit monotonically increasing mineralization model
             # to time series in this pixel
@@ -355,26 +340,23 @@ def main():
             model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
             guess = model.guess(n_walkers)
 
-            for g in guess:
-                print lnprob(g, pct_min, sigma, mu_prior, sigma_prior)
+            
+            # Plot guesses 
+            #fig = plt.figure()
+            #ax = fig.add_subplot(1,1,1)
+            
+            #for s in guess:
+                #ax.plot(Nx_age[idx], np.cumsum(np.exp(s)), 'b-', alpha=0.05)
+            
+            #ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
+                        #fmt='o')
 
-            
-            # Plot guesses without MCMC
-            fig = plt.figure()
-            ax = fig.add_subplot(1,1,1)
-            
-            for s in guess:
-                ax.plot(Nx_age[idx], np.cumsum(np.exp(s)), 'b-', alpha=0.05)
-            
-            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
-                        fmt='o')
+            #plt.show()
 
-            plt.show()
-            
             # MCMC sampler
             
             sampler = emcee.EnsembleSampler(n_walkers, n_points,
-                                            lnprob,
+                                            lnprob, threads=1,
                                             args=[pct_min, sigma, mu_prior, sigma_prior])
             
             pos, prob, state = sampler.run_mcmc(guess, n_steps)

@@ -166,7 +166,7 @@ class TMCMC:
 		chain = np.array(self.chain[start:])
 		weight = np.array(self.weight[start:])
 		
-		subtract = burnin
+		subtract = burninEnsembleSampler
 		if start > 0:
 			subtract = burnin - self.sum_weight[start-1]
 		weight[0] -= subtract
@@ -188,8 +188,8 @@ def test_emcee():
         import emcee
 
         n_points = 20
-        n_walkers = 48
-        n_steps = 5000
+        n_walkers = 88
+        n_steps = 2000
         
         # True parameters
 	x = np.arange(n_points)
@@ -204,9 +204,10 @@ def test_emcee():
 	
 	# Initialize model
 	model = TMonotonicPointModel(y_obs, sigma)
+	print model(np.log(Delta_y_true+1.e-5))
 	
 	# Initial guess
-	Delta_y_guess = np.random.random(size=n_points)
+	#Delta_y_guess = np.random.random(size=n_points)
 	cov_guess = np.diag(sigma)
 	
 	# Set up emcee sampler
