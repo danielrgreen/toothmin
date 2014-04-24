@@ -85,7 +85,7 @@ class TMonotonicPointModel:
                 
 		return log_likelihood + log_prior
 
-	def guess(self, n_guesses, min_delta=0.001):
+	def guess(self, n_guesses, min_delta=0.00001):
                 # Generate a central guess
                 y_0 = np.empty(self.n_dim, dtype='f8')
                 
