@@ -309,12 +309,12 @@ def main():
     samples_store = []
     
     n_walkers = 4 * Nx_age.size
-    n_steps = 2000
-    n_store = 10
+    n_steps = 800
+    n_store = 20
 
     t1 = time.time()
     
-    for x in xrange(19,20):#imgStack.shape[1]): #was shape[0]
+    for x in xrange(149,150):#imgStack.shape[1]): #was shape[0]
         for y in xrange(19,20):#imgStack.shape[2]): #was shape[1]
             
             # Fit monotonically increasing mineralization model
@@ -333,7 +333,7 @@ def main():
             pct_min = pct_min[idx]
 
             # MCMC sampling
-            sigma = 0.025 * np.ones(pct_min.size, dtype='f8')
+            sigma = 0.05 * np.ones(pct_min.size, dtype='f8')
             mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
             sigma_prior = 3. * np.ones(pct_min.size, dtype='f8')
             
