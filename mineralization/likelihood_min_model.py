@@ -190,6 +190,8 @@ def main():
                               help='Directory in which to store output.')
     parser.add_argument('-f', '--output', type=str, default='likelihood_min_model.h5',
                         help='Name of mineralization model file to be created.')
+    parser.add_argument('-p', '--partitions', type=int, nargs=2, default=(1,1),
+                              help='Number of partitions, and partition to operate on.')
     if 'python' in sys.argv[0]:
         offset = 2
     else:
@@ -303,65 +305,67 @@ def main():
     n_store = 100
 
     t1 = time.time()
-    
-    for x in xrange(59,60):#imgStack.shape[1]): #was shape[0]
-        for y in xrange(19,20):#imgStack.shape[2]): #was shape[1]
-            
-            # Fit monotonically increasing mineralization model
-            # to time series in this pixel
-            pct_min = imgStack[:, x, y]
 
-            idx = np.isfinite(pct_min)
-            n_points = np.sum(idx)
+    # Splitting up pixels equally to run on a cluster
 
-            # Skip pixel if too few time slices have data
-            if n_points < 3:
-                continue
+    pix_idx = np.sum(np.isfinite(imgStack), axis=0) >= 3
+    x_idx = np.arange(imgStack[1])
+    y_idx = np.arange(imgStack[2])
+    xx, yy = np.meshgrid(x_idx, y_idx, indexing='ij')
 
-            print 'Pixel %d, %d ...' % (x, y)
-            
-            pct_min = pct_min[idx]
+    pix_idx_x = x_idx[pix_idx]
+    pix_idx_y = y_idx[pix_idx]
 
-            # MCMC sampling
-            sigma = 0.05 * np.ones(pct_min.size, dtype='f8')
-            mu_prior = -4. * np.ones(pct_min.size, dtype='f8')
-            sigma_prior = 3. * np.ones(pct_min.size, dtype='f8')
+    n_parts, part_idx = args.partitions
+    partition_size = int(np.ceil(float(pix_idx_x.size) / float(n_parts)))
+
+    start = partition_size * (part_idx - 1)
+    end = start + partition_size + 1
+    pix_idx_x = pix_idx_x[start:end]
+    pix_idx_y = pix_idx_y[start:end]
+
+    for x, y in zip(pix_idx_x, pix_idx_y):              
+        # Fit monotonically increasing mineralization model
+        # to time series in this pixel
+        pct_min = imgStack[:, x, y]
+
+        idx = np.isfinite(pct_min)
+        n_points = np.sum(idx)
+
+        # Skip pixel if too few time slices have data
+        if n_points < 3:
+            continue
+
+        print 'Pixel %d, %d ...' % (x, y)
             
-            model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
-            guess = model.guess(n_walkers)
+        pct_min = pct_min[idx]
+
+        # MCMC sampling
+        sigma = 0.05 * np.ones(pct_min.size, dtype='f8')
+        mu_prior = -4. * np.ones(pct_min.size, dtype='f8')
+        sigma_prior = 3. * np.ones(pct_min.size, dtype='f8')
             
-            sampler = emcee.EnsembleSampler(n_walkers, n_points,
-                                            lnprob, threads=1,
-                                            args=[pct_min, sigma, mu_prior, sigma_prior])
+        model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
+        guess = model.guess(n_walkers)
             
-            pos, prob, state = sampler.run_mcmc(guess, n_steps)
-            sampler.reset()
-            pos, prob, state = sampler.run_mcmc(pos, n_steps)
+        sampler = emcee.EnsembleSampler(n_walkers, n_points,
+                                        lnprob, threads=4,
+                                        args=[pct_min, sigma, mu_prior, sigma_prior])
+            
+        pos, prob, state = sampler.run_mcmc(guess, n_steps)
+        sampler.reset()
+        pos, prob, state = sampler.run_mcmc(pos, n_steps)
                         
-            np.random.shuffle(sampler.flatchain)
-            pct_min_samples = np.cumsum(np.exp(sampler.flatchain[:n_store]), axis=1)
+        np.random.shuffle(sampler.flatchain)
+        pct_min_samples = np.cumsum(np.exp(sampler.flatchain[:n_store]), axis=1)
             
-            # Store results for pixel
-            loc_store.append([x, y])
-            mask_store.append(idx)
-            samples_store.append(pct_min_samples)
+        # Store results for pixel
+        loc_store.append([x, y])
+        mask_store.append(idx)
+        samples_store.append(pct_min_samples)
 
-            del sampler
-            del model
-
-            '''
-            # Plot results
-            fig = plt.figure()
-            ax = fig.add_subplot(1,1,1)
-
-            for s in pct_min_samples:
-                ax.plot(Nx_age[idx], s, 'b-', alpha=0.05)
-            
-            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
-                        fmt='o')
-
-            plt.show()
-            '''
+        del sampler
+        del model
             
     t2 = time.time()
     print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
@@ -376,7 +380,12 @@ def main():
         os.makedirs(dirname)
 
     # Calculate mineralization values for HDF5 file
-    print 'Writing to %s ...' % (args.output)
+    fname = args.output
+    if fname.endswith('.h5'):
+        fname = fname[:-3]
+    fname += '%.3d.h5' % part_idx
+    
+    print 'Writing to %s ...' % fname
     
     loc_store = np.array(loc_store)
     mask_store = np.array(mask_store)
@@ -394,7 +403,7 @@ def main():
 
     # Save results to an HDF5 file
 
-    f = h5py.File(dirname + '/' + args.output, 'w')
+    f = h5py.File(dirname + '/' + fname, 'w')
     
     dset = f.create_dataset('/locations', loc_store.shape, 'u2',
                                           compression='gzip',
