@@ -156,28 +156,20 @@ def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
     
     return resampImg[:,:]
 
-
-def min_pct_prior(log_Delta_y):
-    y_final = np.sum(np.exp(log_Delta_y))
-
-    return 1. - scipy.special.erf(1.25 * (y_final - 0.8) / 0.075)
-
-
-def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior):
+def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior, n_clip=3.):
     y_mod = np.cumsum(np.exp(log_Delta_y))
     
     Delta_y = (y_mod - y_obs) / y_sigma
+    idx = Delta_y > n_clip
+    Delta_y[idx] = n_clip
     
     log_likelihood = -0.5 * np.sum(Delta_y * Delta_y)
-    log_prior = np.sum(log_Delta_y)
+    #log_prior = np.sum(log_Delta_y)
     
     Delta_y = (log_Delta_y - mu_prior) / sigma_prior
-    log_prior -= 0.5 * np.sum(Delta_y * Delta_y)
-    
-    log_prior += np.log(1. - scipy.special.erf(1.25 * (y_mod[-1] - 0.8) / 0.075))
+    log_prior = -0.5 * np.sum(Delta_y * Delta_y)
     
     return log_likelihood + log_prior
-
 
 # Main section of code in which defined functions are used
 '''
@@ -194,8 +186,10 @@ def main():
     parser.add_argument('-l', '--order-by-length', action='store_true',
                               help='Order teeth according to length.')
     parser.add_argument('-s', '--show', action='store_true', help='Show plot.')
-    parser.add_argument('-o', '--output-dir', type=str, default='.',
+    parser.add_argument('-o', '--output-dir', type=str, default='likelihood min model ',
                               help='Directory in which to store output.')
+    parser.add_argument('-f', '--output', type=str, default='likelihood_min_model.h5',
+                        help='Name of mineralization model file to be created.')
     if 'python' in sys.argv[0]:
         offset = 2
     else:
@@ -309,12 +303,12 @@ def main():
     samples_store = []
     
     n_walkers = 4 * Nx_age.size
-    n_steps = 800
-    n_store = 20
+    n_steps = 2000
+    n_store = 100
 
     t1 = time.time()
     
-    for x in xrange(129,130):#imgStack.shape[1]): #was shape[0]
+    for x in xrange(59,60):#imgStack.shape[1]): #was shape[0]
         for y in xrange(19,20):#imgStack.shape[2]): #was shape[1]
             
             # Fit monotonically increasing mineralization model
@@ -334,26 +328,11 @@ def main():
 
             # MCMC sampling
             sigma = 0.05 * np.ones(pct_min.size, dtype='f8')
-            mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
+            mu_prior = -4. * np.ones(pct_min.size, dtype='f8')
             sigma_prior = 3. * np.ones(pct_min.size, dtype='f8')
             
             model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
             guess = model.guess(n_walkers)
-
-            
-            # Plot guesses 
-            #fig = plt.figure()
-            #ax = fig.add_subplot(1,1,1)
-            
-            #for s in guess:
-                #ax.plot(Nx_age[idx], np.cumsum(np.exp(s)), 'b-', alpha=0.05)
-            
-            #ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
-                        #fmt='o')
-
-            #plt.show()
-
-            # MCMC sampler
             
             sampler = emcee.EnsembleSampler(n_walkers, n_points,
                                             lnprob, threads=1,
@@ -374,7 +353,7 @@ def main():
             del sampler
             del model
 
-            
+            '''
             # Plot results
             fig = plt.figure()
             ax = fig.add_subplot(1,1,1)
@@ -386,11 +365,87 @@ def main():
                         fmt='o')
 
             plt.show()
+            '''
             
-            
-
     t2 = time.time()
     print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
+
+    # create new directory file for output mineralization model
+    dirname = args.output_dir + datetime.now().strftime('%c')
+
+    if dirname == None:
+        return 0
+
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    # Calculate mineralization values for HDF5 file
+    print 'Writing to %s ...' % (args.output)
+    
+    loc_store = np.array(loc_store)
+    mask_store = np.array(mask_store)
+
+    n_pix = loc_store.shape[0]
+    n_ages = Nx_age.size
+    shape = (n_pix, n_store, n_ages)
+    
+    pct_min = np.empty(shape, dtype='f4')
+    pct_min[:] = np.nan
+
+    for i, samples in enumerate(samples_store):
+        n_points = samples.shape[1]
+        pct_min[i, :, :n_points] = samples[:, :]
+
+    # Save results to an HDF5 file
+
+    f = h5py.File(dirname + '/' + args.output, 'w')
+    
+    dset = f.create_dataset('/locations', loc_store.shape, 'u2',
+                                          compression='gzip',
+                                          compression_opts=9)
+    dset[:] = loc_store[:]
+
+    dset = f.create_dataset('/ages', Nx_age.shape, 'u2')
+    dset[:] = Nx_age
+    
+    dset = f.create_dataset('/age_mask', mask_store.shape, 'u1',
+                                         compression='gzip',
+                                         compression_opts=9)
+    dset[:] = mask_store[:]
+    
+    dset = f.create_dataset('/pct_min_samples', pct_min.shape, 'f4',
+                                                compression='gzip',
+                                                compression_opts=9)
+    dset[:] = pct_min[:]
+
+    f.close()
+
+    # calculate model information for save file
+
+    s = imgStack.shape
+    xpixelsize = voxelsize * args.spacing
+    ypixelsize = voxelsize * y_resampling
+    tooth_length = xpixelsize * s[1]
+    tooth_height = ypixelsize * s[2]
+
+    # Save text file with model information
+    txt = 'Please also read model attributes in the h5py file!\n'
+    txt += 'date: %s\n' % (datetime.now().strftime('%c'))
+    txt += 'species: %s\n' % (species)
+    txt += 'x_pix_size: %.3f\n' % (xpixelsize)
+    txt += 'y_pix_size: %.3f\n' % (ypixelsize)
+    txt += 'tooth_length: %.3f\n' % (tooth_length)
+    txt += 'tooth_height: %.3f\n' % (tooth_height)
+    txt += 'image_shape: %d x %d\n' % (s[1], s[2])
+    txt += 'n_time_samples: %d\n' % (s[0])
+    
+    f = open(dirname + '/info.txt', 'w')
+    f.write(txt)
+    f.close()
+
+
+
+
 
     return 0
     
@@ -472,6 +527,7 @@ def main():
                      fontsize=24)
         fig.savefig('%s/img_monotonic_diff_%.2d.png' % (dirname, a), dpi=300)
         plt.close(fig)
+    '''
 
     
     # Save images to HDF5 file
@@ -514,7 +570,6 @@ def main():
     f = open(dirname + '/info.txt', 'w')
     f.write(txt)
     f.close()
-    '''
     
     return 0
 
