@@ -77,11 +77,13 @@ class TMonotonicPointModel:
 		Delta_y = y_mod - self.y
 		
 		log_likelihood = -0.5 * np.sum(Delta_y * Delta_y * self.inv_variance)
-		log_prior = np.sum(log_Delta_y_mod)
+		log_prior = 0.
                 
-		if self.use_prior == True:
+		if self.use_prior:
                         Delta_y = (log_Delta_y_mod - self.mu_prior) / self.sigma_prior
                         log_prior -= 0.5 * np.sum(Delta_y * Delta_y)
+                else:
+                        log_prior = np.sum(log_Delta_y_mod)
                 
 		return log_likelihood + log_prior
 
@@ -123,6 +125,9 @@ class TMCMC:
 		self.chain = []
 		self.weight = []
 		self.sum_weight = []
+
+		self.n_accepted = 0
+		self.n_rejected = 0
 	
 	def draw(self, x0):
 		return np.random.multivariate_normal(x0, self.cov)
@@ -131,6 +136,8 @@ class TMCMC:
 		self.flush()
 		self.x = y
 		self.lnp_x = lnp_y
+
+		self.n_accepted += 1
 	
 	def flush(self):
 		self.chain.append(self.x)
@@ -149,6 +156,7 @@ class TMCMC:
 			self.accept(y, lnp_y)
 		else:
 			self.N += 1
+			self.n_rejected += 1
 	
 	def get_chain(self, burnin=0):
 		if burnin == 0:
@@ -182,6 +190,9 @@ class TMCMC:
 	def kernel_density_estimate(self, burnin=0):
 		chain = self.get_chain(burnin=burnin)
 		return stats.gaussian_kde(chain)
+
+	def get_acceptance_rate(self):
+                return float(self.n_accepted) / float(self.n_accepted + self.n_rejected)
 
 
 def test_emcee():

@@ -23,8 +23,8 @@
 #  
 
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
 import scipy.special
@@ -310,82 +310,84 @@ def main():
 
     # Splitting up pixels equally to run on a cluster
 
-    pix_idx = np.sum(np.isfinite(imgStack), axis=0) >= 3
-    x_idx = np.arange(imgStack.shape[1])
-    y_idx = np.arange(imgStack.shape[2])
-    xx, yy = np.meshgrid(x_idx, y_idx, indexing='ij')
+    #pix_idx = np.sum(np.isfinite(imgStack), axis=0) >= 3
+    #x_idx = np.arange(imgStack.shape[1])
+    #y_idx = np.arange(imgStack.shape[2])
+    #xx, yy = np.meshgrid(x_idx, y_idx, indexing='ij')
 
-    print 'xx shape', xx.shape
-    print 'yy shape', yy.shape
+    #pix_idx_x = xx[pix_idx] # was x_idx[pix_idx]
+    #pix_idx_y = yy[pix_idx] # was y_idx[pix_idx]
 
-    pix_idx_x = xx[pix_idx] # was x_idx[pix_idx]
-    pix_idx_y = yy[pix_idx] # was y_idx[pix_idx]
+    #n_parts, part_idx = args.partitions
+    #partition_size = int(np.ceil(float(pix_idx_x.size) / float(n_parts)))
 
-    print 'pix_idx_x shape', pix_idx_x.shape
-    print 'pix_idx_y shape', pix_idx_y.shape
+    #start = partition_size * (part_idx - 1)
+    #end = start + partition_size + 1
+    #pix_idx_x = pix_idx_x[start:end]
+    #pix_idx_y = pix_idx_y[start:end]
 
-    n_parts, part_idx = args.partitions
-    partition_size = int(np.ceil(float(pix_idx_x.size) / float(n_parts)))
-
-    start = partition_size * (part_idx - 1)
-    end = start + partition_size + 1
-    pix_idx_x = pix_idx_x[start:end]
-    pix_idx_y = pix_idx_y[start:end]
-
-    for x, y in zip(pix_idx_x, pix_idx_y):              
+    #for x, y in zip(pix_idx_x, pix_idx_y):              
         # Fit monotonically increasing mineralization model
         # to time series in this pixel
-        pct_min = imgStack[:, x, y]
+        #pct_min = imgStack[:, x, y]
 
-        print 'pct_min shape', pct_min.shape
+        #idx = np.isfinite(pct_min)
+        #n_points = np.sum(idx)
 
-        idx = np.isfinite(pct_min)
-        n_points = np.sum(idx)
+    for x in xrange(59,60):
+        for y in xrange(19,20):
+            pct_min = imgStack[:, x, y]
+            idx = np.isfinite(pct_min)           
+            n_points = np.sum(idx)
 
-        print 'idx shape', idx.shape
-        print 'n_points shape', n_points.shape
+            # Skip pixel if too few time slices have data
+            if n_points < 3:
+                continue
 
-        # Skip pixel if too few time slices have data
-        if n_points < 3:
-            continue
+            pct_min = pct_min[idx]
 
-        print 'Pixel %d, %d ...' % (x, y)
+            # MCMC sampling
+            sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
+            mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
+            sigma_prior = 2. * np.ones(pct_min.size, dtype='f8')
             
-        pct_min = pct_min[idx]
+            model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
+            _, guess = model.guess(1)
+            cov_guess = np.diag(sigma)
 
-        print 'pct_min shape', pct_min.shape
+            sampler = TMCMC(model, guess, cov_guess/20.)
 
-        # MCMC sampling
-        sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
-        mu_prior = -4. * np.ones(pct_min.size, dtype='f8')
-        sigma_prior = 3. * np.ones(pct_min.size, dtype='f8')
-            
-        model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
-        _, guess = model.guess(1)
-        cov_guess = np.diag(sigma)
-
-        sampler = TMCMC(model, guess, cov_guess/10)
-
-	N = 150000
-	for i in range(N):
+            N = 150000
+            for i in range(N):
 		sampler.step()
-	sampler.flush()
+            sampler.flush()
 
-        accept_frac = sampler.get_acceptance_rate()
-        print 'Acceptance rate: %.4f %%' % (100. * accept_frac)
-
-        chain = sampler.get_chain(burnin=N/3).T
-        np.random.shuffle(chain)
-        pct_min_samples = np.cumsum(np.exp(chain[:n_store]), axis=1)
-
-        # Store results for pixel
-        loc_store.append([x, y])
-        mask_store.append(idx)
-        samples_store.append(pct_min_samples)
-
-        #del sampler
-        #del model
+            accept_frac = sampler.get_acceptance_rate()
+            print 'Acceptance rate: %.4f %%' % (100. * accept_frac)
             
+            chain = sampler.get_chain(burnin=N/3).T
+            np.random.shuffle(chain)
+            pct_min_samples = np.cumsum(np.exp(chain[:n_store]), axis=1)
+
+            # Store results for pixel
+            loc_store.append([x, y])
+            mask_store.append(idx)
+            samples_store.append(pct_min_samples)
+
+            # Plot results
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+
+            for s in pct_min_samples:
+                ax.plot(Nx_age[idx], s, 'b-', alpha=0.05)
+            
+            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
+                        fmt='o')
+
+            plt.show()
+
+            return 0
+        
     t2 = time.time()
     print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
 
