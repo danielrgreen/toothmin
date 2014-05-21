@@ -361,18 +361,21 @@ def main():
         sigma_prior = 3. * np.ones(pct_min.size, dtype='f8')
             
         model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
-        guess = model.guess(n_walkers)
-            
-        sampler = emcee.EnsembleSampler(n_walkers, n_points,
-                                        lnprob, threads=4,
-                                        args=[pct_min, sigma, mu_prior, sigma_prior])
-            
-        pos, prob, state = sampler.run_mcmc(guess, n_steps)
-        sampler.reset()
-        pos, prob, state = sampler.run_mcmc(pos, n_steps)
-                        
-        np.random.shuffle(sampler.flatchain)
-        pct_min_samples = np.cumsum(np.exp(sampler.flatchain[:n_store]), axis=1)
+        _, guess = model.guess(1)
+        cov_guess = np.diag(sigma)
+
+        sampler = TMCMC(model, guess, cov_guess/10)
+
+	N = 4000
+	for i in range(N):
+		sampler.step()
+	sampler.flush()
+
+        chain = sampler.get_chain(burnin=N/3).T
+        np.random.shuffle(chain)
+        pct_min_samples = np.cumsum(np.exp(chain[:n_store]), axis=1)
+
+        print 'chain shape', chain.shape
 
         print 'pct_min_samples shape', pct_min_samples.shape
         print ''

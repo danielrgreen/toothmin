@@ -306,7 +306,7 @@ def main():
     ax = fig.add_subplot(1, 1, 1)
     
     for n in xrange(80):
-        x = np.random.randint(40, 45)
+        x = np.random.randint(80, 85)
         y = np.random.randint(10, 20)
         m = imgStack[:, x, y]
 

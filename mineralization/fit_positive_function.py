@@ -103,8 +103,8 @@ class TMonotonicPointModel:
                 log_delta_y_0.shape = (1, self.n_dim)
                 log_delta_y_guess = np.repeat(log_delta_y_0, n_guesses, axis=0)
                 log_delta_y_guess += np.random.normal(scale=0.01, size=log_delta_y_guess.shape)
-
-                return log_delta_y_guess
+                
+                return log_delta_y_guess, log_delta_y_0.flatten()
 
 
 
@@ -166,7 +166,7 @@ class TMCMC:
 		chain = np.array(self.chain[start:])
 		weight = np.array(self.weight[start:])
 		
-		subtract = burninEnsembleSampler
+		subtract = burnin
 		if start > 0:
 			subtract = burnin - self.sum_weight[start-1]
 		weight[0] -= subtract
