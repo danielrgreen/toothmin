@@ -137,7 +137,7 @@ def place_markers(x, spl, spacing=2.):
     
     return markerPos, markerDeriv
 
-def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
+def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
     img = np.flipud(img)
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
@@ -155,6 +155,43 @@ def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
     resampImg = resampImg.T
+    scan = str(fname[-5])
+
+    # CONVERSION
+    # Convert from pixel value to HAp density
+    # In this case, HAp density is calculated with mu values, keV(1)=111.6
+    #if scan == 'g':
+        #resampImg *= 2.**16
+        #resampImg *= 0.0000689219599491
+        #resampImg -= 1.54118269436172
+    #else:
+        #resampImg *= 2.**16
+        #resampImg *= 0.0002642870705047
+        #resampImg -= 1.41796343841118
+
+    # Convert from pixel value to HAp density
+    # In this case, HAp density is calculated with mu values, keV(1)=119
+    if scan == 'g':
+        resampImg *= 2.**16
+        resampImg *= 0.0000689219599491
+        resampImg -= 1.54118269436172
+    else:
+        resampImg *= 2.**16
+        resampImg *= 0.00028045707501
+        resampImg -= 1.48671229207043
+
+    # Convert from pixel value to HAp density
+    # In this case, HAp density is calculated using standards
+    #if scan == 'g':
+        #resampImg *= 2.**16
+        #resampImg *= 0.000046368
+        #resampImg -= 0.077857152
+    #else:
+        #resampImg *= 2.**16
+        #resampImg *= 0.000182009
+        #resampImg -= 0.077402903
+        
+    print scan, np.max(resampImg)
     
     return resampImg[:,:]
 
@@ -182,7 +219,8 @@ def main():
     parser = argparse.ArgumentParser(prog='enamelsample',
                   description='Resample image of enamel to standard grid',
                   add_help=True)
-    parser.add_argument('images', type=str, nargs='+', help='Images of enamel.')
+    parser.add_argument('images', type=str, nargs='+', help='Images of enamel 1.')
+    #parser.add_argument('images2', type=str, nargs='+', help='Images of enamel 2.')
     parser.add_argument('-sp', '--spacing', type=float, default=x_resampling, help='Marker spacing (in pixels).')
     parser.add_argument('-ex', '--exact', type=float, default=10., help='Exactness of baseline spline.')
     parser.add_argument('-l', '--order-by-length', action='store_true',
@@ -214,7 +252,7 @@ def main():
         
         # Extract age from filename
         age.append(float(fname[1:4]))
-        
+
         # Generate a spline for each tooth edge
         
         x, spl = get_baseline(img, exactness=args.exact)
@@ -236,13 +274,12 @@ def main():
         DeltaMarker[:,0] = markerDeriv[:]
         markerPos2 = markerPos + 80. * DeltaMarker
         
-        
         # Goal: take our x positions, step along the y positions, and get the
         # values from the image.
         # Plot everything
       
         # Resample image to standard grid
-        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker))
+        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker, fname))
         
         # Keep track of shapes of images
         tmp_y, tmp_x = alignedimg[-1].shape
@@ -269,14 +306,10 @@ def main():
     for i,img in enumerate(alignedimg):
         imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:]
 
-    # Convert from pixel value to total density
-    imgStack *= 2.**16
-    imgStack *= 0.000182009
-    imgStack -= 0.077402903
-    #imgStack[imgStack < .79] = np.nan
-
-    # Convert from total density to mineral fraction by weight
-    imgStack = (3.15 - 3.15 * 0.79 / imgStack) / (3.15 - 0.79)
+    # Convert from HAp density to mineral fraction by weight
+    imgStack /= 3.15
+    # If converting from total density, use this equation instead
+    # imgStack = (imgStack - 0.79) / (3.15 - 0.79)
     idx = (imgStack < 0.05) | (imgStack > 1.2)
     imgStack[idx] = np.nan
     
@@ -334,7 +367,7 @@ def main():
         #idx = np.isfinite(pct_min)
         #n_points = np.sum(idx)
 
-    for x in xrange(129,130):
+    for x in xrange(159,160):
         for y in xrange(19,20):
             pct_min = imgStack[:, x, y]
             idx = np.isfinite(pct_min)           
