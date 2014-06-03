@@ -155,6 +155,19 @@ def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
     resampImg = resampImg.T
+    scan = str(fname[-5])
+
+    # CONVERSION
+    # Convert from pixel value to HAp density
+    # In this case, HAp density is calculated with mu values, keV(1)=119
+    if scan == 'g':
+        resampImg *= 2.**16
+        resampImg *= 0.0000689219599491
+        resampImg -= 1.54118269436172
+    else:
+        resampImg *= 2.**16
+        resampImg *= 0.00028045707501
+        resampImg -= 1.48671229207043
     
     return resampImg[:,:]
 
@@ -269,14 +282,11 @@ def main():
     for i,img in enumerate(alignedimg):
         imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:]
 
-    # Convert from pixel value to total density
-    imgStack *= 2.**16
-    imgStack *= 0.000182009
-    imgStack -= 0.077402903
-    #imgStack[imgStack < .79] = np.nan
-
+    # Convert from HAp density to mineral fraction by weight
+    imgStack /= 3.15
     # Convert from total density to mineral fraction by weight
-    imgStack = (3.15 - 3.15 * 0.79 / imgStack) / (3.15 - 0.79)
+    # imgStack = (3.15 - 3.15 * 0.79 / imgStack) / (3.15 - 0.79)
+    
     idx = (imgStack < 0.05) | (imgStack > 1.2)
     imgStack[idx] = np.nan
     
