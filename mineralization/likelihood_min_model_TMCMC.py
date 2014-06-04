@@ -137,7 +137,7 @@ def place_markers(x, spl, spacing=2.):
     
     return markerPos, markerDeriv
 
-def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
+def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
     img = np.flipud(img)
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
@@ -255,7 +255,7 @@ def main():
         # Plot everything
       
         # Resample image to standard grid
-        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker))
+        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker, fname))
         
         # Keep track of shapes of images
         tmp_y, tmp_x = alignedimg[-1].shape
@@ -363,8 +363,6 @@ def main():
             
         pct_min = pct_min[idx]
 
-        print 'pct_min shape', pct_min.shape
-
         # MCMC sampling
         sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
         mu_prior = -4. * np.ones(pct_min.size, dtype='f8')
@@ -425,9 +423,6 @@ def main():
     
     pct_min = np.empty(shape, dtype='f4')
     pct_min[:] = np.nan
-
-    print 'loc_store shape', loc_store.shape
-    print 'pct_min shape', pct_min.shape
 
     for i, samples in enumerate(samples_store):
         n_points = samples.shape[1]
