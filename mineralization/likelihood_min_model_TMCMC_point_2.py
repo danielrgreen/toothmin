@@ -45,6 +45,11 @@ from fit_positive_function import TMonotonicPointModel, TMCMC
 
 # user inputs
 
+xcoordinate1 = 349
+xcoordinate2 = 350
+ycoordinate1 = 19
+ycoordinate2 = 20
+
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
 calibration_type = 'undefined' # pixel to density calibration method
@@ -367,8 +372,8 @@ def main():
         #idx = np.isfinite(pct_min)
         #n_points = np.sum(idx)
 
-    for x in xrange(159,160):
-        for y in xrange(19,20):
+    for x in xrange(xcoordinate1,xcoordinate2):
+        for y in xrange(ycoordinate1,ycoordinate2):
             pct_min = imgStack[:, x, y]
             idx = np.isfinite(pct_min)           
             n_points = np.sum(idx)
@@ -416,7 +421,11 @@ def main():
             
             ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
                         fmt='o')
-
+            ax.set_ylim(0., 0.9)
+            ax.set_xlim(0., 500.)
+            ax.set_title('Mineralization over time, cervix')
+            ax.set_ylabel('Estimated mineralization percent')
+            ax.set_xlabel('Time in days')
             plt.show()
 
             return 0

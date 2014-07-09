@@ -83,7 +83,7 @@ def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist):
 
 def main():
 
-    f = h5py.File('mineralization_model_gpct.h5', 'r') #read in file
+    f = h5py.File('final.h5', 'r') #read in file
     for name in f:
         print name
     dset1 = f['/age_mask']
@@ -104,6 +104,7 @@ def main():
     Nx, Ny = np.max(locations, axis=0) + 1
     n_pix = locations.shape[0]
 
+    '''
     fig = plt.figure()
 
     ax = fig.add_subplot(1,1,1)
@@ -116,9 +117,9 @@ def main():
         ax.plot(x, y)
 
     plt.show()
-
-    return 0
+    '''
     
+    '''
     fig = plt.figure()
     
     for i,t in enumerate(ages[:16]):
@@ -145,11 +146,10 @@ def main():
 
     cax = fig.colorbar(cimg)
     plt.show()
-
-    return 0
     
+    '''
     blood_hist, water_history, feed_history, air_history = calc_blood_hist()
-
+    
     #print blood_hist
 
     #blood_hist = np.zeros(100, dtype='f8')
@@ -165,6 +165,7 @@ def main():
     for n in xrange(n_pix):
         x, y = locations[n]
         img[:, x, y] = mnzt_pct[:, n]
+        img = np.flipud(img)
 
     vmin = np.min(img[np.isfinite(img)])
     vmax = np.max(img[np.isfinite(img)])
