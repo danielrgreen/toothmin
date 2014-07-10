@@ -29,21 +29,25 @@ def load_file(fname):
     ages = dset4[:]
     f.close()
 
-    print 'age_mask shape', age_mask.shape
-    print 'locations', locations.shape
-    print 'pct_min_samples shape', pct_min_samples.shape
-    print 'ages', ages
+    print 'age_mask shape =', age_mask.shape
+    print 'locations =', locations.shape
+    print 'pct_min_samples shape =', pct_min_samples.shape
+    print 'ages =', ages.size
 
     age_expanded = np.einsum('ij,j->ij', age_mask, ages)
     Nx, Ny = np.max(locations, axis=0) + 1
     n_pix = locations.shape[0]
 
+    print 'age expanded size =', age_expanded.size
+    print 'Nx, Ny =', Nx, Ny
+    print 'n pix =', n_pix
+
     return age_mask, locations, pct_min_samples, ages
 
 def main():
 
-fname = min_file
-
+    fname = min_file
+    age_mask, locations, pct_min_samples, ages = load_file(fname)
 
 
     return 0
