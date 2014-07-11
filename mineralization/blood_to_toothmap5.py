@@ -39,30 +39,44 @@ def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     n_samples = pct_min_samples.shape[0]
     
     n_tmp = max(age[-1], n_days)
-    mnzt_rate = np.zeros((n_samples, n_tmp), dtype='f8')
+    mnzt_rate = np.zeros((n_samples, n_tmp+1), dtype='f8')
 
-    #print age
+    # turning pct_min_samples NaNs into 0s
+    pct_min_samples[np.isnan(pct_min_samples)] = 0.
+
+    # inserting a zero before the first pct_min_sample time value
+    add_zeros = np.zeros((pct_min_samples.shape[0], pct_min_samples.shape[1]+1))
+    add_zeros[:, :-1] = pct_min_samples
+    pct_min_samples = add_zeros
     
     for k, (a1, a2) in enumerate(zip(age[:-1], age[1:])):
         rate = (pct_min_samples[:, k+1] - pct_min_samples[:, k]) / (a2 - a1)
-
-        #print a1, a2, rate
         
         for a in xrange(a1, a2):
             mnzt_rate[:, a] = rate
 
-    mnzt_rate = mnzt_rate[:, :n_days]
+    mnzt_rate = mnzt_rate[:, :n_days] # same as daily_increase, shape = nsamples x days
+    di_sum = np.sum(mnzt_rate, axis=1) # shape = nsamples
 
+    # first method of calculating isotope values per pixel    
     tot_isotope = (  np.sum(blood_hist * mnzt_rate, axis=1)
                    + blood_hist[0] * pct_min_samples[:, 0] )
     tot_mnzt = np.sum(mnzt_rate, axis=1) + pct_min_samples[:, 0]
+    tot_isotope = tot_isotope / tot_mnzt
+
+    # second method calculating isotope values per pixel
+    #mnzt_rate = mnzt_rate / di_sum[:, None]
+    #mnzt_rate[mnzt_rate==0.] = np.nan
+    #d18O_addition = mnzt_rate * blood_hist[None, :]
+    #d18O_addition[np.isnan(d18O_addition)] = 0.
+    #tot_isotope = np.sum(d18O_addition, axis=1)
 
     #tmp_ret = np.empty(3, dtype='f8')
     #tmp_ret[0] = np.sum(mnzt_rate[1, :25])
     #tmp_ret[1] = np.sum(mnzt_rate[1, :50])
     #tmp_ret[2] = np.sum(mnzt_rate[1, :100])
     
-    return tot_isotope / tot_mnzt
+    return tot_isotope
 
     
 def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist):
@@ -175,17 +189,19 @@ def main():
     fig = plt.figure()
 
     ax = fig.add_subplot(3, 1, 1)
-    ax.imshow(img[0].T, aspect='auto', interpolation='nearest', origin='lower',
+    cimg1 = ax.imshow(img[0].T, aspect='auto', interpolation='nearest', origin='lower',
                         vmin=vmin, vmax=vmax)
+    cax1 = fig.colorbar(cimg1)
     
     ax = fig.add_subplot(3, 1, 2)
-    ax.imshow(img[1].T, aspect='auto', interpolation='nearest', origin='lower',
+    cimg2 = ax.imshow(img[1].T, aspect='auto', interpolation='nearest', origin='lower',
                         vmin=vmin, vmax=vmax)
+    cax2 = fig.colorbar(cimg2)
     
     ax = fig.add_subplot(3, 1, 3)
-    ax.imshow(img[2].T, aspect='auto', interpolation='nearest', origin='lower',
+    cimg3 = ax.imshow(img[2].T, aspect='auto', interpolation='nearest', origin='lower',
                         vmin=vmin, vmax=vmax)
-
+    cax3 = fig.colorbar(cimg3)
 
     # Show density in each pixel
     img = np.empty((3, Nx, Ny), dtype='f8')
@@ -199,9 +215,10 @@ def main():
 
     for n in xrange(3):
         ax = fig.add_subplot(3, 1, n+1)
-        ax.imshow(img[n].T, aspect='auto', interpolation='nearest', origin='lower',
+        cimg4 = ax.imshow(img[n].T, aspect='auto', interpolation='nearest', origin='lower',
                             vmin=0., vmax=1.)
-    
+        cax4 = fig.colorbar(cimg4)
+
     plt.show()
 
 

@@ -34,8 +34,6 @@ from PIL import Image
 
 def d18O_pixel(age, increase, blood_hist, x, y):
 
-    #print '(x, y) = %d, %d' % (x, y)
-    #print ''
     d_age = np.diff(age)
     add = np.array([1], dtype='uint16')
     d_age = np.insert(d_age, 0, add)

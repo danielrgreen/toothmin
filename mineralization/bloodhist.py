@@ -32,7 +32,7 @@ days_initial_period = 30.
 initial_water_d18O = 0.
 initial_feed_d18O = 12.
 air_d18O = 6.
-blood_halflife = 8. 
+blood_halflife = 1. 
 
 length_of_first_switch = 60.
 first_H2O_switch_d18O = -9.
