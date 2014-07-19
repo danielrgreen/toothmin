@@ -48,7 +48,7 @@ def d18O_pixel(age, increase, blood_hist, x, y):
     d18O_addition = daily_increase * blood_hist[:stop]
     d18O_addition[np.isnan(d18O_addition)] = 0.
 
-    d18O_total = np.sum(d18O_addition)
+    d18O_total = np.sum(d18O_addition) 
 
     return (d18O_total, daily_increase, d18O_addition)
 

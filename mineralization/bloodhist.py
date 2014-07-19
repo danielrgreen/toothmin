@@ -27,7 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 start = 0.
-days_initial_period = 30.
+days_initial_period = 80.
 
 initial_water_d18O = 0.
 initial_feed_d18O = 12.
@@ -38,11 +38,11 @@ length_of_first_switch = 60.
 first_H2O_switch_d18O = -9.
 first_feed_switch_d18O = 12.
 
-length_of_second_switch = 200.
-second_H20_switch_d18O = 4.
+length_of_second_switch = 100.
+second_H20_switch_d18O = 6.
 second_feed_switch_d18O = 12.
 
-length_of_third_switch = 200.
+length_of_third_switch = 250.
 third_H2O_switch_d18O = 6.
 third_feed_switch_d18O = 12.
 

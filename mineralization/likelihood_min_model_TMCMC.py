@@ -24,7 +24,7 @@
 
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg') # Use this when making the full model
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
 import scipy.special
@@ -47,7 +47,7 @@ from fit_positive_function import TMonotonicPointModel, TMCMC
 
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
-calibration_type = 'undefined' # pixel to density calibration method
+calibration_type = 'synchrotron' # pixel to density calibration method
 y_resampling = 0.1 # y pixel size of model compared to voxel size
 x_resampling = 2.0 # x pixel size of model compared to voxel size
 
@@ -78,7 +78,6 @@ def get_baseline(img, exactness=15.):
     locates nonzero pixels to find the enamel in the image and
     makes arrays for the upper and lowwer enamel edges.
     '''
-    img = np.flipud(img)
     Ny, Nx = img.shape
     edge = np.empty((2,Nx), dtype='i4')
     edge[:,:] = -1
@@ -132,13 +131,12 @@ def place_markers(x, spl, spacing=2.):
         if d >= (cellNo+1) * spacing:
             markerPos[cellNo, 0] = xx
             markerPos[cellNo, 1] = spl(xx)
-            markerDeriv[cellNo] = derivFine[i+1] #spl.derivatives(xx)[1]
+            markerDeriv[cellNo] = derivFine[i+1]
             cellNo += 1
     
-    return markerPos, markerDeriv
+    return markerPos, markerDeriv    
 
 def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
-    img = np.flipud(img)
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -154,7 +152,8 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
     samplePos.shape = (nMarkers*(nSteps+1),2)
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
-    resampImg = resampImg.T
+    resampImg = np.rot90(resampImg, 1)
+    
     scan = str(fname[-5])
 
     # CONVERSION
@@ -179,7 +178,6 @@ def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior, n_clip=3.):
     Delta_y[idx] = n_clip
     
     log_likelihood = -0.5 * np.sum(Delta_y * Delta_y)
-    #log_prior = np.sum(log_Delta_y)
     
     Delta_y = (log_Delta_y - mu_prior) / sigma_prior
     log_prior = -0.5 * np.sum(Delta_y * Delta_y)
@@ -223,8 +221,8 @@ def main():
     for i,fname in enumerate(args.images):
         print 'Processing %s ...' % fname
         
-        img = load_image(fname)
-        
+        img = load_image(fname) # Images now loaded in correct orientation, unflattened
+
         # Extract age from filename
         age.append(float(fname[1:4]))
         
@@ -256,6 +254,16 @@ def main():
       
         # Resample image to standard grid
         alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker, fname))
+
+        '''
+        # This section of code checks that images are aligned correctly
+        for img in alignedimg[-1:]:
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+            cimg = ax.imshow(img, aspect='auto', interpolation='nearest')
+            cax = fig.colorbar(cimg)
+            plt.show()
+        '''
         
         # Keep track of shapes of images
         tmp_y, tmp_x = alignedimg[-1].shape
@@ -264,7 +272,6 @@ def main():
             
     # Sort images by length
     if args.order_by_length:
-        #nonzero = [np.sum(img > 0.) for img in alignedimg]
         Nx = np.array(Nx)
         Ny = np.array(Ny)
         age = np.array(age, dtype='f8')
@@ -440,7 +447,7 @@ def main():
     dset = f.create_dataset('/ages', Nx_age.shape, 'u2')
     dset[:] = Nx_age
     
-    dset = f.create_dataset('/age_mask', mask_store.shape, 'u1',
+    dset = f.create_dataset('/age_mask', mask_store.shape, 'u2',
                                          compression='gzip',
                                          compression_opts=9)
     dset[:] = mask_store[:]

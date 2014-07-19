@@ -82,6 +82,64 @@ def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist):
     return mnzt_pct
 
 
+def pixel_mnzt_rate(pct_min_samples, age, n_days):
+    n_samples = pct_min_samples.shape[0]
+
+    n_tmp = max(age[-1], n_days)
+    mnzt_rate = np.zeros((n_samples, n_tmp), dtype='f8')
+    
+    for k, (a1, a2) in enumerate(zip(age[:-1], age[1:])):
+        rate = (pct_min_samples[:, k+1] - pct_min_samples[:, k]) / (a2 - a1)
+        
+        for a in xrange(a1, a2):
+            mnzt_rate[:, a] = rate
+    
+    mnzt_rate = mnzt_rate[:, :n_days]
+
+    return mnzt_rate
+
+
+def mnzt_rate_all_pix(pct_min_samples, age_mask, ages, n_days):
+    n_pix = pct_min_samples.shape[0]
+    mnzt_rate = np.empty((3, n_pix, n_days), dtype='f8')
+
+    for n in xrange(n_pix):
+        samples = pixel_mnzt_rate(pct_min_samples[n],
+                                   ages[age_mask[n]],
+                                   n_days)
+        mnzt_rate[:, n, :] = np.percentile(samples, [5., 50., 95.], axis=0)
+    
+    return mnzt_rate
+
+
+def plot_mnzt_rate(locs, pct_min_samples, age_mask, ages):
+    mnzt_rate = mnzt_rate_all_pix(pct_min_samples, age_mask, ages, ages[-1])
+
+    Nx, Ny = np.max(locs, axis=0) + 1
+    img = np.empty((Nx, Ny), dtype='f8')
+
+    vmin = 0.
+    vmax = np.percentile(mnzt_rate[np.isfinite(mnzt_rate)], 99.)
+    
+    for day in xrange(ages[-1]):
+        print 'Day %d ...' % day
+        
+        img[:,:] = np.nan
+        print mnzt_rate.shape
+        print locs.shape
+        
+        img[locs[:,0], locs[:,1]] = mnzt_rate[1, :, day]
+
+        fig = plt.figure(figsize=(10,4), dpi=200)
+        ax = fig.add_subplot(1,1,1)
+        ax.imshow(img.T, aspect='auto',
+                        interpolation='nearest',
+                        origin='lower',
+                        vmin=vmin, vmax=vmax)
+        fig.savefig('mnzt_rate/btt3_mnzt_rate-%d.png' % day, dpi=200)
+        plt.close(fig)
+
+
 def main():
 
     f = h5py.File('final.h5', 'r') #read in file
@@ -100,11 +158,16 @@ def main():
     print 'locations', locations.shape
     print 'pct_min_samples shape', pct_min_samples.shape
 
+    plot_mnzt_rate(locations, pct_min_samples, age_mask, ages)
+
+    return 0
+
     age_expanded = np.einsum('ij,j->ij', age_mask, ages)
     
     Nx, Ny = np.max(locations, axis=0) + 1
     n_pix = locations.shape[0]
 
+    
     '''
     fig = plt.figure()
 
@@ -166,7 +229,7 @@ def main():
     for n in xrange(n_pix):
         x, y = locations[n]
         img[:, x, y] = mnzt_pct[:, n]
-        img = np.flipud(img)
+        #img = np.flipud(img)
 
     vmin = np.min(img[np.isfinite(img)])
     vmax = np.max(img[np.isfinite(img)])

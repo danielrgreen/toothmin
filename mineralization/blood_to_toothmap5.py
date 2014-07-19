@@ -58,18 +58,18 @@ def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     mnzt_rate = mnzt_rate[:, :n_days] # same as daily_increase, shape = nsamples x days
     di_sum = np.sum(mnzt_rate, axis=1) # shape = nsamples
 
-    # first method of calculating isotope values per pixel    
-    tot_isotope = (  np.sum(blood_hist * mnzt_rate, axis=1)
-                   + blood_hist[0] * pct_min_samples[:, 0] )
-    tot_mnzt = np.sum(mnzt_rate, axis=1) + pct_min_samples[:, 0]
-    tot_isotope = tot_isotope / tot_mnzt
+    # first method of calculating isotope values per pixel   ###    
+    #tot_isotope = (  np.sum(blood_hist * mnzt_rate, axis=1)
+                   #+ blood_hist[0] * pct_min_samples[:, 0] )
+    #tot_mnzt = np.sum(mnzt_rate, axis=1) + pct_min_samples[:, 0]
+    #tot_isotope = tot_isotope / tot_mnzt
 
-    # second method calculating isotope values per pixel
-    #mnzt_rate = mnzt_rate / di_sum[:, None]
-    #mnzt_rate[mnzt_rate==0.] = np.nan
-    #d18O_addition = mnzt_rate * blood_hist[None, :]
-    #d18O_addition[np.isnan(d18O_addition)] = 0.
-    #tot_isotope = np.sum(d18O_addition, axis=1)
+    # second method calculating isotope values per pixel   ###
+    mnzt_rate = mnzt_rate / di_sum[:, None]
+    mnzt_rate[mnzt_rate==0.] = np.nan
+    d18O_addition = mnzt_rate * blood_hist[None, :]
+    d18O_addition[np.isnan(d18O_addition)] = 0.
+    tot_isotope = np.sum(d18O_addition, axis=1)
 
     #tmp_ret = np.empty(3, dtype='f8')
     #tmp_ret[0] = np.sum(mnzt_rate[1, :25])
@@ -118,6 +118,7 @@ def main():
     
     Nx, Ny = np.max(locations, axis=0) + 1
     n_pix = locations.shape[0]
+
 
     '''
     fig = plt.figure()
@@ -180,7 +181,6 @@ def main():
     for n in xrange(n_pix):
         x, y = locations[n]
         img[:, x, y] = mnzt_pct[:, n]
-        img = np.flipud(img)
 
     vmin = np.min(img[np.isfinite(img)])
     vmax = np.max(img[np.isfinite(img)])
