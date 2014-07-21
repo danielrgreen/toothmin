@@ -45,10 +45,10 @@ from fit_positive_function import TMonotonicPointModel, TMCMC
 
 # user inputs
 
-xcoordinate1 = 349
-xcoordinate2 = 350
-ycoordinate1 = 19
-ycoordinate2 = 20
+xcoordinate1 = 149
+xcoordinate2 = 150
+ycoordinate1 = 229
+ycoordinate2 = 230
 
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
@@ -83,7 +83,6 @@ def get_baseline(img, exactness=15.):
     locates nonzero pixels to find the enamel in the image and
     makes arrays for the upper and lowwer enamel edges.
     '''
-    img = np.flipud(img)
     Ny, Nx = img.shape
     edge = np.empty((2,Nx), dtype='i4')
     edge[:,:] = -1
@@ -143,7 +142,6 @@ def place_markers(x, spl, spacing=2.):
     return markerPos, markerDeriv
 
 def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
-    img = np.flipud(img)
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -159,7 +157,7 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
     samplePos.shape = (nMarkers*(nSteps+1),2)
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
-    resampImg = resampImg.T
+    resampImg = np.rot90(resampImg, 1)
     scan = str(fname[-5])
 
     # CONVERSION
