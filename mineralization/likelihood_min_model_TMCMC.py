@@ -40,7 +40,7 @@ import argparse, sys, warnings
 from matplotlib.ticker import FuncFormatter
 import time
 import h5py
-import emcee
+#import emcee
 from fit_positive_function import TMonotonicPointModel, TMCMC
 
 # user inputs
@@ -122,7 +122,7 @@ def place_markers(x, spl, spacing=2.):
     dist = np.cumsum(dist)
     nMarkers = int(dist[-1] / spacing)
     if nMarkers > 1e5:
-		raise ValueError('nMarkers unreasonably high. Something has likely gone wrong.')
+        raise ValueError('nMarkers unreasonably high. Something has likely gone wrong.')
     markerDist = np.linspace(spacing, spacing*nMarkers, nMarkers)
     markerPos = np.empty((nMarkers, 2), dtype='f8')
     markerDeriv = np.empty(nMarkers, dtype='f8')
@@ -136,7 +136,14 @@ def place_markers(x, spl, spacing=2.):
     
     return markerPos, markerDeriv    
 
-def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
+
+def downsample_by_2(img):
+    img = 0.5 * (img[:-1:2, :] + img[1::2, :])
+    img = 0.5 * (img[:, :-1:2] + img[:, 1::2])
+    
+    return img
+
+def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, threshold=0.2):
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -150,9 +157,9 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
     samplePos = sampleStart + sampleOffset
 
     samplePos.shape = (nMarkers*(nSteps+1),2)
-    resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
+    resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=0)
     resampImg.shape = (nMarkers, nSteps+1)
-    resampImg = np.rot90(resampImg, 1)
+    #resampImg = np.rot90(resampImg, 1)
     
     scan = str(fname[-5])
 
@@ -168,7 +175,45 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
         resampImg *= 0.00028045707501
         resampImg -= 1.48671229207043
     
-    return resampImg[:,:]
+    # Shift each column down until bottom pixel is above some threshold
+    
+    mask = (resampImg > threshold)
+    #resampImg[mask] = 0.
+    
+    fig = plt.figure()
+    
+    ax = fig.add_subplot(3,1,1)
+    ax.imshow(resampImg.copy().T, origin='lower', aspect='auto', interpolation='nearest')
+    
+    fill = np.min(resampImg)
+    
+    for col in xrange(resampImg.shape[0]):
+        if np.any(mask[col,:]):
+            nClip = np.min(np.where(mask[col,:])[0])
+            
+            if nClip < resampImg.shape[1]:
+                tmp = resampImg[col,:].copy()
+                resampImg[col,:] = fill
+                resampImg[col,:resampImg.shape[1]-nClip] = tmp[nClip:]
+    
+    ax = fig.add_subplot(3,1,2)
+    ax.imshow(resampImg.copy().T, origin='lower', aspect='auto', interpolation='nearest')
+    
+    # Downsample by a factor of two
+    idx = resampImg < threshold
+    resampImg[idx] = np.nan
+    
+    resampImg = downsample_by_2(resampImg)
+    idx = (downsample_by_2(idx.astype('f8')) > 0.)
+    
+    resampImg[idx] = fill
+    
+    ax = fig.add_subplot(3,1,3)
+    ax.imshow(resampImg.T, origin='lower', aspect='auto', interpolation='nearest')
+    
+    plt.show()
+    
+    return resampImg[:,:].T
 
 def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior, n_clip=3.):
     y_mod = np.cumsum(np.exp(log_Delta_y))
