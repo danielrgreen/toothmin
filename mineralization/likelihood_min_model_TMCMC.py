@@ -253,15 +253,20 @@ def main():
         # Plot everything
       
         # Resample image to standard grid
-        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker, fname))
+        alignedimg.append(np.flipud(get_image_values_2(img, markerPos, DeltaMarker, fname)))
 
         '''
         # This section of code checks that images are aligned correctly
         for img in alignedimg[-1:]:
+            img /= 3.15
+            idx = (img < 0.05) | (img > 1.2)
+            img[idx] = np.nan
+
             fig = plt.figure()
             ax = fig.add_subplot(1,1,1)
             cimg = ax.imshow(img, aspect='auto', interpolation='nearest')
             cax = fig.colorbar(cimg)
+            plt.gca().invert_yaxis()
             plt.show()
         '''
         

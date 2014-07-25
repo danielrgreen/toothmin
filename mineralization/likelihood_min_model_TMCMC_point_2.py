@@ -45,10 +45,10 @@ from fit_positive_function import TMonotonicPointModel, TMCMC
 
 # user inputs
 
-xcoordinate1 = 149
-xcoordinate2 = 150
-ycoordinate1 = 229
-ycoordinate2 = 230
+xcoordinate1 = 29
+xcoordinate2 = 30
+ycoordinate1 = 29
+ycoordinate2 = 30
 
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
@@ -305,9 +305,14 @@ def main():
 
     # Combine images into one 3-dimensional array
     nImages = len(alignedimg)
-    imgStack = np.zeros((nImages, max(Nx), max(Ny)), dtype='f8')
+    imgStack = np.zeros((nImages, max(Ny), max(Nx)), dtype='f8') # Nx, Ny were flipped
     for i,img in enumerate(alignedimg):
-        imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:]
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        cimg = ax.imshow(img, aspect='auto', interpolation='nearest')
+        cax = fig.colorbar(cimg)
+        plt.show()
+        imgStack[i, :Nx[i], :Ny[i]] = img[:,:] # was img.T[:,:] at end
 
     # Convert from HAp density to mineral fraction by weight
     imgStack /= 3.15
