@@ -49,7 +49,12 @@ voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
 calibration_type = 'synchrotron' # pixel to density calibration method
 y_resampling = 0.1 # y pixel size of model compared to voxel size
-x_resampling = 2.0 # x pixel size of model compared to voxel size
+x_resampling = 1.0 # x pixel size of model compared to voxel size
+
+#xcoordinate1 = 349
+#xcoordinate2 = 350
+#ycoordinate1 = 29
+#ycoordinate2 = 30
 
 # Load image
     
@@ -143,7 +148,7 @@ def downsample_by_2(img):
     
     return img
 
-def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, threshold=0.2):
+def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, threshold=0.1):
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -170,21 +175,24 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
         resampImg *= 2.**16
         resampImg *= 0.0000689219599491
         resampImg -= 1.54118269436172
+        resampImg /= 3.15 # Converts to fraction maximum theoretical density HAp
     else:
         resampImg *= 2.**16
         resampImg *= 0.00028045707501
         resampImg -= 1.48671229207043
+        resampImg /= 3.15 # Converts to fraction maximum theoretical density HAp
     
     # Shift each column down until bottom pixel is above some threshold
     
     mask = (resampImg > threshold)
     #resampImg[mask] = 0.
     
-    fig = plt.figure()
+    #fig = plt.figure()
     
-    ax = fig.add_subplot(3,1,1)
-    ax.imshow(resampImg.copy().T, origin='lower', aspect='auto', interpolation='nearest')
-    
+    #ax = fig.add_subplot(3,1,1)
+    #cimg = ax.imshow(resampImg.copy().T, origin='lower', aspect='auto', interpolation='none')
+    #cax = fig.colorbar(cimg)
+
     fill = np.min(resampImg)
     
     for col in xrange(resampImg.shape[0]):
@@ -196,8 +204,9 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
                 resampImg[col,:] = fill
                 resampImg[col,:resampImg.shape[1]-nClip] = tmp[nClip:]
     
-    ax = fig.add_subplot(3,1,2)
-    ax.imshow(resampImg.copy().T, origin='lower', aspect='auto', interpolation='nearest')
+    #ax = fig.add_subplot(3,1,2)
+    #cimg = ax.imshow(resampImg.copy().T, origin='lower', aspect='auto', interpolation='none')
+    #cax = fig.colorbar(cimg)
     
     # Downsample by a factor of two
     idx = resampImg < threshold
@@ -208,10 +217,11 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
     
     resampImg[idx] = fill
     
-    ax = fig.add_subplot(3,1,3)
-    ax.imshow(resampImg.T, origin='lower', aspect='auto', interpolation='nearest')
+    #ax = fig.add_subplot(3,1,3)
+    #cimg = ax.imshow(resampImg.T, origin='lower', aspect='auto', interpolation='none')
+    #cax = fig.colorbar(cimg)
     
-    plt.show()
+    #plt.show()
     
     return resampImg[:,:].T
 
@@ -298,20 +308,19 @@ def main():
         # Plot everything
       
         # Resample image to standard grid
-        alignedimg.append(np.flipud(get_image_values_2(img, markerPos, DeltaMarker, fname)))
+        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker, fname))
 
         # This section of code checks that images are aligned correctly
-        for img in alignedimg[-1:]:
-            img /= 3.15
-            idx = (img < 0.05) | (img > 1.2)
-            img[idx] = np.nan
+        #for img in alignedimg[-1:]:
+            #idx = (img < 0.05) | (img > 1.2)
+            #img[idx] = np.nan
 
-            fig = plt.figure()
-            ax = fig.add_subplot(1,1,1)
-            cimg = ax.imshow(img, aspect='auto', interpolation='nearest')
-            cax = fig.colorbar(cimg)
-            plt.gca().invert_yaxis()
-            plt.show()
+            #fig = plt.figure()
+            #ax = fig.add_subplot(1,1,1)
+            #cimg = ax.imshow(img, aspect='auto', interpolation='none')
+            #cax = fig.colorbar(cimg)
+            #plt.gca().invert_yaxis()
+            #plt.show()
         
         # Keep track of shapes of images
         tmp_y, tmp_x = alignedimg[-1].shape
@@ -336,11 +345,6 @@ def main():
     imgStack = np.zeros((nImages, max(Nx), max(Ny)), dtype='f8')
     for i,img in enumerate(alignedimg):
         imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:]
-
-    # Convert from HAp density to mineral fraction by weight
-    imgStack /= 3.15
-    # Convert from total density to mineral fraction by weight
-    # imgStack = (3.15 - 3.15 * 0.79 / imgStack) / (3.15 - 0.79)
     
     idx = (imgStack < 0.05) | (imgStack > 1.2)
     imgStack[idx] = np.nan
@@ -371,8 +375,69 @@ def main():
     n_steps = 2000
     n_store = 100
 
-    t1 = time.time()
+    t1 = time.time() # Inserting below to check profiles
 
+    '''
+    for x in xrange(xcoordinate1,xcoordinate2):
+        for y in xrange(ycoordinate1,ycoordinate2):
+            pct_min = imgStack[:, x, y]
+            idx = np.isfinite(pct_min)           
+            n_points = np.sum(idx)
+
+            # Skip pixel if too few time slices have data
+            if n_points < 3:
+                continue
+
+            pct_min = pct_min[idx]
+
+            # MCMC sampling
+            sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
+            mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
+            sigma_prior = 2. * np.ones(pct_min.size, dtype='f8')
+            
+            model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
+            _, guess = model.guess(1)
+            cov_guess = np.diag(sigma)
+
+            sampler = TMCMC(model, guess, cov_guess/20.)
+
+            N = 150000
+            for i in range(N):
+		sampler.step()
+            sampler.flush()
+
+            accept_frac = sampler.get_acceptance_rate()
+            print 'Acceptance rate: %.4f %%' % (100. * accept_frac)
+            
+            chain = sampler.get_chain(burnin=N/3).T
+            np.random.shuffle(chain)
+            pct_min_samples = np.cumsum(np.exp(chain[:n_store]), axis=1)
+
+            # Store results for pixel
+            loc_store.append([x, y])
+            mask_store.append(idx)
+            samples_store.append(pct_min_samples)
+
+            # Plot results
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+
+            for s in pct_min_samples:
+                ax.plot(Nx_age[idx], s, 'b-', alpha=0.05)
+            
+            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
+                        fmt='o')
+            ax.set_ylim(0., 0.9)
+            ax.set_xlim(0., 500.)
+            ax.set_title('Mineralization over time, cervix')
+            ax.set_ylabel('Estimated mineralization percent')
+            ax.set_xlabel('Time in days')
+            plt.show()
+
+    return 0
+
+    '''
+    
     # Splitting up pixels equally to run on a cluster
 
     pix_idx = np.sum(np.isfinite(imgStack), axis=0) >= 3
@@ -510,8 +575,8 @@ def main():
     # calculate model information for save file
 
     s = imgStack.shape
-    xpixelsize = voxelsize * args.spacing
-    ypixelsize = voxelsize * y_resampling
+    xpixelsize = voxelsize * args.spacing * 2
+    ypixelsize = voxelsize * y_resampling * 2
     tooth_length = xpixelsize * s[1]
     tooth_height = ypixelsize * s[2]
 
@@ -529,7 +594,7 @@ def main():
     f = open(dirname + '/info.txt', 'w')
     f.write(txt)
     f.close()
-
+    
     return 0
 
 if __name__ == '__main__':
