@@ -187,22 +187,26 @@ def main():
     print vmin, vmax
     
     fig = plt.figure()
-
+    '''
     ax = fig.add_subplot(3, 1, 1)
     cimg1 = ax.imshow(img[0].T, aspect='auto', interpolation='nearest', origin='lower',
                         vmin=vmin, vmax=vmax)
     cax1 = fig.colorbar(cimg1)
-    
-    ax = fig.add_subplot(3, 1, 2)
-    cimg2 = ax.imshow(img[1].T, aspect='auto', interpolation='nearest', origin='lower',
-                        vmin=vmin, vmax=vmax)
+    '''
+    ax = fig.add_subplot(1, 1, 1)
+    cimg2 = ax.imshow(img[1].T, aspect='equal', interpolation='nearest', origin='lower',
+                        vmin=.8, vmax=vmax)
     cax2 = fig.colorbar(cimg2)
-    
+    '''
     ax = fig.add_subplot(3, 1, 3)
     cimg3 = ax.imshow(img[2].T, aspect='auto', interpolation='nearest', origin='lower',
                         vmin=vmin, vmax=vmax)
     cax3 = fig.colorbar(cimg3)
+    '''
+    fig.savefig('fig_20140815b.png', dpi=500, figsize=8, edgecolor='none')
+    plt.show()
 
+    '''
     # Show density in each pixel
     img = np.empty((3, Nx, Ny), dtype='f8')
     img[:] = np.nan
@@ -210,7 +214,7 @@ def main():
     for n in xrange(n_pix):
         x, y = locations[n]
         img[:, x, y] = np.median(pct_min_samples[n, :, :3], axis=0)
-
+    
     fig = plt.figure()
 
     for n in xrange(3):
@@ -220,7 +224,7 @@ def main():
         cax4 = fig.colorbar(cimg4)
 
     plt.show()
-
+    '''
 
     return 0
 

@@ -47,7 +47,7 @@ voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
 calibration_type = 'undefined' # pixel to density calibration method
 y_resampling = 0.1 # y pixel size of model compared to voxel size
-x_resampling = 2.0 # x pixel size of model compared to voxel size
+x_resampling = 1.0 # x pixel size of model compared to voxel size
 
 # Load image
     

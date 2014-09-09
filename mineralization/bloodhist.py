@@ -27,32 +27,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 start = 0.
-days_initial_period = 80.
 
-initial_water_d18O = 0.
-initial_feed_d18O = 12.
+days_initial_period = 10.
+initial_water_d18O = 1.
+initial_feed_d18O = 8.
 air_d18O = 6.
-blood_halflife = 1. 
+blood_halflife = 5. 
 
-length_of_first_switch = 60.
-first_H2O_switch_d18O = -9.
-first_feed_switch_d18O = 12.
+length_of_first_switch = 90.
+first_H2O_switch_d18O = 1.
+first_feed_switch_d18O = 8.
 
-length_of_second_switch = 100.
-second_H20_switch_d18O = 6.
-second_feed_switch_d18O = 12.
+length_of_second_switch = 40.
+second_H20_switch_d18O = -5.
+second_feed_switch_d18O = 10.
 
-length_of_third_switch = 250.
-third_H2O_switch_d18O = 6.
-third_feed_switch_d18O = 12.
+length_of_third_switch = 200.
+third_H2O_switch_d18O = 1.
+third_feed_switch_d18O = 8.
 
-length_of_fourth_switch = 40.
-fourth_H2O_switch_d18O = 0.
-fourth_feed_switch_d18O = 12.
+length_of_fourth_switch = 100.
+fourth_H2O_switch_d18O = 1.
+fourth_feed_switch_d18O = 8.
 
-length_of_fifth_switch = 1.
-fifth_H2O_switch_d18O = 4.
-fifth_feed_switch_d18O = 12.
+length_of_fifth_switch = 100.
+fifth_H2O_switch_d18O = 1.
+fifth_feed_switch_d18O = 8.
 
 likely_variance_blood = .5
 measurement_error = .3
@@ -294,7 +294,7 @@ def main():
     #ax.plot(ipts, c='r', marker='.', linestyle='none')
     #ax.plot(jpts, c='r', marker='.', linestyle='none')
     ax.set_title(b'Sheep blood $\delta^{18}$O varies with inputs & predicts tooth $\delta^{18}$O profiles')
-    ax.set_ylim(minimum*1.1, maximum*1.1)
+    ax.set_ylim(minimum-2, maximum*1.1)
     ax.set_xlim(1., d18O_history.size)
     ax.legend(loc='best')
     ax.set_ylabel(r'$d^{18} \mathrm{O} \ \mathrm{in} \ \mathrm{VSMOW}$')

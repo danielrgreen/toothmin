@@ -158,9 +158,9 @@ def main():
     print 'locations', locations.shape
     print 'pct_min_samples shape', pct_min_samples.shape
 
-    plot_mnzt_rate(locations, pct_min_samples, age_mask, ages)
+    #plot_mnzt_rate(locations, pct_min_samples, age_mask, ages)
 
-    return 0
+    #return 0
 
     age_expanded = np.einsum('ij,j->ij', age_mask, ages)
     
