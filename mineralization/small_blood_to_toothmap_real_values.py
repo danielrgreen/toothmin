@@ -178,6 +178,8 @@ def main():
     x_resized = imresize1(d18O_map, shape, method=Image.BILINEAR)
     x_resized = x_resized.T
 
+    # This is the place where complex_image_resize.py would be appropriate
+
     data, compare, z, x_resized, data_mean, model_mean, factor, two, z_s = z_calc(x_resized)
     
     d18O_total, daily_increase, d18O_addition = d18O_pixel(age, increase, blood_hist, 80, 15)

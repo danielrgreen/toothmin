@@ -20,7 +20,10 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #  
-#
+#  This program takes a model matrix and data matrix of the same shape,
+#  and resizes the model so that internally, value indices in the model
+#  matrix correspond to value indices in the data matrix, and zero indices
+#  in the model matrix correspond to zero indices in the data matrix.
 
 
 import numpy as np
