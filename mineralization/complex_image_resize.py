@@ -72,7 +72,11 @@ def complex_resize(model, data_x_ct):
 
     for ct, row in zip(data_x_ct, model):
         fill.append(resize(row, ct))
-
+        print 'r', row
+        print 'c', ct
+        
+    fill = np.array(fill)
+    print '2', fill
     return fill
 
 

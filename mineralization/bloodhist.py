@@ -34,23 +34,23 @@ initial_feed_d18O = 8.
 air_d18O = 6.
 blood_halflife = 5. 
 
-length_of_first_switch = 90.
+length_of_first_switch = 30.
 first_H2O_switch_d18O = 1.
 first_feed_switch_d18O = 8.
 
-length_of_second_switch = 40.
-second_H20_switch_d18O = -5.
-second_feed_switch_d18O = 10.
+length_of_second_switch = 10.
+second_H20_switch_d18O = -1.
+second_feed_switch_d18O = 8.
 
-length_of_third_switch = 200.
+length_of_third_switch = 80.
 third_H2O_switch_d18O = 1.
 third_feed_switch_d18O = 8.
 
-length_of_fourth_switch = 100.
-fourth_H2O_switch_d18O = 1.
-fourth_feed_switch_d18O = 8.
+length_of_fourth_switch = 15.
+fourth_H2O_switch_d18O = -20.
+fourth_feed_switch_d18O = 10.
 
-length_of_fifth_switch = 100.
+length_of_fifth_switch = 380.
 fifth_H2O_switch_d18O = 1.
 fifth_feed_switch_d18O = 8.
 
