@@ -78,8 +78,8 @@ def get_baseline(img, exactness=15.):
     locates nonzero pixels to find the enamel in the image and
     makes arrays for the upper and lowwer enamel edges.
     '''
-    img = np.flipud(img)
-    Ny, Nx = img.shape
+    img = np.flipud(img) ##########
+    Ny, Nx = img.shape ##########
     edge = np.empty((2,Nx), dtype='i4')
     edge[:,:] = -1
     mask = (img > 0.)
@@ -138,7 +138,7 @@ def place_markers(x, spl, spacing=2.):
     return markerPos, markerDeriv
 
 def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
-    img = np.flipud(img)
+    img = np.flipud(img) #####
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -154,7 +154,7 @@ def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
     samplePos.shape = (nMarkers*(nSteps+1),2)
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
-    resampImg = resampImg.T
+    resampImg = resampImg.T  ##########
     
     return resampImg[:,:]
 
@@ -265,7 +265,7 @@ def main():
 
     # Combine images into one 3-dimensional array
     nImages = len(alignedimg)
-    imgStack = np.zeros((nImages, max(Nx), max(Ny)), dtype='f8')
+    imgStack = np.zeros((nImages, max(Nx), max(Ny)), dtype='f8') ##########
     for i,img in enumerate(alignedimg):
         imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:]
 
@@ -334,8 +334,8 @@ def main():
         #idx = np.isfinite(pct_min)
         #n_points = np.sum(idx)
 
-    for x in xrange(129,130):
-        for y in xrange(19,20):
+    for x in xrange(155,160):
+        for y in xrange(30,31):
             pct_min = imgStack[:, x, y]
             idx = np.isfinite(pct_min)           
             n_points = np.sum(idx)

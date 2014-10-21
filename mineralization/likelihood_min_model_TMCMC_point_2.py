@@ -45,10 +45,10 @@ from fit_positive_function import TMonotonicPointModel, TMCMC
 
 # user inputs
 
-xcoordinate1 = 29
-xcoordinate2 = 30
-ycoordinate1 = 29
-ycoordinate2 = 30
+xcoordinate1 = 175
+xcoordinate2 = 176
+ycoordinate1 = 35
+ycoordinate2 = 36
 
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
@@ -83,7 +83,7 @@ def get_baseline(img, exactness=15.):
     locates nonzero pixels to find the enamel in the image and
     makes arrays for the upper and lowwer enamel edges.
     '''
-    Ny, Nx = img.shape
+    Ny, Nx = img.shape #########
     edge = np.empty((2,Nx), dtype='i4')
     edge[:,:] = -1
     mask = (img > 0.)
@@ -141,7 +141,14 @@ def place_markers(x, spl, spacing=2.):
     
     return markerPos, markerDeriv
 
-def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
+def downsample_by_2(img):
+    img = 0.5 * (img[:-1:2, :] + img[1::2, :])
+    img = 0.5 * (img[:, :-1:2] + img[:, 1::2])
+    
+    return img
+
+def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, threshold=0.1):
+    #####
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -157,21 +164,10 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
     samplePos.shape = (nMarkers*(nSteps+1),2)
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
-    resampImg = np.rot90(resampImg, 1)
-    scan = str(fname[-5])
+    #resampImg = np.rot90(resampImg, 1) ##########
+    scan = str(fname[-5])  ##########
 
     # CONVERSION
-    # Convert from pixel value to HAp density
-    # In this case, HAp density is calculated with mu values, keV(1)=111.6
-    #if scan == 'g':
-        #resampImg *= 2.**16
-        #resampImg *= 0.0000689219599491
-        #resampImg -= 1.54118269436172
-    #else:
-        #resampImg *= 2.**16
-        #resampImg *= 0.0002642870705047
-        #resampImg -= 1.41796343841118
-
     # Convert from pixel value to HAp density
     # In this case, HAp density is calculated with mu values, keV(1)=119
     if scan == 'g':
@@ -182,21 +178,39 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling):
         resampImg *= 2.**16
         resampImg *= 0.00028045707501
         resampImg -= 1.48671229207043
-
-    # Convert from pixel value to HAp density
-    # In this case, HAp density is calculated using standards
-    #if scan == 'g':
-        #resampImg *= 2.**16
-        #resampImg *= 0.000046368
-        #resampImg -= 0.077857152
-    #else:
-        #resampImg *= 2.**16
-        #resampImg *= 0.000182009
-        #resampImg -= 0.077402903
         
-    print scan, np.max(resampImg)
+    mask = (resampImg > threshold)
+    fill = np.min(resampImg)
     
-    return resampImg[:,:]
+    for col in xrange(resampImg.shape[0]):
+        if np.any(mask[col,:]):
+            nClip = np.min(np.where(mask[col,:])[0])
+            
+            if nClip < resampImg.shape[1]:
+                tmp = resampImg[col,:].copy()
+                resampImg[col,:] = fill
+                resampImg[col,:resampImg.shape[1]-nClip] = tmp[nClip:]
+    
+    #ax = fig.add_subplot(3,1,2)
+    #cimg = ax.imshow(resampImg.copy().T, origin='lower', aspect='auto', interpolation='none')
+    #cax = fig.colorbar(cimg)
+    
+    # Downsample by a factor of two
+    idx = resampImg < threshold
+    resampImg[idx] = np.nan
+    
+    resampImg = downsample_by_2(resampImg)
+    idx = (downsample_by_2(idx.astype('f8')) > 0.)
+    
+    resampImg[idx] = fill
+    
+    #ax = fig.add_subplot(3,1,3)
+    #cimg = ax.imshow(resampImg.T, origin='lower', aspect='auto', interpolation='none')
+    #cax = fig.colorbar(cimg)
+    
+    #plt.show()
+    
+    return resampImg[:,:].T
 
 def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior, n_clip=3.):
     y_mod = np.cumsum(np.exp(log_Delta_y))
@@ -305,15 +319,16 @@ def main():
 
     # Combine images into one 3-dimensional array
     nImages = len(alignedimg)
-    imgStack = np.zeros((nImages, max(Ny), max(Nx)), dtype='f8') # Nx, Ny were flipped
+    imgStack = np.zeros((nImages, max(Nx), max(Ny)), dtype='f8') # Nx, Ny were flipped
+    ##########    
     for i,img in enumerate(alignedimg):
-        fig = plt.figure()
-        ax = fig.add_subplot(1,1,1)
-        cimg = ax.imshow(img, aspect='auto', interpolation='nearest')
-        cax = fig.colorbar(cimg)
-        plt.show()
-        imgStack[i, :Nx[i], :Ny[i]] = img[:,:] # was img.T[:,:] at end
-
+        #fig = plt.figure()
+        #ax = fig.add_subplot(1,1,1)
+        #cimg = ax.imshow(img, aspect='auto', interpolation='nearest')
+        #cax = fig.colorbar(cimg)
+        #plt.show()
+        imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:] # was img.T[:,:] at end
+    
     # Convert from HAp density to mineral fraction by weight
     imgStack /= 3.15
     # If converting from total density, use this equation instead
@@ -375,16 +390,18 @@ def main():
         #idx = np.isfinite(pct_min)
         #n_points = np.sum(idx)
 
+    print 'imgStack_shape', imgStack.shape
+    print 'test0'
     for x in xrange(xcoordinate1,xcoordinate2):
         for y in xrange(ycoordinate1,ycoordinate2):
             pct_min = imgStack[:, x, y]
             idx = np.isfinite(pct_min)           
             n_points = np.sum(idx)
-
+            print 'test0.5'
             # Skip pixel if too few time slices have data
-            if n_points < 3:
-                continue
-
+            #if n_points < 3:
+                #continue
+            print 'test0.75'
             pct_min = pct_min[idx]
 
             # MCMC sampling
@@ -426,15 +443,19 @@ def main():
                         fmt='o')
             ax.set_ylim(0., 0.9)
             ax.set_xlim(0., 500.)
-            ax.set_title('Mineralization over time, cervix')
+            ax.set_title('Mineralization over time, x=%d, y=%d' % (xcoordinate1, ycoordinate1))
             ax.set_ylabel('Estimated mineralization percent')
             ax.set_xlabel('Time in days')
+            print 'test1'
             plt.show()
 
-            return 0
+    print 'test2'
+    plt.show()
+    print 'test3'
+    return 0
         
-    t2 = time.time()
-    print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
+    #t2 = time.time()
+    #print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
 
     # create new directory file for output mineralization model
     dirname = args.output_dir + datetime.now().strftime('%c')

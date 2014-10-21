@@ -1,14 +1,15 @@
-# Daniel Green, 2014
+# Daniel Green, Gregory Green, 2014
 # drgreen@fas.harvard.edu
 # Human Evolutionary Biology
+# Center for Astrophysics
 # Harvard University
 #
 # Mineralization Model Re-Size:
-# this code takes a larger 
-#
-# 
-#
-#
+# this code takes a larger mineralization model
+# and produces images demonstrating mineral density
+# increase over time, total density over time, or
+# calculates final isotope distributions at full
+# or partial resolution.
 # 
 
 import numpy as np
@@ -63,8 +64,6 @@ def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     tot_isotope = np.sum(d18O_addition, axis=1)
 
     return tot_isotope
-
-
 
 def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist):
     '''
@@ -126,8 +125,7 @@ class ToothModel:
             for k in xrange(self.n_samples):
                 pct_min_interp[n, k, ~idx] = np.interp(x, xp, samples[:,k], left=0.)
 
-        print pct_min_interp.shape
-        self.pct_min_interp = pct_min_interp
+            self.pct_min_interp = pct_min_interp
     
     def _gen_rand_hist(self):
         '''
@@ -178,6 +176,34 @@ class ToothModel:
             return img_interp
         
         return img
+
+    def _resize(self, array, shape):
+        '''
+        Takes an array and broadcasts it into a new shape, ignoring NaNs.
+        '''
+        
+        # Calculate shapes
+        oldshape = array.shape
+        axis0 = np.repeat(array, shape[0], axis=0)
+        axis1 = np.repeat(axis0, shape[1], axis=1)
+
+        # Resize
+        axis1ravel = np.ravel(axis1)
+        axis1stack = np.reshape(axis1ravel, (shape[0]*shape[1]*oldshape[0],oldshape[1]))
+        m_axis1stack = np.ma.masked_array(axis1stack,np.isnan(axis1stack))
+        axis1mean = np.mean(m_axis1stack, axis = 1)
+        axis2stack = np.reshape(axis1mean, (shape[0]*shape[1], oldshape[0]))
+        m_axis2stack = np.ma.masked_array(axis2stack,np.isnan(axis2stack))
+        axis2mean = np.mean(m_axis2stack, axis=1)
+        new_array = np.reshape(axis2mean, shape)
+
+        # Add back in NaNs, threshold > 50% NaN
+        nan_map = np.zeros(oldshape)
+        nan_map[np.isnan(array)] = 1.
+        sm_nan_map = imresize(nan_map, shape, interp='bilinear', mode='F')
+        new_array[sm_nan_map >= 0.5] = np.nan
+                
+        return new_array
     
     def downsample_model(self, shape, n_samples):
         img_sm = np.empty((shape[0], shape[1], n_samples, self.n_ages), dtype='f8')
@@ -186,7 +212,7 @@ class ToothModel:
             img = self.gen_image(mode='sample')
 
             for t in xrange(self.n_ages):
-                img_sm[:,:,n,t] = imresize(img[:,:,t], shape, interp='bilinear')
+                img_sm[:,:,n,t] = self._resize(img[:,:,t], shape)
 
         img_sm.shape = (shape[0]*shape[1], n_samples, self.n_ages)
 
@@ -272,7 +298,7 @@ def gen_movie(toothmodel):
         img[k] = img_interp(t)
 
     img = np.diff(img, axis=0)
-    sigma = 15
+    sigma = 4
     img = gaussian_filter1d(img, sigma, axis=0, mode='nearest')
     
     idx = np.isfinite(img)
@@ -291,14 +317,13 @@ def gen_movie(toothmodel):
 
         ax.set_title(r'$t = %d \ \mathrm{days}$' % t, fontsize=14)
         
-        fig.savefig('tooth_rate_sm_k%05d.png' % k, dpi=100)
-
+        fig.savefig('tooth_rate_sm_k%04d.png' % k, dpi=100)
 
 def main():
-    toothmodel = ToothModel('final.h5')
-    toothmodel_sm = toothmodel.downsample_model((20,5), 10)
 
-    gen_movie(toothmodel_sm)
+    toothmodel = ToothModel('final.h5')
+    #toothmodel_sm = toothmodel.downsample_model((20,5), 10)
+    #gen_movie(toothmodel_sm)
     
     return 0
 
