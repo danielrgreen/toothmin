@@ -28,26 +28,27 @@ import matplotlib.pyplot as plt
 
 start = 0.
 
-days_initial_period = 10.
+days_initial_period = 20.
 initial_water_d18O = 1.
 initial_feed_d18O = 8.
+
 air_d18O = 6.
 blood_halflife = 5. 
 
-length_of_first_switch = 30.
+length_of_first_switch = 20.
 first_H2O_switch_d18O = 1.
 first_feed_switch_d18O = 8.
 
-length_of_second_switch = 10.
-second_H20_switch_d18O = -1.
+length_of_second_switch = 6.
+second_H20_switch_d18O = -12.
 second_feed_switch_d18O = 8.
 
-length_of_third_switch = 80.
+length_of_third_switch = 180.
 third_H2O_switch_d18O = 1.
 third_feed_switch_d18O = 8.
 
-length_of_fourth_switch = 15.
-fourth_H2O_switch_d18O = -20.
+length_of_fourth_switch = 12.
+fourth_H2O_switch_d18O = -15.
 fourth_feed_switch_d18O = 10.
 
 length_of_fifth_switch = 380.

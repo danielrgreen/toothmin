@@ -45,10 +45,29 @@ from fit_positive_function import TMonotonicPointModel, TMCMC
 
 # user inputs
 
-xcoordinate1 = 175
-xcoordinate2 = 176
-ycoordinate1 = 35
-ycoordinate2 = 36
+xcoordinate1 = 45
+ycoordinate1 = 25
+
+xcoordinateB1 = 45
+ycoordinateB1 = 25
+
+xcoordinateC1 = 45
+ycoordinateC1 = 25
+
+xcoordinateD1 = 45
+ycoordinateD1 = 25
+
+xcoordinate2 = xcoordinate1+1
+ycoordinate2 = ycoordinate1+1
+
+xcoordinateB2 = xcoordinateB1+1
+ycoordinateB2 = ycoordinateB1+1
+
+xcoordinateC2 = xcoordinateC1+1
+ycoordinateC2 = ycoordinateC1+1
+
+xcoordinateD2 = xcoordinateD1+1
+ycoordinateD2 = ycoordinateD1+1
 
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
@@ -232,6 +251,10 @@ def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior, n_clip=3.):
 Loads image
 '''
 
+def plot_point(point1, point2, ImgStack, 
+
+
+
 def main():
     parser = argparse.ArgumentParser(prog='enamelsample',
                   description='Resample image of enamel to standard grid',
@@ -390,8 +413,7 @@ def main():
         #idx = np.isfinite(pct_min)
         #n_points = np.sum(idx)
 
-    print 'imgStack_shape', imgStack.shape
-    print 'test0'
+    print 'x1, x1 ...'
     for x in xrange(xcoordinate1,xcoordinate2):
         for y in xrange(ycoordinate1,ycoordinate2):
             pct_min = imgStack[:, x, y]
@@ -442,16 +464,12 @@ def main():
             ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
                         fmt='o')
             ax.set_ylim(0., 0.9)
-            ax.set_xlim(0., 500.)
+            ax.set_xlim(20., 320.)
             ax.set_title('Mineralization over time, x=%d, y=%d' % (xcoordinate1, ycoordinate1))
             ax.set_ylabel('Estimated mineralization percent')
             ax.set_xlabel('Time in days')
-            print 'test1'
             plt.show()
 
-    print 'test2'
-    plt.show()
-    print 'test3'
     return 0
         
     #t2 = time.time()

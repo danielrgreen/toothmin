@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  calc_tooth_edj_distances.py
+#  small_make_min_model.py
 #  
 #  Copyright 2014 Daniel Green, Greg Green
 #  
@@ -23,6 +23,8 @@
 #  
 
 import numpy as np
+#import matplotlib
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
 import scipy.special
@@ -39,9 +41,12 @@ from matplotlib.ticker import FuncFormatter
 import time
 import h5py
 import emcee
-from fit_positive_function import TMonotonicPointModel
+from fit_positive_function import TMonotonicPointModel, TMCMC
 
 # user inputs
+
+x_coordinates = np.array([15, 25, 35, 45, 65, 85, 105, 145, 185])
+y_coordinates = np.array([35, 35, 35, 35, 35, 35, 35, 35, 35])
 
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
@@ -76,8 +81,7 @@ def get_baseline(img, exactness=15.):
     locates nonzero pixels to find the enamel in the image and
     makes arrays for the upper and lowwer enamel edges.
     '''
-    
-    Ny, Nx = img.shape
+    Ny, Nx = img.shape #########
     edge = np.empty((2,Nx), dtype='i4')
     edge[:,:] = -1
     mask = (img > 0.)
@@ -135,7 +139,14 @@ def place_markers(x, spl, spacing=2.):
     
     return markerPos, markerDeriv
 
-def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
+def downsample_by_2(img):
+    img = 0.5 * (img[:-1:2, :] + img[1::2, :])
+    img = 0.5 * (img[:, :-1:2] + img[:, 1::2])
+    
+    return img
+
+def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, threshold=0.1):
+    #####
     ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
     nSteps = img.shape[0] / step
     stepSize = step / ds
@@ -151,44 +162,146 @@ def get_image_values_2(img, markerPos, DeltaMarker, step=y_resampling):
     samplePos.shape = (nMarkers*(nSteps+1),2)
     resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
     resampImg.shape = (nMarkers, nSteps+1)
-    resampImg = resampImg.T
+    #resampImg = np.rot90(resampImg, 1) ##########
+    scan = str(fname[-5])  ##########
+
+    # CONVERSION
+    # Convert from pixel value to HAp density
+    # In this case, HAp density is calculated with mu values, keV(1)=119
+    if scan == 'g':
+        resampImg *= 2.**16
+        resampImg *= 0.0000689219599491
+        resampImg -= 1.54118269436172
+    else:
+        resampImg *= 2.**16
+        resampImg *= 0.00028045707501
+        resampImg -= 1.48671229207043
+        
+    mask = (resampImg > threshold)
+    fill = np.min(resampImg)
     
-    return resampImg[:,:]
+    for col in xrange(resampImg.shape[0]):
+        if np.any(mask[col,:]):
+            nClip = np.min(np.where(mask[col,:])[0])
+            
+            if nClip < resampImg.shape[1]:
+                tmp = resampImg[col,:].copy()
+                resampImg[col,:] = fill
+                resampImg[col,:resampImg.shape[1]-nClip] = tmp[nClip:]
+    
+    #ax = fig.add_subplot(3,1,2)
+    #cimg = ax.imshow(resampImg.copy().T, origin='lower', aspect='auto', interpolation='none')
+    #cax = fig.colorbar(cimg)
+    
+    # Downsample by a factor of two
+    idx = resampImg < threshold
+    resampImg[idx] = np.nan
+    
+    resampImg = downsample_by_2(resampImg)
+    idx = (downsample_by_2(idx.astype('f8')) > 0.)
+    
+    resampImg[idx] = fill
+    
+    #ax = fig.add_subplot(3,1,3)
+    #cimg = ax.imshow(resampImg.T, origin='lower', aspect='auto', interpolation='none')
+    #cax = fig.colorbar(cimg)
+    
+    #plt.show()
+    
+    return resampImg[:,:].T
 
-
-def min_pct_prior(log_Delta_y):
-    y_final = np.sum(np.exp(log_Delta_y))
-
-    return 1. - scipy.special.erf(1.25 * (y_final - 0.8) / 0.075)
-
-
-def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior):
+def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior, n_clip=3.):
     y_mod = np.cumsum(np.exp(log_Delta_y))
     
     Delta_y = (y_mod - y_obs) / y_sigma
+    idx = Delta_y > n_clip
+    Delta_y[idx] = n_clip
     
     log_likelihood = -0.5 * np.sum(Delta_y * Delta_y)
-    log_prior = np.sum(log_Delta_y)
+    #log_prior = np.sum(log_Delta_y)
     
     Delta_y = (log_Delta_y - mu_prior) / sigma_prior
-    log_prior -= 0.5 * np.sum(Delta_y * Delta_y)
-    
-    log_prior += np.log(1. - scipy.special.erf(1.25 * (y_mod[-1] - 0.8) / 0.075))
+    log_prior = -0.5 * np.sum(Delta_y * Delta_y)
     
     return log_likelihood + log_prior
+
+# Main section of code in which defined functions are used
+'''
+Loads image
+'''
+
+def plot_point(x_coord, y_coord, imgStack, n_store,
+               loc_store, mask_store, samples_store, Nx_age):
+               
+    print 'plotting x%d, y%d ...' % (x_coord,y_coord)
+    for x in xrange(x_coord,x_coord+1):
+        for y in xrange(y_coord,y_coord+1):
+            pct_min = imgStack[:, x, y]
+            idx = np.isfinite(pct_min)           
+            n_points = np.sum(idx)
+            pct_min = pct_min[idx]
+
+            # MCMC sampling
+            sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
+            mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
+            sigma_prior = 2. * np.ones(pct_min.size, dtype='f8')
+            
+            model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
+            _, guess = model.guess(1)
+            cov_guess = np.diag(sigma)
+
+            sampler = TMCMC(model, guess, cov_guess/20.)
+
+            N = 150000
+            for i in range(N):
+		sampler.step()
+            sampler.flush()
+
+            accept_frac = sampler.get_acceptance_rate()
+            print 'Acceptance rate: %.4f %%' % (100. * accept_frac)
+            
+            chain = sampler.get_chain(burnin=N/3).T
+            np.random.shuffle(chain)
+            pct_min_samples = np.cumsum(np.exp(chain[:n_store]), axis=1)
+
+            # Store results for pixel
+            loc_store.append([x, y])
+            mask_store.append(idx)
+            samples_store.append(pct_min_samples)
+
+            # Plot results
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+
+            for s in pct_min_samples:
+                ax.plot(Nx_age[idx], s, 'b-', alpha=0.05)
+            
+            ax.errorbar(Nx_age[idx], pct_min, yerr=sigma,
+                        fmt='o')
+            ax.set_ylim(0., 0.9)
+            ax.set_xlim(20., 320.)
+            ax.set_title('Mineralization over time, x=%d, y=%d' % (x_coord, y_coord))
+            ax.set_ylabel('Estimated mineralization percent')
+            ax.set_xlabel('Time in days')
+            fig.savefig('Min_over_time_x=%d_y=%d.png' % (x_coord, y_coord), dpi=300, figsize=4, edgecolor='none')
 
 def main():
     parser = argparse.ArgumentParser(prog='enamelsample',
                   description='Resample image of enamel to standard grid',
                   add_help=True)
-    parser.add_argument('images', type=str, nargs='+', help='Images of enamel.')
+    parser.add_argument('images', type=str, nargs='+', help='Images of enamel 1.')
+    #parser.add_argument('images2', type=str, nargs='+', help='Images of enamel 2.')
     parser.add_argument('-sp', '--spacing', type=float, default=x_resampling, help='Marker spacing (in pixels).')
     parser.add_argument('-ex', '--exact', type=float, default=10., help='Exactness of baseline spline.')
     parser.add_argument('-l', '--order-by-length', action='store_true',
                               help='Order teeth according to length.')
     parser.add_argument('-s', '--show', action='store_true', help='Show plot.')
-    parser.add_argument('-o', '--output-dir', type=str, default=None,
+    parser.add_argument('-o', '--output-dir', type=str, default='likelihood min model ',
                               help='Directory in which to store output.')
+    parser.add_argument('-f', '--output', type=str, default='likelihood_min_model.h5',
+                        help='Name of mineralization model file to be created.')
+    parser.add_argument('-p', '--partitions', type=int, nargs=2, default=(1,1),
+                              help='Number of partitions, and partition to operate on.')
     if 'python' in sys.argv[0]:
         offset = 2
     else:
@@ -209,7 +322,7 @@ def main():
         
         # Extract age from filename
         age.append(float(fname[1:4]))
-        
+
         # Generate a spline for each tooth edge
         
         x, spl = get_baseline(img, exactness=args.exact)
@@ -230,14 +343,13 @@ def main():
         DeltaMarker = -np.ones((len(markerDeriv), 2), dtype='f8')
         DeltaMarker[:,0] = markerDeriv[:]
         markerPos2 = markerPos + 80. * DeltaMarker
-
-                
+        
         # Goal: take our x positions, step along the y positions, and get the
         # values from the image.
         # Plot everything
       
         # Resample image to standard grid
-        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker))
+        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker, fname))
         
         # Keep track of shapes of images
         tmp_y, tmp_x = alignedimg[-1].shape
@@ -251,7 +363,7 @@ def main():
         Ny = np.array(Ny)
         age = np.array(age, dtype='f8')
         
-        idx = np.argsort(Nx, kind='mergesort')
+        idx = np.argsort(Nx, kind='mergesort')        
         alignedimgSorted = [alignedimg[i] for i in idx]
         alignedimg = alignedimgSorted
         Nx = Nx[idx]
@@ -260,18 +372,13 @@ def main():
 
     # Combine images into one 3-dimensional array
     nImages = len(alignedimg)
-    imgStack = np.zeros((nImages, max(Nx), max(Ny)), dtype='f8')
+    imgStack = np.zeros((nImages, max(Nx), max(Ny)), dtype='f8') # Nx, Ny were flipped
+    ##########    
     for i,img in enumerate(alignedimg):
-        imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:]
-
-    # Convert from pixel value to total density
-    imgStack *= 2.**16
-    imgStack *= 0.000182009
-    imgStack -= 0.077402903
-    #imgStack[imgStack < .79] = np.nan
-
-    # Convert from total density to mineral fraction by weight
-    imgStack = (3.15 - 3.15 * 0.79 / imgStack) / (3.15 - 0.79)
+        imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:] # was img.T[:,:] at end
+    
+    # Convert from HAp density to mineral fraction by weight
+    imgStack /= 3.15
     idx = (imgStack < 0.05) | (imgStack > 1.2)
     imgStack[idx] = np.nan
     
@@ -281,11 +388,7 @@ def main():
     Nx_age = np.zeros(Nx.size, dtype='f8')
     for i in xrange(len(age_coeff)):
         Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
-
-    # Make Nx_age monotonically increasing
-    #increasing = np.linspace(0., 0.1, len(Nx_age))
-    #Nx_age = Nx_age + increasing
-
+    
     Nx_age = np.around(Nx_age)
     Nx_age[Nx_age < 1.] = 1
     
@@ -294,51 +397,114 @@ def main():
             Nx_age[k] = Nx_age[k-1] + 1
 
     Nx_age = Nx_age.astype('u2')
+    
+    # start MCMC ##
+
+    loc_store = []
+    mask_store = []
+    samples_store = []
+    
+    n_walkers = 4 * Nx_age.size
+    n_steps = 2000
+    n_store = 100
+
+    t1 = time.time()
+
+    for a,b in zip(x_coordinates,y_coordinates):
+        plot_point(a, b, imgStack, n_store, loc_store,
+                   mask_store, samples_store, Nx_age)
+        
+    return 0
+        
+    #t2 = time.time()
+    #print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
+
+    # create new directory file for output mineralization model
+    dirname = args.output_dir + datetime.now().strftime('%c')
+
+    if dirname == None:
+        return 0
+
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    # Calculate mineralization values for HDF5 file
+    fname = args.output
+    if fname.endswith('.h5'):
+        fname = fname[:-3]
+    fname += '%.3d.h5' % part_idx
+    
+    print 'Writing to %s ...' % fname
+    
+    loc_store = np.array(loc_store)
+    mask_store = np.array(mask_store)
+
+    n_pix = loc_store.shape[0]
+    n_ages = Nx_age.size
+    shape = (n_pix, n_store, n_ages)
+    
+    pct_min = np.empty(shape, dtype='f4')
+    pct_min[:] = np.nan
+
+    print 'loc_store shape', loc_store.shape
+    print 'pct_min shape', pct_min.shape
+
+    for i, samples in enumerate(samples_store):
+        n_points = samples.shape[1]
+        pct_min[i, :, :n_points] = samples[:, :]
+
+    # Save results to an HDF5 file
+
+    f = h5py.File(dirname + '/' + fname, 'w')
+    
+    dset = f.create_dataset('/locations', loc_store.shape, 'u2',
+                                          compression='gzip',
+                                          compression_opts=9)
+    dset[:] = loc_store[:]
+
+    dset = f.create_dataset('/ages', Nx_age.shape, 'u2')
+    dset[:] = Nx_age
+    
+    dset = f.create_dataset('/age_mask', mask_store.shape, 'u1',
+                                         compression='gzip',
+                                         compression_opts=9)
+    dset[:] = mask_store[:]
+    
+    dset = f.create_dataset('/pct_min_samples', pct_min.shape, 'f4',
+                                                compression='gzip',
+                                                compression_opts=9)
+    dset[:] = pct_min[:]
+
+    f.close()
 
     # calculate model information for save file
 
+    s = imgStack.shape
     xpixelsize = voxelsize * args.spacing
     ypixelsize = voxelsize * y_resampling
-    tooth_length = xpixelsize * Nx / 1000
+    tooth_length = xpixelsize * s[1]
+    tooth_height = ypixelsize * s[2]
 
-    # calculate um/day
+    # Save text file with model information
+    txt = 'Please also read model attributes in the h5py file!\n'
+    txt += 'date: %s\n' % (datetime.now().strftime('%c'))
+    txt += 'species: %s\n' % (species)
+    txt += 'x_pix_size: %.3f\n' % (xpixelsize)
+    txt += 'y_pix_size: %.3f\n' % (ypixelsize)
+    txt += 'tooth_length: %.3f\n' % (tooth_length)
+    txt += 'tooth_height: %.3f\n' % (tooth_height)
+    txt += 'image_shape: %d x %d\n' % (s[1], s[2])
+    txt += 'n_time_samples: %d\n' % (s[0])
     
-    increase_per_day = np.repeat(np.diff(tooth_length), np.diff(Nx_age))
-    increase_per_day = increase_per_day / np.repeat(np.diff(Nx_age), np.diff(Nx_age))
-    increase_per_day = increase_per_day * 1000
+    f = open(dirname + '/info.txt', 'w')
+    f.write(txt)
+    f.close()
 
-    for i in xrange(0, 467):
-        print i, increase_per_day[i]
-        if increase_per_day[i] > 300:
-            increase_per_day[i] = 300
-
-    days = np.linspace(1, 467, 467)
-    w = np.ones(200)
-    exact = .0018
-    s = UnivariateSpline(days, increase_per_day, w=w, s=200/exact)
-    xs = linspace(days[0], days[-1], 1000)
-    ys = s(xs)
-
-    # Kierdorf 2013 data
-
-    kday = np.array([13, 27, 41, 55, 75, 154, 168, 185, 200, 212, 230, 245])
-    kext = np.array([177, 168, 180, 132, 110, 40, 36, 35, 33, 27, 28, 29])
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(age, tooth_length, marker='o', linestyle='none', color='b', label='age')
-    ax.plot(Nx_age, tooth_length, marker='o', linestyle='none', color='r', label='fitted age')
-    ax2 = ax.twinx()
-    ax2.plot(xs, ys, color='g', label='radiograph extension, smooth')
-    ax2.plot(days, increase_per_day, color='y', label='radiograph extension, raw')
-    ax2.plot(kday, kext, color='k', mfc='none', marker='o', linestyle='none', label='histology extension')
-    ax.set_xlabel('age or Nx_age in days')
-    ax.set_ylabel('length in mm')
-    ax2.set_ylabel('extension in um/day')
-    plt.title('Age & Nx_age vs. tooth_length: tooth length by age at death')
-    plt.show()
-           
     return 0
 
 if __name__ == '__main__':
     main()
+
+
+
+
