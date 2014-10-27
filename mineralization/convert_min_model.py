@@ -308,14 +308,13 @@ def interp_over_nans(x_data, y_data):
 
     return y
 
-
-def gen_movie(toothmodel, blood_hist):
+def gen_movie(toothmodel):
     #toothmodel = toothmodel.downsample(shape)
     #isotope_pct = toothmodel.isotope_pct(bloodhist)
     #diff = isotope_pct - data
     #chisq = np.sum(diff**2)
 
-    img_interp = toothmodel.gen_isotope_image(blood_hist, interp=True, mode='sample')
+    img_interp = toothmodel.gen_mnzt_image(interp=True, mode='sample')
 
     ages = np.arange(toothmodel.ages[0], toothmodel.ages[-1]+1)
 
@@ -330,7 +329,6 @@ def gen_movie(toothmodel, blood_hist):
     img = np.diff(img, axis=0)
     sigma_t = 5
     sigma_x, sigma_y = 3, 3
-    #img = gaussian_filter1d(img, sigma, axis=0, mode='nearest')
     img = gaussian_filter(img, (sigma_t,sigma_x,sigma_y), mode='nearest')
     
     idx = np.isfinite(img)
@@ -351,7 +349,6 @@ def gen_movie(toothmodel, blood_hist):
         ax.set_title(r'$t = %d \ \mathrm{days}$' % t, fontsize=14)
         
         fig.savefig('october_rate_g05_x03_y03_k%04d.png' % k, dpi=100)
-
 
 def gen_isomap_movie(toothmodel, blood_hist):
     img = toothmodel.gen_isotope_image(blood_hist, mode='sample')
