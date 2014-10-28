@@ -28,32 +28,32 @@ import matplotlib.pyplot as plt
 
 start = 0.
 
-days_initial_period = 20.
-initial_water_d18O = 1.
-initial_feed_d18O = 8.
+days_initial_period = 50.
+initial_water_d18O = 14.
+initial_feed_d18O = 13.
 
 air_d18O = 6.
 blood_halflife = 5. 
 
 length_of_first_switch = 20.
-first_H2O_switch_d18O = 1.
-first_feed_switch_d18O = 8.
+first_H2O_switch_d18O = 12.
+first_feed_switch_d18O = 13.
 
-length_of_second_switch = 6.
-second_H20_switch_d18O = -12.
-second_feed_switch_d18O = 8.
+length_of_second_switch = 180.
+second_H20_switch_d18O = 14.
+second_feed_switch_d18O = 13.
 
-length_of_third_switch = 180.
-third_H2O_switch_d18O = 1.
-third_feed_switch_d18O = 8.
+length_of_third_switch = 60.
+third_H2O_switch_d18O = 9.
+third_feed_switch_d18O = 13.
 
-length_of_fourth_switch = 12.
-fourth_H2O_switch_d18O = -15.
-fourth_feed_switch_d18O = 10.
+length_of_fourth_switch = 180.
+fourth_H2O_switch_d18O = 14.
+fourth_feed_switch_d18O = 13.
 
 length_of_fifth_switch = 380.
-fifth_H2O_switch_d18O = 1.
-fifth_feed_switch_d18O = 8.
+fifth_H2O_switch_d18O = 14.
+fifth_feed_switch_d18O = 13.
 
 likely_variance_blood = .5
 measurement_error = .3

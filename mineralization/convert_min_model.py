@@ -327,12 +327,12 @@ def gen_movie(toothmodel):
         img[k] = img_interp(t)
 
     img = np.diff(img, axis=0)
-    sigma_t = 5
-    sigma_x, sigma_y = 3, 3
+    sigma_t = 10
+    sigma_x, sigma_y = 2, 2
     img = gaussian_filter(img, (sigma_t,sigma_x,sigma_y), mode='nearest')
     
     idx = np.isfinite(img)
-    vmax = np.percentile(img[idx], 99.5)
+    vmax = np.percentile(img[idx], 99.8)
     #vmax = 1.
 
     fig = plt.figure(figsize=(6,3), dpi=100)
@@ -348,7 +348,7 @@ def gen_movie(toothmodel):
 
         ax.set_title(r'$t = %d \ \mathrm{days}$' % t, fontsize=14)
         
-        fig.savefig('october_rate_g05_x03_y03_k%04d.png' % k, dpi=100)
+        fig.savefig('october_rate_g10_x02_y02_local_k%04d.png' % k, dpi=100)
 
 def gen_isomap_movie(toothmodel, blood_hist):
     img = toothmodel.gen_isotope_image(blood_hist, mode='sample')
