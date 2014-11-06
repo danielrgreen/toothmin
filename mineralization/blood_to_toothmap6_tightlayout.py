@@ -288,47 +288,47 @@ def main():
     
     fig = plt.figure(dpi=300)
 
-    ax1 = plt.subplot2grid((6,3), (0,0), colspan=3)
+    ax1 = plt.subplot2grid((10,3), (0,0), colspan=3, rowspan=2)
     ax1.set_title('Modeled high-res d18O tooth map')
     cimg1 = ax1.imshow(img, aspect='auto', interpolation='nearest', origin='lower',
-                        vmin=6, vmax=14)
+                        vmin=7, vmax=14)
     cax1 = fig.colorbar(cimg1)
 
-    ax2 = plt.subplot2grid((6,3), (1,0), colspan=3)
+    ax2 = plt.subplot2grid((10,3), (2,0), colspan=3, rowspan=2)
     ax2.set_title('Modeled sample-res d18O tooth map')
     cimg2 = ax2.imshow(x_resized, aspect='auto', interpolation='nearest', origin='lower',
-                        vmin=6, vmax=14)
+                        vmin=7, vmax=14)
     cax2 = fig.colorbar(cimg2)
 
-    ax3 = plt.subplot2grid((6,3), (2,0), colspan=3)
+    ax3 = plt.subplot2grid((10,3), (4,0), colspan=3, rowspan=2)
     ax3.set_title('Data: sampled d18O tooth map')
     cimg3 = ax3.imshow(iso_data, aspect='auto', interpolation='nearest', origin='lower',
-                        vmin=6, vmax=14)
+                        vmin=7, vmax=14)
     cax3 = fig.colorbar(cimg3)
 
-    ax4 = plt.subplot2grid((6,3), (3,0), colspan=3)
+    ax4 = plt.subplot2grid((10,3), (6,0), colspan=3)
     ax4.set_title('Data as vector')
     iso_data_reduced.shape = (iso_data_reduced.size, 1)
     cimg4 = ax4.imshow(iso_data_reduced.T, aspect='auto', interpolation='nearest', origin='lower',
-                        vmin=6, vmax=14)
+                        vmin=7, vmax=14)
     cax4 = fig.colorbar(cimg4)
 
-    ax5 = plt.subplot2grid((6,3), (4,0), colspan=3)
+    ax5 = plt.subplot2grid((10,3), (7,0), colspan=3, rowspan=2)
     ax5.set_title('Reshaped model d18O tooth map, Xi2 = %d' % likelihood_2D)
     cimg5 = ax5.imshow(remodeled, aspect='auto', interpolation='nearest', origin='lower',
-                        vmin=6, vmax=14)
+                        vmin=7, vmax=14)
     cax5 = fig.colorbar(cimg5)
 
-    ax6 = plt.subplot2grid((6,3), (5,0), colspan=3)
+    ax6 = plt.subplot2grid((10,3), (9,0), colspan=3)
     ax6.set_title('Model as vector, Xi2 = %d' % likelihood_1D)
     reduced.shape = (reduced.size, 1)
     cimg6 = ax6.imshow(reduced.T, aspect='auto', interpolation='nearest', origin='lower',
-                        vmin=6, vmax=14)
+                        vmin=7, vmax=14)
     cax6 = fig.colorbar(cimg6)
 
     #fig.subplots_adjust(hspace=.5)
     plt.tight_layout()
-    fig.savefig('oct_blood2toothmap6_11_xi2_v%d_a%d.png' % (likelihood_1D, likelihood_2D))
+    fig.savefig('oct_blood2toothmap6_14_xi2_v%d_a%d.png' % (likelihood_1D, likelihood_2D))
     #plt.show()
 
     return 0

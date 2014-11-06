@@ -32,11 +32,11 @@ days_initial_period = 50.
 initial_water_d18O = 14.
 initial_feed_d18O = 13.
 
-air_d18O = 6.
+air_d18O = 9.
 blood_halflife = 5. 
 
-length_of_first_switch = 20.
-first_H2O_switch_d18O = 12.
+length_of_first_switch = 30.
+first_H2O_switch_d18O = 15.
 first_feed_switch_d18O = 13.
 
 length_of_second_switch = 180.
@@ -47,12 +47,12 @@ length_of_third_switch = 60.
 third_H2O_switch_d18O = 9.
 third_feed_switch_d18O = 13.
 
-length_of_fourth_switch = 180.
+length_of_fourth_switch = 15.
 fourth_H2O_switch_d18O = 14.
 fourth_feed_switch_d18O = 13.
 
-length_of_fifth_switch = 380.
-fifth_H2O_switch_d18O = 14.
+length_of_fifth_switch = 50.
+fifth_H2O_switch_d18O = 11.
 fifth_feed_switch_d18O = 13.
 
 likely_variance_blood = .5
