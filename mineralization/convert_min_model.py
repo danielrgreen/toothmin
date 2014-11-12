@@ -308,7 +308,7 @@ def interp_over_nans(x_data, y_data):
 
     return y
 
-def gen_movie(toothmodel):
+def gen_min_movie(toothmodel):
     #toothmodel = toothmodel.downsample(shape)
     #isotope_pct = toothmodel.isotope_pct(bloodhist)
     #diff = isotope_pct - data
@@ -372,10 +372,9 @@ def gen_isomap_movie(toothmodel, blood_hist):
     
     for k in xrange(img.shape[2]):
         im.set_data(img[:,:,k].T)
-
+        print 'printing image k%04d.png' % k
         ax.set_title(r'$t = %d \ \mathrm{days}$' % k, fontsize=14)
-        
-        fig.savefig('october_isomaps03_k%04d.png' % k, dpi=100)
+        fig.savefig('november_isomaps01_03setdataT_k%04d.png' % k, dpi=100)
 
 
 def main():
@@ -389,13 +388,13 @@ def main():
     toothmodel = ToothModel('final.h5')
     age_max = np.max(toothmodel.ages)
     print 'Downsampling tooth model ...'
-    #toothmodel_sm = toothmodel.downsample_model((40,10), 1)
-    #blood_hist = np.zeros(age_max, dtype='f8')
-    #blood_hist[100:120] = 1.
+    toothmodel_sm = toothmodel.downsample_model((40,10), 1)
+    blood_hist = np.zeros(age_max, dtype='f8')
+    blood_hist[100:120] = 1.
 
     print 'Generating movie ...'
-    gen_movie(toothmodel)
-    #gen_isomap_movie(toothmodel_sm, blood_hist)
+    #gen_min_movie(toothmodel_sm)
+    gen_isomap_movie(toothmodel_sm, blood_hist)
     
     return 0
 
