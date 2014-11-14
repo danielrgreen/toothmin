@@ -20,14 +20,38 @@ from PIL import Image
 from scipy.interpolate import interp1d
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
+from lmfit import minimize, Parameters
 
+def water_hist(days=365., Am=10., P=182., offset=40., mean=-7.):
+    
+    days = np.arange(days)
+    waterhist = Am * np.sin((days-offset) * (2*np.pi) / P) + mean
 
-def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
+    print '0', waterhist.shape
+    
+    return waterhist, days
+
+def blood_hist(waterhist, feed=-8., air=-18., half_life=8.,
+               feed_frac=0.3, air_frac=0.1):
+    
+    water_frac = 1. - feed_frac - air_frac
+    air_feed = (feed_frac * feed) + (air_frac * air)
+    
+    remaining = .5**(1/half_life)
+    bloodhist = np.empty(len(waterhist), dtype='f8')
+    bloodhist[0] = water_frac*waterhist[0] + air_feed
+    
+    for k in xrange(1, len(waterhist)):
+        bloodhist[k] = remaining*bloodhist[k-1] + (1-remaining)*(water_frac*waterhist[k]+air_feed)
+
+    return bloodhist
+
+def blood_pixel_mnzt(pct_min_samples, age, bloodhist):
     '''
     
     '''
     
-    n_days = blood_hist.size
+    n_days = bloodhist.size
     n_samples = pct_min_samples.shape[0]
     
     n_tmp = max(age[-1], n_days)
@@ -59,13 +83,13 @@ def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     # second method calculating isotope values per pixel   ###
     mnzt_rate = mnzt_rate / di_sum[:, None]
     mnzt_rate[mnzt_rate==0.] = np.nan
-    d18O_addition = mnzt_rate * blood_hist[None, :]
+    d18O_addition = mnzt_rate * bloodhist[None, :]
     d18O_addition[np.isnan(d18O_addition)] = 0.
     tot_isotope = np.sum(d18O_addition, axis=1)
 
     return tot_isotope
 
-def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist):
+def mnzt_all_pix(pct_min_samples, age_mask, ages, bloodhist):
     '''
 
     '''
@@ -76,7 +100,7 @@ def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist):
     for n in xrange(n_pix):
         samples = blood_pixel_mnzt(pct_min_samples[n],
                                    ages[age_mask[n]],
-                                   blood_hist)
+                                   bloodhist)
         mnzt_pct[:, n] = np.percentile(samples, [5., 50., 95.])
     
     return mnzt_pct
@@ -237,12 +261,12 @@ class ToothModel:
 
         return tmodel
     
-    def gen_isotope_image(self, blood_hist, mode='sample'):
+    def gen_isotope_image(self, bloodhist, mode='sample'):
         idx_mask = np.isnan(self.pct_min_interp)
         pct_min_interp = np.ma.array(self.pct_min_interp, mask=idx_mask, fill_value=0.)
         pct_min_diff = diff_with_first(pct_min_interp[:,:,:].filled(), axis=2)
 
-        n_days = blood_hist.size
+        n_days = bloodhist.size
         pct_min_diff_days = np.empty((self.n_pix, self.n_samples, n_days), dtype='f8')
         pct_min_diff_days[:] = np.nan
         
@@ -269,7 +293,7 @@ class ToothModel:
         print pct_min_days.shape
         
         isotope = np.cumsum(
-            blood_hist[np.newaxis, np.newaxis, :]
+            bloodhist[np.newaxis, np.newaxis, :]
             * pct_min_diff_days,
             axis=2
         )
@@ -314,6 +338,8 @@ def gen_min_movie(toothmodel):
     #diff = isotope_pct - data
     #chisq = np.sum(diff**2)
 
+    print 'generating mineralization movie...'
+
     img_interp = toothmodel.gen_mnzt_image(interp=True, mode='sample')
 
     ages = np.arange(toothmodel.ages[0], toothmodel.ages[-1]+1)
@@ -350,8 +376,10 @@ def gen_min_movie(toothmodel):
         
         fig.savefig('october_rate_g10_x02_y02_local_k%04d.png' % k, dpi=100)
 
-def gen_isomap_movie(toothmodel, blood_hist):
-    img = toothmodel.gen_isotope_image(blood_hist, mode='sample')
+def gen_isomap_movie(toothmodel, bloodhist):
+
+    print 'generating movie...'
+    img = toothmodel.gen_isotope_image(bloodhist, mode='sample')
     
     sigma_t = 0
     sigma_x, sigma_y = 0, 0
@@ -374,27 +402,112 @@ def gen_isomap_movie(toothmodel, blood_hist):
         im.set_data(img[:,:,k].T)
         print 'printing image k%04d.png' % k
         ax.set_title(r'$t = %d \ \mathrm{days}$' % k, fontsize=14)
-        fig.savefig('november_isomaps01_03setdataT_k%04d.png' % k, dpi=100)
+        fig.savefig('november_isomaps01_03setdataT_01imgshapeT_k%04d.png' % k, dpi=100)
 
+def imresize1(x, iso_shape, method=Image.BILINEAR):
+    '''
+    '''
+    assert len(x.shape) == 2
+    
+    im = Image.fromarray(x)
+    im_resized = im.resize(iso_shape, method)
+    
+    x_resized = np.array(im_resized.getdata()).reshape(iso_shape[::-1]).T
+    
+    return x_resized
+
+def count_number(iso_data):
+    '''
+    '''
+    iso_data = np.reshape(iso_data, (iso_shape[1],iso_shape[0]))
+    iso_data = iso_data.T
+    iso_data = np.fliplr(iso_data)
+    iso_data_x_ct = iso_shape[1] - np.sum(np.isnan(iso_data), axis=1)
+
+    return (iso_data, iso_data_x_ct)
+
+def resize(model_row, new_size):
+    '''
+    '''
+    model_row = model_row[np.isfinite(model_row)]
+    msize = model_row.size
+    required = abs(iso_shape[1] - new_size)
+    transform = np.repeat(model_row, new_size).reshape(new_size, msize)
+    new_row = np.einsum('ij->i', transform) / msize
+    if required > 0:
+        new_row = np.append(new_row, np.zeros(required)) # ADDING ZEROS, COULD CAUSE PROBLEMS
+    new_row[new_row==0.] = np.nan
+    return new_row
+
+def complex_resize(model, iso_data_x_ct):
+    '''
+    '''
+    model = np.reshape(model, (iso_shape[1], iso_shape[0]))
+    model = model.T
+    model = np.flipud(model)
+    fill = []
+
+    for ct, row in zip(iso_data_x_ct, model):
+        fill.append(resize(row, ct))
+
+    model_resized = np.array(fill)
+    return model_resized
+
+def isotope_data():
+    iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 10.38, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.00, 0.00, 0.00, 0.00, 0.00, 12.08, 12.91, 13.11, 12.70, 12.69, 12.23, 12.56, 11.53, 12.82, 12.36, 12.51, 10.69, 11.33, 13.33, 13.12, 13.21, 13.07, 13.76, 12.90, 14.63, 11.81, 9.76, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.21, 11.04, 12.81, 12.20, 12.69, 12.31, 12.44, 12.12, 10.84, 12.85, 12.90, 13.13, 13.74, 13.18, 11.91, 12.53, 13.10, 12.28, 12.92, 10.95, 12.83, 13.20, 13.25, 12.10, 11.95, 12.08, 11.65, 8.45, 0.00, 0.00, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 10.19, 11.24, 10.55, 11.33, 12.09, 12.56, 13.71, 12.03, 10.78, 12.75, 12.67, 12.50, 12.48, 12.50, 11.96, 12.21, 12.28, 9.88, 11.85, 12.44, 11.07, 11.18, 10.68, 11.42, 12.39, 10.08])
+    iso_data[iso_data==0.] = np.nan
+    iso_data, iso_data_x_ct = count_number(iso_data)
+    temp_x_r = np.fliplr(x_resized.T)
+    model_resized = complex_resize(temp_x_r.flatten(), iso_data_x_ct)
+    remodeled = np.array(model_resized)
+    data_isomap = remodeled
+
+    return data_isomap
+
+def test01(toothmodel, bloodhist):
+
+    #Am = params['amp'].value
+    #offset = params['offset'].value
+    #P = params['period'].value
+    #mean = params['mean'].value
+    #air = params['air'].value
+    #feed = params['feed'].value
+
+    model_isomap = toothmodel.gen_isotope_image(bloodhist, mode='sample')
+    data_isomap = isotope_data()
+
+    return model_isomap, data_isomap    
 
 def main():
-    #x = np.arange(20)**2
-    #x.shape = (4,5)
-    #y = diff_with_first(x, axis=1)
-    #print x
-    #print y
 
     print 'Loading tooth model ...'
     toothmodel = ToothModel('final.h5')
     age_max = np.max(toothmodel.ages)
     print 'Downsampling tooth model ...'
-    toothmodel_sm = toothmodel.downsample_model((40,10), 1)
-    blood_hist = np.zeros(age_max, dtype='f8')
-    blood_hist[100:120] = 1.
+    toothmodel_sm = toothmodel.downsample_model((50,12), 1)
+    waterhist, days = water_hist()
+    bloodhist = blood_hist(waterhist)
 
-    print 'Generating movie ...'
+    #params = Parameters()
+    #params.add('amp', value=10.)
+    #params.add('offset', value= 40.)
+    #params.add('period', value=182.)
+    #params.add('mean', value=-7.)
+    #params.add('air', value=-18.)
+    #params.add('feed', value=-8.)
+
+    model_isomap, data_isomap = test01(toothmodel_sm, bloodhist)
+    fig = plt.figure(dpi=300)
+    ax1 = plt.subplot(1,2,1)
+    cimg1 = ax1.imshow(model_isomap, aspect='auto', interpolation='nearest', origin='lower')
+    cax1 = fig.colorbar(cimg1)
+    ax2 = plt.subplot(1,2,2)
+    cimg2 = ax2.imshow(data_isomap, aspect='auto', interpolation='nearest', origin='lower')
+    cax2 = fig.colorbar(cimg2)
+    plt.show()
+    
     #gen_min_movie(toothmodel_sm)
-    gen_isomap_movie(toothmodel_sm, blood_hist)
+    #gen_isomap_movie(toothmodel_sm, bloodhist)
     
     return 0
 
