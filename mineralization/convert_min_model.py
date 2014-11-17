@@ -22,6 +22,8 @@ from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
 from lmfit import minimize, Parameters
 
+iso_shape = (34, 5)
+
 def water_hist(days=365., Am=10., P=182., offset=40., mean=-7.):
     
     days = np.arange(days)
@@ -165,7 +167,7 @@ class ToothModel:
         return pix_val_rand
 
     def _pix2img(self, pix_val, mode='sample', interp=False):
-        print 'pix_val.shape =', pix_val.shape
+        print 'pix_val.shape in pix2img =', pix_val.shape
         
         if mode == 'sample':
             pix_val = self._gen_rand_hist(pix_val)
@@ -180,10 +182,6 @@ class ToothModel:
 
         idx0 = self.locations[:,0]
         idx1 = self.locations[:,1]
-
-        print 'idx0.shape =', idx0.shape
-        print 'idx1.shape =', idx1.shape
-        print 'pix_val.shape =', pix_val.shape
         
         img[idx0, idx1, :] = pix_val[:,:]
 
@@ -281,17 +279,10 @@ class ToothModel:
             
             pct_min_diff_days[:,:,a1:a2] = (pct_min_diff[:,:,k] / dt)[:,:,np.newaxis]
 
-        print 'frost', pct_min_diff_days
-
         pct_min_diff_days[np.isnan(pct_min_diff_days)] = 0.
         pct_min_days = np.cumsum(pct_min_diff_days, axis=2)
         pct_min_days[pct_min_days==0.] = np.nan
 
-        print 'stevens', pct_min_days
-
-        print pct_min_diff_days.shape
-        print pct_min_days.shape
-        
         isotope = np.cumsum(
             bloodhist[np.newaxis, np.newaxis, :]
             * pct_min_diff_days,
@@ -299,9 +290,6 @@ class ToothModel:
         )
         
         isotope /= pct_min_days
-
-        print isotope.shape
-        print self.locations.shape
         
         return self._pix2img(isotope, mode=mode, interp=False)
 
@@ -404,18 +392,6 @@ def gen_isomap_movie(toothmodel, bloodhist):
         ax.set_title(r'$t = %d \ \mathrm{days}$' % k, fontsize=14)
         fig.savefig('november_isomaps01_03setdataT_01imgshapeT_k%04d.png' % k, dpi=100)
 
-def imresize1(x, iso_shape, method=Image.BILINEAR):
-    '''
-    '''
-    assert len(x.shape) == 2
-    
-    im = Image.fromarray(x)
-    im_resized = im.resize(iso_shape, method)
-    
-    x_resized = np.array(im_resized.getdata()).reshape(iso_shape[::-1]).T
-    
-    return x_resized
-
 def count_number(iso_data):
     '''
     '''
@@ -453,18 +429,24 @@ def complex_resize(model, iso_data_x_ct):
     model_resized = np.array(fill)
     return model_resized
 
-def isotope_data():
-    iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 10.38, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.00, 0.00, 0.00, 0.00, 0.00, 12.08, 12.91, 13.11, 12.70, 12.69, 12.23, 12.56, 11.53, 12.82, 12.36, 12.51, 10.69, 11.33, 13.33, 13.12, 13.21, 13.07, 13.76, 12.90, 14.63, 11.81, 9.76, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.21, 11.04, 12.81, 12.20, 12.69, 12.31, 12.44, 12.12, 10.84, 12.85, 12.90, 13.13, 13.74, 13.18, 11.91, 12.53, 13.10, 12.28, 12.92, 10.95, 12.83, 13.20, 13.25, 12.10, 11.95, 12.08, 11.65, 8.45, 0.00, 0.00, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 10.19, 11.24, 10.55, 11.33, 12.09, 12.56, 13.71, 12.03, 10.78, 12.75, 12.67, 12.50, 12.48, 12.50, 11.96, 12.21, 12.28, 9.88, 11.85, 12.44, 11.07, 11.18, 10.68, 11.42, 12.39, 10.08])
-    iso_data[iso_data==0.] = np.nan
-    iso_data, iso_data_x_ct = count_number(iso_data)
-    temp_x_r = np.fliplr(x_resized.T)
-    model_resized = complex_resize(temp_x_r.flatten(), iso_data_x_ct)
-    remodeled = np.array(model_resized)
-    data_isomap = remodeled
+def imresize1(x, iso_shape, method=Image.BILINEAR):
+    '''
+    '''
 
-    return data_isomap
+    print 'imresize1 x.shape before transformation = ', x.shape
+    x = x[:,:,-1] # OR SUM, ALSO BROKEN BECAUSE SUM OR MEAN TAKES NANS
+    print 'imresize1 x.shape after transformation = ', x.shape
 
-def test01(toothmodel, bloodhist):
+    assert len(x.shape) == 2
+    
+    im = Image.fromarray(x)
+    im_resized = im.resize(iso_shape, method)
+    
+    x_resized = np.array(im_resized.getdata()).reshape(iso_shape[::-1]).T
+    
+    return x_resized
+
+def isotope_data(toothmodel, bloodhist):
 
     #Am = params['amp'].value
     #offset = params['offset'].value
@@ -474,9 +456,18 @@ def test01(toothmodel, bloodhist):
     #feed = params['feed'].value
 
     model_isomap = toothmodel.gen_isotope_image(bloodhist, mode='sample')
-    data_isomap = isotope_data()
+    x_resized = imresize1(model_isomap, iso_shape, method=Image.BILINEAR)
+    
+    iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 10.38, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.00, 0.00, 0.00, 0.00, 0.00, 12.08, 12.91, 13.11, 12.70, 12.69, 12.23, 12.56, 11.53, 12.82, 12.36, 12.51, 10.69, 11.33, 13.33, 13.12, 13.21, 13.07, 13.76, 12.90, 14.63, 11.81, 9.76, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.21, 11.04, 12.81, 12.20, 12.69, 12.31, 12.44, 12.12, 10.84, 12.85, 12.90, 13.13, 13.74, 13.18, 11.91, 12.53, 13.10, 12.28, 12.92, 10.95, 12.83, 13.20, 13.25, 12.10, 11.95, 12.08, 11.65, 8.45, 0.00, 0.00, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 10.19, 11.24, 10.55, 11.33, 12.09, 12.56, 13.71, 12.03, 10.78, 12.75, 12.67, 12.50, 12.48, 12.50, 11.96, 12.21, 12.28, 9.88, 11.85, 12.44, 11.07, 11.18, 10.68, 11.42, 12.39, 10.08])
+    iso_data[iso_data==0.] = np.nan
+    iso_data, iso_data_x_ct = count_number(iso_data)
+    temp_x_r = np.fliplr(x_resized.T)
+    model_resized = complex_resize(temp_x_r.flatten(), iso_data_x_ct)
+    remodeled = np.array(model_resized)
+    model_isomap = remodeled
+    data_isomap = iso_data
 
-    return model_isomap, data_isomap    
+    return model_isomap, data_isomap
 
 def main():
 
@@ -496,13 +487,13 @@ def main():
     #params.add('air', value=-18.)
     #params.add('feed', value=-8.)
 
-    model_isomap, data_isomap = test01(toothmodel_sm, bloodhist)
-    fig = plt.figure(dpi=300)
-    ax1 = plt.subplot(1,2,1)
-    cimg1 = ax1.imshow(model_isomap, aspect='auto', interpolation='nearest', origin='lower')
+    model_isomap, data_isomap = isotope_data(toothmodel_sm, bloodhist)
+    fig = plt.figure(dpi=100)
+    ax1 = plt.subplot(2,1,1)
+    cimg1 = ax1.imshow(model_isomap.T, aspect='auto', interpolation='nearest', origin='lower')
     cax1 = fig.colorbar(cimg1)
-    ax2 = plt.subplot(1,2,2)
-    cimg2 = ax2.imshow(data_isomap, aspect='auto', interpolation='nearest', origin='lower')
+    ax2 = plt.subplot(2,1,2)
+    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower')
     cax2 = fig.colorbar(cimg2)
     plt.show()
     
