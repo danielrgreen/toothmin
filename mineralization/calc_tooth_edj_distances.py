@@ -305,10 +305,10 @@ def main():
     
     increase_per_day = np.repeat(np.diff(tooth_length), np.diff(Nx_age))
     increase_per_day = increase_per_day / np.repeat(np.diff(Nx_age), np.diff(Nx_age))
+    print 'increase per day', increase_per_day
     increase_per_day = increase_per_day * 1000
 
     for i in xrange(0, 467):
-        print i, increase_per_day[i]
         if increase_per_day[i] > 300:
             increase_per_day[i] = 300
 

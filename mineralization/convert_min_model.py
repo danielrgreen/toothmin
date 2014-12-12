@@ -28,8 +28,6 @@ def water_hist(days=365., Am=10., P=182., offset=40., mean=-7.):
     
     days = np.arange(days)
     waterhist = Am * np.sin((days-offset) * (2*np.pi) / P) + mean
-
-    print '0', waterhist.shape
     
     return waterhist, days
 
@@ -235,30 +233,66 @@ class ToothModel:
         return new_array
     
     def downsample_model(self, shape, n_samples):
-        img_sm = np.empty((shape[0], shape[1], n_samples, self.n_ages), dtype='f8')
+        img_sm = np.empty((shape[1], shape[0], n_samples, self.n_ages), dtype='f8') ######## 0,1
         
         for n in xrange(n_samples):
             img = self.gen_mnzt_image(mode='sample')
 
             for t in xrange(self.n_ages):
-                img_sm[:,:,n,t] = self._resize(img[:,:,t], shape)
+                img_sm[:,:,n,t] = np.fliplr((self._resize(img[:,:,t], (shape[0], shape[1]))).T) ######## 0,1 #
+                #print 'first', img_sm[:,:,n,t].shape
+                #img_sm[:,:,n,t] = img_sm[:,:,n,t].T
+                #print 'second', img_sm[:,:,n,t].shape
 
-        img_sm.shape = (shape[0]*shape[1], n_samples, self.n_ages)
+        img_sm.shape = (shape[0]*shape[1], n_samples, self.n_ages) ########## 0,1 # no effect
 
-        locations = np.indices(shape)
-        locations.shape = (2, shape[0]*shape[1])
-        locations = np.swapaxes(locations, 0, 1)
+        locations = np.indices((shape[1], shape[0])) ######## 0,1 # shape now reversed
+        locations.shape = (2, shape[0]*shape[1]) ######## 0,1 # no effect
+        locations = np.swapaxes(locations, 0, 1) ######## 0,1 # no effect
         
         tmodel = ToothModel()
         tmodel.pct_min_interp = img_sm[:,:,:]
         tmodel.locations = locations[:,:]
         tmodel.ages = self.ages[:]
-        tmodel.n_pix = shape[0] * shape[1]
+        tmodel.n_pix = shape[0] * shape[1] ########## 0,1 # no effect
         tmodel.n_ages = self.n_ages
         tmodel.n_samples = n_samples
 
         return tmodel
-    
+
+    def gen_isotope_image(self, bloodhist, mode='sample'):
+        idx_mask = np.isnan(self.pct_min_interp)
+        pct_min_interp = np.ma.array(self.pct_min_interp, mask=idx_mask, fill_value=0.)
+        pct_min_diff = diff_with_first(pct_min_interp[:,:,:].filled(), axis=2)
+
+        n_days = bloodhist.size
+        pct_min_diff_days = np.empty((self.n_pix, self.n_samples, n_days), dtype='f8')
+        pct_min_diff_days[:] = np.nan
+        
+        for k,(a1,a2) in enumerate(zip(self.ages[:-1], self.ages[1:])):
+            if a1 > n_days:
+                break
+
+            dt = a2 - a1
+            
+            if a2 > n_days:
+                a2 = n_days
+            
+            pct_min_diff_days[:,:,a1:a2] = (pct_min_diff[:,:,k] / dt)[:,:,np.newaxis]
+
+        pct_min_diff_days[np.isnan(pct_min_diff_days)] = 0.
+        pct_min_days = np.cumsum(pct_min_diff_days, axis=2)
+        pct_min_days[pct_min_days==0.] = np.nan
+
+        isotope = np.cumsum(
+            bloodhist[np.newaxis, np.newaxis, :]
+            * pct_min_diff_days,
+            axis=2
+        )
+        
+        isotope /= pct_min_days
+
+    '''
     def gen_isotope_image(self, bloodhist, mode='sample'):
         idx_mask = np.isnan(self.pct_min_interp)
         pct_min_interp = np.ma.array(self.pct_min_interp, mask=idx_mask, fill_value=0.)
@@ -292,7 +326,7 @@ class ToothModel:
         isotope /= pct_min_days
         
         return self._pix2img(isotope, mode=mode, interp=False)
-
+    '''
 
 def diff_with_first(x, axis=0):
     y = np.swapaxes(x, 0, axis)
@@ -341,8 +375,8 @@ def gen_min_movie(toothmodel):
         img[k] = img_interp(t)
 
     img = np.diff(img, axis=0)
-    sigma_t = 10
-    sigma_x, sigma_y = 2, 2
+    sigma_t = 0
+    sigma_x, sigma_y = 0, 0
     img = gaussian_filter(img, (sigma_t,sigma_x,sigma_y), mode='nearest')
     
     idx = np.isfinite(img)
@@ -358,11 +392,11 @@ def gen_min_movie(toothmodel):
     
     for k,t in enumerate(ages[:-1]):
         #img = img_interp(t)
-        im.set_data(img[k].T)
+        im.set_data(img[k].T) #was(img[k].T)
 
         ax.set_title(r'$t = %d \ \mathrm{days}$' % t, fontsize=14)
         
-        fig.savefig('october_rate_g10_x02_y02_local_k%04d.png' % k, dpi=100)
+        fig.savefig('december_rate_sigt10_x0_y0_test01_k%04d.png' % k, dpi=100)
 
 def gen_isomap_movie(toothmodel, bloodhist):
 
@@ -432,11 +466,7 @@ def complex_resize(model, iso_data_x_ct):
 def imresize1(x, iso_shape, method=Image.BILINEAR):
     '''
     '''
-
-    print 'imresize1 x.shape before transformation = ', x.shape
     x = x[:,:,-1] # OR SUM, ALSO BROKEN BECAUSE SUM OR MEAN TAKES NANS
-    print 'imresize1 x.shape after transformation = ', x.shape
-
     assert len(x.shape) == 2
     
     im = Image.fromarray(x)
@@ -458,7 +488,7 @@ def isotope_data(toothmodel, bloodhist):
     model_isomap = toothmodel.gen_isotope_image(bloodhist, mode='sample')
     x_resized = imresize1(model_isomap, iso_shape, method=Image.BILINEAR)
     
-    iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.00, 0.00, 0.00, 0.00, 0.00, 12.08, 12.91, 10.38, 13.29, 13.36, 12.85, 13.15, 12.35, 13.31, 12.89, 12.92, 13.35, 13.12, 13.21, 13.08, 13.30, 13.67, 12.45, 11.82, 11.32, 11.81, 9.76, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.21, 11.04, 12.81, 12.20, 12.69, 13.00, 13.07, 13.11, 12.98, 13.20, 13.37, 13.24, 12.26, 12.61, 13.19, 12.50, 13.01, 12.75, 13.08, 12.97, 13.15, 12.52, 12.33, 12.08, 11.87, 11.07, 11.65, 8.45, 0.00, 0.00, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 12.86, 12.69, 12.95, 12.66, 12.89, 13.52, 12.47, 12.91, 12.95, 12.87, 12.41, 12.72, 12.82, 12.38, 12.44, 12.89, 11.03, 12.63, 12.99, 13.13, 12.43, 7.35, 12.10, 11.42, 12.39, 10.08])
+    iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.00, 0.00, 0.00, 0.00, 0.00, 12.08, 12.91, 10.38, 13.29, 13.36, 12.85, 13.15, 12.35, 13.31, 12.89, 12.92, 13.35, 13.12, 13.21, 13.08, 13.30, 13.67, 12.45, 11.82, 11.32, 11.81, 9.76, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.21, 11.04, 12.81, 12.20, 12.69, 13.00, 13.07, 13.11, 12.98, 13.20, 13.37, 13.24, 12.26, 12.61, 13.19, 12.50, 13.01, 12.75, 13.08, 12.97, 13.15, 12.52, 12.33, 12.08, 11.87, 11.07, 11.65, 8.45, 0.00, 0.00, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 12.86, 12.69, 12.95, 12.66, 12.89, 13.52, 12.47, 12.91, 12.95, 12.87, 12.41, 12.72, 12.82, 12.38, 12.44, 12.89, 11.03, 12.63, 12.99, 13.13, 12.43, 7.35, 12.10, 11.42, 12.39, 10.08])
     iso_data[iso_data==0.] = np.nan
     iso_data, iso_data_x_ct = count_number(iso_data)
     temp_x_r = np.fliplr(x_resized.T)
@@ -477,7 +507,10 @@ def main():
     print 'Downsampling tooth model ...'
     toothmodel_sm = toothmodel.downsample_model((50,12), 1)
     waterhist, days = water_hist()
-    bloodhist = blood_hist(waterhist)
+    #bloodhist = blood_hist(waterhist)
+    bloodhist = np.zeros(days.size)
+    bloodhist[bloodhist==0] = 4.
+    bloodhist[90:100] = 8.
 
     #params = Parameters()
     #params.add('amp', value=10.)
@@ -487,17 +520,19 @@ def main():
     #params.add('air', value=-18.)
     #params.add('feed', value=-8.)
 
+    '''
     model_isomap, data_isomap = isotope_data(toothmodel_sm, bloodhist)
     fig = plt.figure(dpi=100)
     ax1 = plt.subplot(2,1,1)
-    cimg1 = ax1.imshow(model_isomap.T, aspect='auto', interpolation='nearest', origin='lower')
+    cimg1 = ax1.imshow(model_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=4, vmax=5)
     cax1 = fig.colorbar(cimg1)
     ax2 = plt.subplot(2,1,2)
     cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower')
     cax2 = fig.colorbar(cimg2)
     plt.show()
+    '''
     
-    #gen_min_movie(toothmodel_sm)
+    gen_min_movie(toothmodel_sm)
     #gen_isomap_movie(toothmodel_sm, bloodhist)
     
     return 0

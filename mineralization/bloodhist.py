@@ -28,35 +28,35 @@ import matplotlib.pyplot as plt
 
 start = 0.
 
-days_initial_period = 50.
-initial_water_d18O = 14.
-initial_feed_d18O = 13.
+days_initial_period = 1.
+initial_water_d18O = -6.5
+initial_feed_d18O = 8.
 
-air_d18O = 9.
-blood_halflife = 5. 
+air_d18O = -20.
+blood_halflife = 3. 
 
-length_of_first_switch = 30.
-first_H2O_switch_d18O = 15.
-first_feed_switch_d18O = 13.
+length_of_first_switch = 1.
+first_H2O_switch_d18O = -6.5
+first_feed_switch_d18O = 8.
 
-length_of_second_switch = 180.
-second_H20_switch_d18O = 14.
-second_feed_switch_d18O = 13.
+length_of_second_switch = 20.
+second_H20_switch_d18O = -19.3
+second_feed_switch_d18O = 8.
 
-length_of_third_switch = 60.
-third_H2O_switch_d18O = 9.
-third_feed_switch_d18O = 13.
+length_of_third_switch = 1.
+third_H2O_switch_d18O = -19.3
+third_feed_switch_d18O = 9.
 
-length_of_fourth_switch = 15.
-fourth_H2O_switch_d18O = 14.
-fourth_feed_switch_d18O = 13.
+length_of_fourth_switch = 1.
+fourth_H2O_switch_d18O = -19.3
+fourth_feed_switch_d18O = 8.
 
-length_of_fifth_switch = 50.
-fifth_H2O_switch_d18O = 11.
-fifth_feed_switch_d18O = 13.
+length_of_fifth_switch = 1.
+fifth_H2O_switch_d18O = -19.3
+fifth_feed_switch_d18O = 8.
 
-likely_variance_blood = .5
-measurement_error = .3
+likely_variance_blood = .25
+measurement_error = .1
 samples_per_point = 10
 sample_frequency = 2.
     
@@ -80,8 +80,8 @@ def calc_d1(start, finish, air, h, water1, feed1, water2, feed2):
     '''
 
     # Initial and equilibrium blood d18O
-    bloodA = (.60*water1 + .30*feed1 + .1*air) # starting blood d18O
-    bloodB = (.60*water2 + .30*feed2 + .1*air) # blood equilibrium d18O
+    bloodA = (.65*water1 + .20*feed1 + .15*air) # starting blood d18O
+    bloodB = (.65*water2 + .20*feed2 + .15*air) # blood equilibrium d18O
 
     # create time series (days) and vector for d18O
     t = np.linspace(start, finish, num=(finish-start+1)) # time t in days
@@ -114,7 +114,7 @@ def calc_d2(start, finish, air, h, bloodA, water2, feed2):
     '''
     
     # Initial and equilibrium blood d18O
-    bloodB = (.60*water2 + .30*feed2 + .1*air) # blood equilibrium d18O
+    bloodB = (.65*water2 + .20*feed2 + .15*air) # blood equilibrium d18O
     
     # create time series (days) and vector for d18O
     t = np.linspace(start, finish, num=(finish-start+1)) # time t in days
@@ -241,6 +241,11 @@ def noise(d18O_history, likely_variance_blood, measurement_error, samples_per_po
     
     return (sigma_profile, sigma)
 
+def sheeps():
+
+    data_947 = 0.
+
+
 def main():
 
     d18O_history, water_history, feed_history, air_history = calc_blood_hist()
@@ -295,8 +300,8 @@ def main():
     #ax.plot(ipts, c='r', marker='.', linestyle='none')
     #ax.plot(jpts, c='r', marker='.', linestyle='none')
     ax.set_title(b'Sheep blood $\delta^{18}$O varies with inputs & predicts tooth $\delta^{18}$O profiles')
-    ax.set_ylim(minimum-2, maximum*1.1)
-    ax.set_xlim(1., d18O_history.size)
+    ax.set_ylim(-15, -5)              #(minimum-2, maximum*1.1)
+    ax.set_xlim(3, 25)                       #(1., d18O_history.size)
     ax.legend(loc='best')
     ax.set_ylabel(r'$d^{18} \mathrm{O} \ \mathrm{in} \ \mathrm{VSMOW}$')
     ax.set_xlabel('time in days')
