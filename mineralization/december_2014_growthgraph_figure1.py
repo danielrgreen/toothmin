@@ -158,10 +158,36 @@ def est_tooth_extension(x, amplitude, slope, offset):
 
     return extension_erf
 
+def est_kdorf_gaussian(x, amplitude, slope, offset):
+    
+    height_max = 36. # in millimeters
+    kdorf_gaussian = amplitude * np.exp(-(x - offset)**2 / (2. * slope**2))
+
+    return kdorf_gaussian
+
 def curve_residuals(p0, pcurve_fit, x,y):
     penalization = ((p0[2] - pcurve_fit[2]))**2 * .005/x.size
-    resids = ((y - est_tooth_extension(x, p0[0],p0[1],p0[2]))**2 + penalization)**.5
+    resids = ((y - est_tooth_extension(x, p0[0], p0[1], p0[2]))**2 + penalization)**.5
     return resids
+
+def kdorf_residuals(p0, pcurve_fit, x,y):
+    penalization = ((p0[2] - pcurve_fit[2]))**2 * 1/x.size
+    resids = ((y - est_kdorf_gaussian(x, p0[0], p0[1], p0[2]))**2 + penalization)**.5
+    return resids
+
+def est_p70_extension(x, amplitude, offset):
+    
+    height_max = 36. # in millimeters
+    extension_erf = (amplitude * spec.erf(.0058 * (x - offset))) + (height_max - amplitude)
+
+    return extension_erf
+
+def p70_residuals(p0, pcurve_fit, x,y):
+    penalization = ((p0[1] - pcurve_fit[1]))**2 * .005/x.size
+    resids = ((y - est_p70_extension(x, p0[0], p0[1]))**2 + penalization)**.5
+    return resids
+
+
 
 def main():
 
@@ -245,8 +271,8 @@ def main():
     model_pct_increase_per_day = model_increase_per_day / np.max(model_increase_per_day)
 
     # Kierdorf 2013 data
-    kday = np.array([13, 27, 41, 55, 75, 154, 168, 185, 200, 212, 230, 245])
-    kext = np.array([177, 168, 180, 132, 110, 40, 36, 35, 33, 27, 28, 29])
+    kday = np.array([13., 27., 41., 55., 75., 154., 168., 185., 200., 212., 230., 245.])
+    kext = np.array([177., 168., 180., 132., 110., 40., 36., 35., 33., 27., 28., 29.])
 
     tooth_days = np.array([1., 9., 11., 19., 21., 30., 31., 31., 38., 42., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
     tooth_extension = np.array([9.38, 8.05, 11.32, 9.43, 13.34, 16.19, 13.85, 15.96, 15.32, 14.21, 17.99, 19.32, 19.32, 18.31, 17.53, 18.68, 18.49, 22.08, 23.14, 19.92, 27.97, 24.38, 25.53, 29.07, 27.65, 26.27, 27.55, 24.33, 29.03, 29.07, 30.36, 31.79, 31.37, 31.28, 35.79, 29.81, 31.79, 34.04, 33.21, 34.50, 33.76, 33.40, 36.34, 33.63])
@@ -259,68 +285,70 @@ def main():
 
     p0_var_ext = np.array([30.34, .006102, -10.54])
     p0_var_p35 = np.array([23., .008, 13.])
-    p0_var_p70 = np.array([25., .006, 110.])
+    p0_var_p70 = np.array([25., 80.]) # slope (middle variable) is estimated at .0058
+    p0_var_kd = np.array([180., 105., 0.])
 
-    days = np.linspace(-50, 350, 401)
+    days = np.linspace(-50, 400, 451)
     ext_variables, ext_pcov = curve_fit(est_tooth_extension, tooth_days, tooth_extension, p0_var_ext)
     p35_variables, p35_pcov = curve_fit(est_tooth_extension, tooth_days, tooth_35p, p0_var_p35)
-    p70_variables, p70_pcov = curve_fit(est_tooth_extension, tooth_70p_days, tooth_70p_b, p0_var_p70)
-    p70_variables2, p70_pcov2 = leastsq(func=curve_residuals, x0=p70_variables, args=(p0_var_p70, tooth_70p_days, tooth_70p_b))
-    print ext_variables
-    print p35_variables
-    print p70_variables
-    print p70_variables2
+    p70_variables, p70_pcov = curve_fit(est_p70_extension, tooth_70p_days, tooth_70p_b, p0_var_p70)
+    p70_variables2, p70_pcov2 = leastsq(func=p70_residuals, x0=p70_variables, args=(p0_var_p70, tooth_70p_days, tooth_70p_b))
+    kdorf_var, kdorf_pcov = curve_fit(est_kdorf_gaussian, kday, kext, p0_var_kd)
+    kdorf_var2, kdorf_pcov2 = leastsq(func=kdorf_residuals, x0=kdorf_var, args=(p0_var_kd, kday, kext))
+    print 'ext', ext_variables
+    print 'p35', p35_variables
+    print 'p70', p70_variables
+    print 'p70.2', p70_variables2
+    print 'p0_p70', p0_var_p70
+    print 'kdorf', kdorf_var
+    print 'kdorf.2', kdorf_var2
+    print 'p0_kdorf', p0_var_kd
     
     extension_erf = est_tooth_extension(days, ext_variables[0], ext_variables[1], ext_variables[2])
     p35_erf = est_tooth_extension(days, p35_variables[0], p35_variables[1], p35_variables[2])
-    p70_erf = est_tooth_extension(days, p70_variables2[0], p70_variables2[1], p70_variables2[2])
+    p70_erf = est_p70_extension(days, p70_variables2[0], p70_variables2[1])
+    kdorf_gauss = est_kdorf_gaussian(days, kdorf_var2[0], kdorf_var2[1], kdorf_var2[2])
 
     diff_extension_erf = np.diff(extension_erf) * 1000
     diff_p35_erf = np.diff(p35_erf) * 1000
     diff_p70_erf = np.diff(p70_erf) * 1000
 
-    ext_zero = ext_variables[1] - ext_variables[2]*spec.erfinv((36. - ext_variables[0])/ext_variables[0])
-    p35_zero = p35_variables[1] - p35_variables[2]*spec.erfinv((36. - p35_variables[0])/p35_variables[0])
-    p70_zero = p70_variables2[1] - p70_variables2[2]*spec.erfinv((36. - p70_variables2[0])/p70_variables2[0])
-    print ext_zero, p35_zero, p70_zero 
+    #ext_zero = ext_variables[1] - ext_variables[2]*spec.erfinv((36. - ext_variables[0])/ext_variables[0])
+    #p35_zero = p35_variables[1] - p35_variables[2]*spec.erfinv((36. - p35_variables[0])/p35_variables[0])
+    #p70_zero = p70_variables2[1] - p70_variables2[2]*spec.erfinv((36. - p70_variables2[0])/p70_variables2[0])
 
-    gmod = Model(est_tooth_extension)
-    print gmod.eval(x=tooth_70p_b, amplitude=25., slope=.006, offset=110.)
-
+    #gmod = Model(est_tooth_extension)
+    #gmod.eval(x=tooth_70p_b, amplitude=25., slope=.006, offset=110.)
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax2 = ax.twinx()
-    ax2.plot(days[1::4], diff_extension_erf[::4], 'b.', label=r'$ \mathrm{extension} \ \Delta $')
-    ax2.plot(days[1::4], diff_p35_erf[::4], 'm.', label=r'$ \mathrm{maturation} \ \Delta $')
-    ax2.plot(days[1::4], diff_p70_erf[::4], 'r.', label=r'$ \mathrm{completion} \ \Delta $')
-    ax2.set_ylim([0,300])
-    ax2.set_xlim([-60,350])
-    ax.plot(tooth_days, tooth_extension, marker='o', linestyle='none', color='b', label=r'$ \mathrm{extension}$')
-    ax.plot(tooth_days, tooth_35p, marker='o', linestyle='none', color='m', label=r'$ \mathrm{maturation}$')
-    ax.plot(tooth_days, tooth_70p, marker='o', linestyle='none', color='r', label=r'$ \mathrm{completion}$')
+    ax2.plot(days[1::4], diff_extension_erf[::4], 'b.', label=r'$ \mathrm{extension} \ \Delta $', alpha=.5)
+    ax2.plot(days[1::4], diff_p35_erf[::4], 'm.', label=r'$ \mathrm{maturation} \ \Delta $', alpha=.5)
+    ax2.plot(days[1::4], diff_p70_erf[::4], 'r.', label=r'$ \mathrm{completion} \ \Delta $', alpha=.5)
+    ax2.plot(kday, kext, marker='D', mfc='none', mec='g', linewidth=2, linestyle='none', label=r'$ \mathrm{Kierdorf} \ \mathrm{(observed)} $')
+    ax2.plot(days[::4], kdorf_gauss[::4], 'g-.', label=r'$ \mathrm{Kierdorf} \ \Delta $')
+    ax2.set_ylim([0,250])
+    ax2.set_xlim([-50,400])
+    ax.plot(tooth_days, tooth_extension, marker='o', linestyle='none', color='b', label=r'$ \mathrm{extension} \ \mathrm{(observed)} $')
+    ax.plot(tooth_days, tooth_35p, marker='o', linestyle='none', color='m', label=r'$ \mathrm{maturation} \ \mathrm{(observed)} $')
+    ax.plot(tooth_days, tooth_70p, marker='o', linestyle='none', color='r', label=r'$ \mathrm{completion} \ \mathrm{(observed)} $')
     ax.plot(days, extension_erf, linestyle='-', color='b', label=r'$ \mathrm{extension,} \ \mathrm{optimized} $')
     ax.plot(days, p35_erf, linestyle='-', color='m', label=r'$ \mathrm{maturation,} \ \mathrm{optimized} $')
     ax.plot(days, p70_erf, linestyle='-', color='r', label=r'$ \mathrm{completion,} \ \mathrm{optimized} $')
     ax.set_ylim([0,40])
-    ax.set_xlim([-60,350])
+    ax.set_xlim([-50,400])
     plt.title('Enamel secretion and maturation progress over time')
     ax.set_xlabel('Days after birth')
     ax.set_ylabel('Progress from cusp tip in mm')
     ax2.set_ylabel('Secretion or maturation speed in um/day')
-    ax2.legend(loc='lower right', fancybox=True, framealpha=0.8)
-    ax.legend(loc='upper left', fancybox=True, framealpha=0.8)
+    #ax2.legend(loc='lower right', fancybox=True, framealpha=0.8)
+    #ax.legend(loc='upper right', fancybox=True, framealpha=0.8)
+    h1, l1 = ax.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax.legend(h1+h2, l1+l2, loc='center right')
 
     plt.show()
-    '''
-    ax2 = ax.twinx()
-    ax2.plot(xs, ys, color='g', label='radiograph extension, smooth')
-    ax2.plot(days, increase_per_day, color='y', label='radiograph extension, raw')
-    ax2.plot(kday, kext, color='k', mfc='none', marker='o', linestyle='none', label='histology extension')
-    plt.show()
-    '''
-
-
 
     return 0
 if __name__ == '__main__':
