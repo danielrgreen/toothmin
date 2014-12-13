@@ -18,8 +18,11 @@ import time
 import h5py
 import emcee
 from fit_positive_function import TMonotonicPointModel, TMCMC
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, minimize, leastsq
+from scipy.integrate import quad
+from scipy import pi, sin
 import scipy.special as spec
+from lmfit import Model
 
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
@@ -148,11 +151,17 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
     
     return resampImg[:,:].T, age_label
 
-def est_tooth_extension(tooth_days, amplitude, slope, offset):
-
-    extension_erf = (amplitude * spec.erf(slope * (tooth_days - offset))) + amplitude
+def est_tooth_extension(x, amplitude, slope, offset):
+    
+    height_max = 36. # in millimeters
+    extension_erf = (amplitude * spec.erf(slope * (x - offset))) + (height_max - amplitude)
 
     return extension_erf
+
+def curve_residuals(p0, pcurve_fit, x,y):
+    penalization = ((p0[2] - pcurve_fit[2]))**2 * 1000000/x.size
+    resids = ((y - est_tooth_extension(x, p0[0],p0[1],p0[2]))**2 + penalization)**.5
+    return resids
 
 def main():
 
@@ -248,50 +257,68 @@ def main():
     tooth_70p_days = np.array([30., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
     tooth_70p_b = np.array([2.76, 3.68, 4.60, 4.69, 5.11, 4.88, 5.75, 4.74, 7.36, 8.97, 5.15, 13.62, 12.33, 11.13, 14.54, 13.25, 10.81, 13.25, 8.69, 15.78, 17.16, 19.27, 20.56, 19.87, 21.48, 30.27, 20.01, 22.17, 24.56, 26.27, 28.11, 23.55, 23.83, 36.34, 29.49])
 
-    days = np.linspace(-50, 300, 351)
-    ext_variables, ext_pcov = curve_fit(est_tooth_extension, tooth_days, tooth_extension)
-    p35_variables, p35_pcov = curve_fit(est_tooth_extension, tooth_days, tooth_35p)
-    p70_variables, p70_pcov = curve_fit(est_tooth_extension, tooth_70p_days, tooth_70p_b)
+    p0_var_ext = np.array([30.34, .006102, -10.54])
+    p0_var_p35 = np.array([23., .008, 13.])
+    p0_var_p70 = np.array([25., .006, 110.])
+
+    days = np.linspace(-50, 350, 401)
+    ext_variables, ext_pcov = curve_fit(est_tooth_extension, tooth_days, tooth_extension, p0_var_ext)
+    p35_variables, p35_pcov = curve_fit(est_tooth_extension, tooth_days, tooth_35p, p0_var_p35)
+    p70_variables, p70_pcov = curve_fit(est_tooth_extension, tooth_70p_days, tooth_70p_b, p0_var_p70)
+    p70_variables2, p70_pcov2 = leastsq(func=curve_residuals, x0=p70_variables, args=(p0_var_p70, tooth_70p_days, tooth_70p_b))
     print ext_variables
     print p35_variables
     print p70_variables
+    print p70_variables2
     
     extension_erf = est_tooth_extension(days, ext_variables[0], ext_variables[1], ext_variables[2])
     p35_erf = est_tooth_extension(days, p35_variables[0], p35_variables[1], p35_variables[2])
-    p70_erf = est_tooth_extension(days, p35_variables[0]*.75, p35_variables[1]*.6, p35_variables[2]*.6)
+    p70_erf = est_tooth_extension(days, p70_variables2[0], p70_variables2[1], p70_variables2[2])
 
     diff_extension_erf = np.diff(extension_erf) * 1000
     diff_p35_erf = np.diff(p35_erf) * 1000
     diff_p70_erf = np.diff(p70_erf) * 1000
+
+    ext_zero = ext_variables[1] - ext_variables[2]*spec.erfinv((36. - ext_variables[0])/ext_variables[0])
+    p35_zero = p35_variables[1] - p35_variables[2]*spec.erfinv((36. - p35_variables[0])/p35_variables[0])
+    p70_zero = p70_variables2[1] - p70_variables2[2]*spec.erfinv((36. - p70_variables2[0])/p70_variables2[0])
+    print ext_zero, p35_zero, p70_zero 
+
+    gmod = Model(est_tooth_extension)
+    print gmod.eval(x=tooth_70p_b, amplitude=25., slope=.006, offset=110.)
+
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(tooth_days, tooth_extension, marker='o', linestyle='none', color='b', label='extension')
     ax.plot(tooth_days, tooth_35p, marker='o', linestyle='none', color='m', label='maturation onset')
     ax.plot(tooth_days, tooth_70p, marker='o', linestyle='none', color='r', label='completion')
-    ax.plot(days, extension_erf, linestyle='-', color='b', label='erf_extension')
-    ax.plot(days, p35_erf, linestyle='-', color='m', label='erf_maturation')
-    ax.plot(days, p70_erf, linestyle='-', color='r', label='erf_completion')
+    ax.plot(days, extension_erf, linestyle='-', color='b', label='extension err. fxn')
+    ax.plot(days, p35_erf, linestyle='-', color='m', label='maturation err. fxn')
+    ax.plot(days, p70_erf, linestyle='-', color='r', label='completion err. fxn')
     ax.set_ylim([0,40])
-    ax.set_xlim([-60,300])
+    ax.set_xlim([-60,350])
     ax2 = ax.twinx()
-    ax2.plot(days[1:], diff_extension_erf, linestyle='.', color='b', label='diff_extension')
-    ax2.plot(days[1:], diff_p35_erf, linestyle='.', color='m', label='diff_maturation')
-    ax2.plot(days[1:], diff_p70_erf, linestyle='.', color='r', label='diff_completion')
-    ax2.set_ylim([0,1000])
-    ax2.set_xlim([-60,300])
-
-
+    ax2.plot(days[1::3], diff_extension_erf[::3], 'b.', label='extension delta')
+    ax2.plot(days[1::3], diff_p35_erf[::3], 'm.', label='maturation delta')
+    ax2.plot(days[1::3], diff_p70_erf[::3], 'r.', label='completion delta')
+    ax2.set_ylim([0,300])
+    ax2.set_xlim([-60,350])
+    plt.title('Enamel secretion and maturation progress over time')
+    ax.set_xlabel('Days after birth')
+    ax.set_ylabel('Progress from cusp tip in mm')
+    ax2.set_ylabel('Secretion or maturation speed in um/day')
+    legend2 = ax2.legend(loc='lower right', fancybox=True, framealpha=0.8)
+    legend2.set_zorder(21)
+    legend1 = ax.legend(loc='upper left', fancybox=True, framealpha=0.8)
+    legend1.set_zorder(20)
+    
     plt.show()
     '''
     ax2 = ax.twinx()
     ax2.plot(xs, ys, color='g', label='radiograph extension, smooth')
     ax2.plot(days, increase_per_day, color='y', label='radiograph extension, raw')
     ax2.plot(kday, kext, color='k', mfc='none', marker='o', linestyle='none', label='histology extension')
-    ax.set_xlabel('age or Nx_age in days')
-    ax.set_ylabel('length in mm')
-    ax2.set_ylabel('extension in um/day')
-    plt.title('Age & Nx_age vs. tooth_length: tooth length by age at death')
     plt.show()
     '''
 
