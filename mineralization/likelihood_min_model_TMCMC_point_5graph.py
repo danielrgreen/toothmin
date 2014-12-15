@@ -23,7 +23,7 @@
 #  
 
 import numpy as np
-#import matplotlib
+import matplotlib
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
@@ -50,8 +50,8 @@ from lmfit import Model
 
 # user inputs
 
-x_coordinates = np.array([65, 105, 145, 185, 225, 265, 305, 345, 385, 425, 465, 505, 545, 585, 625, 665, 705, 65, 105, 145, 185, 225, 265, 305, 345, 385, 425, 465, 505, 545, 585, 625, 665, 705, 65, 105, 145, 185, 225, 265, 305, 345, 385, 425, 465, 505, 545, 585, 625, 665, 705])
-y_coordinates = np.array([35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55])
+x_coordinates = np.array([145, 265, 385, 505, 625, 145, 265, 385, 505, 625])
+y_coordinates = np.array([12, 12, 12, 12, 12, 50, 50, 50, 50, 50])
 
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
@@ -239,45 +239,47 @@ def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior, n_clip=3.):
 Loads image
 '''
 
-def plot_point(x_coord, y_coord, imgStack, n_store,
+def figure_out_trajectories(x_coord, y_coord, imgStack, n_store,
                loc_store, mask_store, samples_store, Nx_age):
-               
-    print 'plotting x%d, y%d ...' % (x_coord,y_coord)
-    for x in xrange(x_coord,x_coord+1):
-        for y in xrange(y_coord,y_coord+1):
-            pct_min = imgStack[:, x, y]
-            idx = np.isfinite(pct_min)           
-            n_points = np.sum(idx)
-            pct_min = pct_min[idx]
 
-            # MCMC sampling
-            sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
-            mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
-            sigma_prior = 2. * np.ones(pct_min.size, dtype='f8')
+    x = x_coord
+    y = y_coord
+    pct_min = imgStack[:, x, y]
+    idx = np.isfinite(pct_min)           
+    n_points = np.sum(idx)
+    pct_min = pct_min[idx]
+
+    # MCMC sampling
+    sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
+    mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
+    sigma_prior = 2. * np.ones(pct_min.size, dtype='f8')
             
-            model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
-            _, guess = model.guess(1)
-            cov_guess = np.diag(sigma)
+    model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
+    _, guess = model.guess(1)
+    cov_guess = np.diag(sigma)
 
-            sampler = TMCMC(model, guess, cov_guess/20.)
+    sampler = TMCMC(model, guess, cov_guess/20.)
 
-            N = 150000
-            for i in range(N):
-		sampler.step()
-            sampler.flush()
+    N = 150000
+    for i in range(N):
+	sampler.step()
+    sampler.flush()
 
-            accept_frac = sampler.get_acceptance_rate()
-            print 'Acceptance rate: %.4f %%' % (100. * accept_frac)
+    accept_frac = sampler.get_acceptance_rate()
+    print 'Acceptance rate: %.4f %%' % (100. * accept_frac)
             
-            chain = sampler.get_chain(burnin=N/3).T
-            np.random.shuffle(chain)
-            pct_min_samples = np.cumsum(np.exp(chain[:n_store]), axis=1)
+    chain = sampler.get_chain(burnin=N/3).T
+    np.random.shuffle(chain)
+    pct_min_samples = np.cumsum(np.exp(chain[:n_store]), axis=1)
 
-            # Store results for pixel
-            loc_store.append([x, y])
-            mask_store.append(idx)
-            samples_store.append(pct_min_samples)
+    # Store results for pixel
+    loc_store.append([x, y])
+    mask_store.append(idx)
+    samples_store.append(pct_min_samples)
 
+    return pct_min_samples, loc_store, mask_store, samples_store, pct_min, idx
+'''
+def plot_points(pct_min_samples, loc_store, mask_store, samples_store, x, y)
             # Plot results
             fig = plt.figure()
             ax = fig.add_subplot(1,1,1)
@@ -292,7 +294,7 @@ def plot_point(x_coord, y_coord, imgStack, n_store,
             ax.set_ylabel('Estimated mineralization percent')
             ax.set_xlabel('Time in days')
             fig.savefig('Dec14_min_over_time_x=%d_y=%d.png' % (x_coord, y_coord), dpi=300, figsize=4, edgecolor='none')
-
+'''
 def main():
     parser = argparse.ArgumentParser(prog='enamelsample',
                   description='Resample image of enamel to standard grid',
@@ -384,10 +386,8 @@ def main():
     ##########    
     for i,img in enumerate(alignedimg):
         imgStack[i, :Nx[i], :Ny[i]] = img.T[:,:] # was img.T[:,:] at end
-        print np.min(imgStack), np.max
         idx = (imgStack < 0.05) | (imgStack > 1.2)
         imgStack[idx] = np.nan
-        print np.min(imgStack), np.max    
     
     # Convert from HAp density to mineral fraction by weight
     #imgStack /= 3.15
@@ -423,98 +423,71 @@ def main():
     n_steps = 2000
     n_store = 100
 
-    t1 = time.time()
+    pct_min_samples0, loc_store0, mask_store0, samples_store0, pct_min0, idx0 = figure_out_trajectories(x_coordinates[0], y_coordinates[0], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples1, loc_store1, mask_store1, samples_store1, pct_min1, idx1 = figure_out_trajectories(x_coordinates[1], y_coordinates[1], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples2, loc_store2, mask_store2, samples_store2, pct_min2, idx2 = figure_out_trajectories(x_coordinates[2], y_coordinates[2], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples3, loc_store3, mask_store3, samples_store3, pct_min3, idx3 = figure_out_trajectories(x_coordinates[3], y_coordinates[3], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples4, loc_store4, mask_store4, samples_store4, pct_min4, idx4 = figure_out_trajectories(x_coordinates[4], y_coordinates[4], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples5, loc_store5, mask_store5, samples_store5, pct_min5, idx5 = figure_out_trajectories(x_coordinates[5], y_coordinates[5], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples6, loc_store6, mask_store6, samples_store6, pct_min6, idx6 = figure_out_trajectories(x_coordinates[6], y_coordinates[6], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples7, loc_store7, mask_store7, samples_store7, pct_min7, idx7 = figure_out_trajectories(x_coordinates[7], y_coordinates[7], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples8, loc_store8, mask_store8, samples_store8, pct_min8, idx8 = figure_out_trajectories(x_coordinates[8], y_coordinates[8], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
+    pct_min_samples9, loc_store9, mask_store9, samples_store9, pct_min9, idx9 = figure_out_trajectories(x_coordinates[9], y_coordinates[9], imgStack, n_store, loc_store, mask_store, samples_store, Nx_age)
 
-    for a,b in zip(x_coordinates,y_coordinates):
-        plot_point(a, b, imgStack, n_store, loc_store,
-                   mask_store, samples_store, Nx_age)
-        
-    return 0
-        
-    #t2 = time.time()
-    #print '%.2f seconds per pixel.' % ((t2 - t1) / len(loc_store))
-
-    # create new directory file for output mineralization model
-    dirname = args.output_dir + datetime.now().strftime('%c')
-
-    if dirname == None:
-        return 0
-
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    # Calculate mineralization values for HDF5 file
-    fname = args.output
-    if fname.endswith('.h5'):
-        fname = fname[:-3]
-    fname += '%.3d.h5' % part_idx
+    sigma = 0.03
     
-    print 'Writing to %s ...' % fname
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+
+    for s in pct_min_samples0: # edj 1
+        ax.plot(Nx_age[idx0], s, '-', color='#86B404', alpha=0.05)
+    ax.errorbar(Nx_age[idx0], pct_min0, yerr=sigma, fmt='o', color='#86B404', label='x=%d, y=%d' % (x_coordinates[0], y_coordinates[0]))
     
-    loc_store = np.array(loc_store)
-    mask_store = np.array(mask_store)
+    for s in pct_min_samples1: # edj 2
+        ax.plot(Nx_age[idx1], s, '-', color='#04B404', alpha=0.05)
+    ax.errorbar(Nx_age[idx1], pct_min1, yerr=sigma, fmt='o', color='#04B404', label='x=%d, y=%d' % (x_coordinates[1], y_coordinates[1]))
 
-    n_pix = loc_store.shape[0]
-    n_ages = Nx_age.size
-    shape = (n_pix, n_store, n_ages)
+    for s in pct_min_samples2: # edj 3
+        ax.plot(Nx_age[idx2], s, '-', color='#04B45F', alpha=0.05)
+    ax.errorbar(Nx_age[idx2], pct_min2, yerr=sigma, fmt='o', color='#04B45F', label='x=%d, y=%d' % (x_coordinates[2], y_coordinates[2]))
+
+    for s in pct_min_samples3: # edj 4
+        ax.plot(Nx_age[idx3], s, '-', color='#04B4AE', alpha=0.05)
+    ax.errorbar(Nx_age[idx3], pct_min3, yerr=sigma, fmt='o', color='#04B4AE', label='x=%d, y=%d' % (x_coordinates[3], y_coordinates[3]))
+
+    for s in pct_min_samples4: # edj 5
+        ax.plot(Nx_age[idx4], s, '-', color='#045FB4', alpha=0.05)
+    ax.errorbar(Nx_age[idx4], pct_min4, yerr=sigma, fmt='o', color='#045FB4', label='x=%d, y=%d' % (x_coordinates[4], y_coordinates[4]))
+
+    for s in pct_min_samples5: # edge 1
+        ax.plot(Nx_age[idx5], s, '-', color='#C8FE2E', alpha=0.05)
+    ax.errorbar(Nx_age[idx5], pct_min5, yerr=sigma, fmt='o', color='#C8FE2E', label='x=%d, y=%d' % (x_coordinates[5], y_coordinates[5]))
+
+    for s in pct_min_samples6: # edge 2
+        ax.plot(Nx_age[idx6], s, '-', color='#2EFE2E', alpha=0.05)
+    ax.errorbar(Nx_age[idx6], pct_min6, yerr=sigma, fmt='o', color='#2EFE2E', label='x=%d, y=%d' % (x_coordinates[6], y_coordinates[6]))
+
+    for s in pct_min_samples7: # edge 3
+        ax.plot(Nx_age[idx7], s, '-', color='#2EFE9A', alpha=0.05)
+    ax.errorbar(Nx_age[idx7], pct_min7, yerr=sigma, fmt='o', color='#2EFE9A', label='x=%d, y=%d' % (x_coordinates[7], y_coordinates[7]))
+
+    for s in pct_min_samples8: # edge 4
+        ax.plot(Nx_age[idx8], s, '-', color='#2EFEF7', alpha=0.05)
+    ax.errorbar(Nx_age[idx8], pct_min8, yerr=sigma, fmt='o', color='#2EFEF7', label='x=%d, y=%d' % (x_coordinates[8], y_coordinates[8]))
+
+    for s in pct_min_samples9: # edge 5
+        ax.plot(Nx_age[idx9], s, '-', color='#2E9AFE', alpha=0.05)
+    ax.errorbar(Nx_age[idx9], pct_min9, yerr=sigma, fmt='o', color='#2E9AFE', label='x=%d, y=%d' % (x_coordinates[9], y_coordinates[9]))
     
-    pct_min = np.empty(shape, dtype='f4')
-    pct_min[:] = np.nan
-
-    print 'loc_store shape', loc_store.shape
-    print 'pct_min shape', pct_min.shape
-
-    for i, samples in enumerate(samples_store):
-        n_points = samples.shape[1]
-        pct_min[i, :, :n_points] = samples[:, :]
-
-    # Save results to an HDF5 file
-
-    f = h5py.File(dirname + '/' + fname, 'w')
-    
-    dset = f.create_dataset('/locations', loc_store.shape, 'u2',
-                                          compression='gzip',
-                                          compression_opts=9)
-    dset[:] = loc_store[:]
-
-    dset = f.create_dataset('/ages', Nx_age.shape, 'u2')
-    dset[:] = Nx_age
-    
-    dset = f.create_dataset('/age_mask', mask_store.shape, 'u1',
-                                         compression='gzip',
-                                         compression_opts=9)
-    dset[:] = mask_store[:]
-    
-    dset = f.create_dataset('/pct_min_samples', pct_min.shape, 'f4',
-                                                compression='gzip',
-                                                compression_opts=9)
-    dset[:] = pct_min[:]
-
-    f.close()
-
-    # calculate model information for save file
-
-    s = imgStack.shape
-    xpixelsize = voxelsize * args.spacing
-    ypixelsize = voxelsize * y_resampling
-    tooth_length = xpixelsize * s[1]
-    tooth_height = ypixelsize * s[2]
-
-    # Save text file with model information
-    txt = 'Please also read model attributes in the h5py file!\n'
-    txt += 'date: %s\n' % (datetime.now().strftime('%c'))
-    txt += 'species: %s\n' % (species)
-    txt += 'x_pix_size: %.3f\n' % (xpixelsize)
-    txt += 'y_pix_size: %.3f\n' % (ypixelsize)
-    txt += 'tooth_length: %.3f\n' % (tooth_length)
-    txt += 'tooth_height: %.3f\n' % (tooth_height)
-    txt += 'image_shape: %d x %d\n' % (s[1], s[2])
-    txt += 'n_time_samples: %d\n' % (s[0])
-    
-    f = open(dirname + '/info.txt', 'w')
-    f.write(txt)
-    f.close()
-
+    ax.set_ylim(0., 0.9)
+    ax.set_xlim(0., 300.)
+    ax.set_title('Mineralization over time')
+    ax.set_ylabel('Estimated mineralization percent')
+    ax.set_xlabel('Time in days')
+    ax.legend(loc='center right')
+    plt.show()
+    #fig.savefig('Dec15_min_over_time.png', dpi=300, figsize=4, edgecolor='none')
+       
     return 0
 
 if __name__ == '__main__':

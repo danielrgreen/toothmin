@@ -136,7 +136,7 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
         resampImg -= 1.48671229207043
 
     resampImg /= 3.15
-    idx = (resampImg < 0.05) | (resampImg > 0.7)
+    idx = (resampImg < 0.05) | (resampImg > 1)
     resampImg[idx] = np.nan
     vmax = 0.7
     vmin = 0.15

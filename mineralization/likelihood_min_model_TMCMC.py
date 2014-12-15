@@ -42,6 +42,7 @@ import time
 import h5py
 #import emcee
 from fit_positive_function import TMonotonicPointModel, TMCMC
+import scipy.special as spec
 
 # user inputs
 
@@ -183,7 +184,7 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
         resampImg /= 3.15 # Converts to fraction maximum theoretical density HAp
     
     # Shift each column down until bottom pixel is above some threshold
-    
+    '''
     mask = (resampImg > threshold)
     #resampImg[mask] = 0.
     
@@ -222,7 +223,7 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
     #cax = fig.colorbar(cimg)
     
     #plt.show()
-    
+    '''
     return resampImg[:,:].T
 
 def lnprob(log_Delta_y, y_obs, y_sigma, mu_prior, sigma_prior, n_clip=3.):
@@ -348,14 +349,18 @@ def main():
     
     idx = (imgStack < 0.05) | (imgStack > 1.2)
     imgStack[idx] = np.nan
-    
+
+    Nx2 = Nx*46./1000.
+    Nx2_max = np.max(Nx2) * 1.005
+    Nx_age = (spec.erfinv((30.34 + Nx2 - Nx2_max)/30.34) -(11*.0061))/.0061
+    '''
     # Relate image length to day: output for time x-axis is 'age_plt'
     age_coeff = np.polyfit(Nx, age, 5)
     
     Nx_age = np.zeros(Nx.size, dtype='f8')
     for i in xrange(len(age_coeff)):
         Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
-    
+    '''
     Nx_age = np.around(Nx_age)
     Nx_age[Nx_age < 1.] = 1
     
@@ -485,8 +490,8 @@ def main():
 
         # MCMC sampling
         sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
-        mu_prior = -4. * np.ones(pct_min.size, dtype='f8')
-        sigma_prior = 3. * np.ones(pct_min.size, dtype='f8')
+        mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
+        sigma_prior = 2. * np.ones(pct_min.size, dtype='f8')
             
         model = TMonotonicPointModel(pct_min, sigma, mu_prior, sigma_prior)
         _, guess = model.guess(1)
@@ -575,8 +580,8 @@ def main():
     # calculate model information for save file
 
     s = imgStack.shape
-    xpixelsize = voxelsize * args.spacing * 2
-    ypixelsize = voxelsize * y_resampling * 2
+    xpixelsize = voxelsize * args.spacing
+    ypixelsize = voxelsize * y_resampling
     tooth_length = xpixelsize * s[1]
     tooth_height = ypixelsize * s[2]
 
