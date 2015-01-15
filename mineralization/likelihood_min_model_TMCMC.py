@@ -501,7 +501,7 @@ def main():
 
 	N = 150000
 	for i in range(N):
-		sampler.step()
+	    sampler.step()
 	sampler.flush()
 
         accept_frac = sampler.get_acceptance_rate()

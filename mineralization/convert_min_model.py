@@ -115,7 +115,7 @@ class ToothModel:
         self._interp_missing_ages()
 
     def _load_toothmodel(self, fname):
-        f = h5py.File('final.h5', 'r')
+        f = h5py.File('final_equalsize_dec2014.h5', 'r')
         dset1 = f['/age_mask']
         self.age_mask = dset1[:].astype(np.bool)
         dset2 = f['/locations']
@@ -375,8 +375,8 @@ def gen_min_movie(toothmodel):
         img[k] = img_interp(t)
 
     img = np.diff(img, axis=0)
-    sigma_t = 0
-    sigma_x, sigma_y = 0, 0
+    sigma_t = 6
+    sigma_x, sigma_y = 1, 1
     img = gaussian_filter(img, (sigma_t,sigma_x,sigma_y), mode='nearest')
     
     idx = np.isfinite(img)
@@ -396,7 +396,7 @@ def gen_min_movie(toothmodel):
 
         ax.set_title(r'$t = %d \ \mathrm{days}$' % t, fontsize=14)
         
-        fig.savefig('december_rate_sigt10_x0_y0_test01_k%04d.png' % k, dpi=100)
+        fig.savefig('dec_rate_equalsize_k%04d.png' % k, dpi=100)
 
 def gen_isomap_movie(toothmodel, bloodhist):
 
@@ -502,15 +502,15 @@ def isotope_data(toothmodel, bloodhist):
 def main():
 
     print 'Loading tooth model ...'
-    toothmodel = ToothModel('final.h5')
+    toothmodel = ToothModel('final_equalsize_dec2014.h5')
     age_max = np.max(toothmodel.ages)
     print 'Downsampling tooth model ...'
-    toothmodel_sm = toothmodel.downsample_model((50,12), 1)
-    waterhist, days = water_hist()
+    #toothmodel_sm = toothmodel.downsample_model((50,12), 1)
+    #waterhist, days = water_hist()
     #bloodhist = blood_hist(waterhist)
-    bloodhist = np.zeros(days.size)
-    bloodhist[bloodhist==0] = 4.
-    bloodhist[90:100] = 8.
+    #bloodhist = np.zeros(days.size)
+    #bloodhist[bloodhist==0] = 4.
+    #bloodhist[90:100] = 8.
 
     #params = Parameters()
     #params.add('amp', value=10.)
@@ -532,7 +532,7 @@ def main():
     plt.show()
     '''
     
-    gen_min_movie(toothmodel_sm)
+    gen_min_movie(toothmodel)
     #gen_isomap_movie(toothmodel_sm, bloodhist)
     
     return 0

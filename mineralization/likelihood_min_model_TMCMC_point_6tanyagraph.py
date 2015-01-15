@@ -182,7 +182,7 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
         resampImg *= 0.00028045707501
         resampImg -= 1.48671229207043
 
-    resampImg /= 3.15
+    resampImg /= 2.6
     idx = (resampImg < 0.05) | (resampImg > 1)
     resampImg[idx] = np.nan
     '''
@@ -439,67 +439,67 @@ def main():
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
 
-    for s in pct_min_samples0: # cusp edj
-        ax.plot(Nx_age[idx0], s, '-', color='#AEB404', alpha=0.05)
+    #for s in pct_min_samples0: # cusp edj
+        #ax.plot(Nx_age[idx0], s, '-', color='#AEB404', alpha=0.05)
     #ax.errorbar(Nx_age[idx0], pct_min0, yerr=sigma, fmt='o', color='#AEB404', label='x=%d, y=%d' % (x_coordinates[0], y_coordinates[0]))
     ax.errorbar(Nx_age[idx0], pct_min0, yerr=sigma, fmt='o', color='#AEB404', label='Cuspal EDJ') # % (x_coordinates[0], y_coordinates[0]))
     ax.plot(Nx_age[idx0], np.mean(pct_min_samples0, axis=0), '-', color='#AEB404')
     
-    for s in pct_min_samples1: # cusp surface
-        ax.plot(Nx_age[idx1], s, '-', color='#F7FE2E', alpha=0.05)
+    #for s in pct_min_samples1: # cusp surface
+        #ax.plot(Nx_age[idx1], s, '-', color='#F7FE2E', alpha=0.05)
     #ax.errorbar(Nx_age[idx1], pct_min1, yerr=sigma, fmt='o', color='#F7FE2E', label='x=%d, y=%d' % (x_coordinates[1], y_coordinates[1]))
     ax.errorbar(Nx_age[idx1], pct_min1, yerr=sigma, fmt='o', color='#F7FE2E', label='Cuspal surface') # % (x_coordinates[1], y_coordinates[1]))
     ax.plot(Nx_age[idx1], np.mean(pct_min_samples1, axis=0), '-', color='#F7FE2E')
 
-    for s in pct_min_samples2: # high crown edj
-        ax.plot(Nx_age[idx2], s, '-', color='#31B404', alpha=0.05)
+    #for s in pct_min_samples2: # high crown edj
+        #ax.plot(Nx_age[idx2], s, '-', color='#31B404', alpha=0.05)
     #ax.errorbar(Nx_age[idx2], pct_min2, yerr=sigma, fmt='o', color='#31B404', label='x=%d, y=%d' % (x_coordinates[2], y_coordinates[2]))
     ax.errorbar(Nx_age[idx2], pct_min2, yerr=sigma, fmt='o', color='#31B404', label='High crown EDJ') # % (x_coordinates[2], y_coordinates[2]))
     ax.plot(Nx_age[idx2], np.mean(pct_min_samples2, axis=0), '-', color='#31B404')
 
-    for s in pct_min_samples3: # high crown surface
-        ax.plot(Nx_age[idx3], s, '-', color='#64FE2E', alpha=0.05)
+    #for s in pct_min_samples3: # high crown surface
+        #ax.plot(Nx_age[idx3], s, '-', color='#64FE2E', alpha=0.05)
     #ax.errorbar(Nx_age[idx3], pct_min3, yerr=sigma, fmt='o', color='#64FE2E', label='x=%d, y=%d' % (x_coordinates[3], y_coordinates[3]))
     ax.errorbar(Nx_age[idx3], pct_min3, yerr=sigma, fmt='o', color='#64FE2E', label='High crown surface') # % (x_coordinates[3], y_coordinates[3]))
     ax.plot(Nx_age[idx3], np.mean(pct_min_samples3, axis=0), '-', color='#64FE2E')
 
-    for s in pct_min_samples4: # mid crown edj
-        ax.plot(Nx_age[idx4], s, '-', color='#088A68', alpha=0.05)
+    #for s in pct_min_samples4: # mid crown edj
+        #ax.plot(Nx_age[idx4], s, '-', color='#088A68', alpha=0.05)
     #ax.errorbar(Nx_age[idx4], pct_min4, yerr=sigma, fmt='o', color='#088A68', label='x=%d, y=%d' % (x_coordinates[4], y_coordinates[4]))
     ax.errorbar(Nx_age[idx4], pct_min4, yerr=sigma, fmt='o', color='#088A68', label='Mid crown EDJ') # % (x_coordinates[4], y_coordinates[4]))
     ax.plot(Nx_age[idx4], np.mean(pct_min_samples4, axis=0), '-', color='#088A68')
 
-    for s in pct_min_samples5: # mid crown surface
-        ax.plot(Nx_age[idx5], s, '-', color='#00FFBF', alpha=0.05)
+    #for s in pct_min_samples5: # mid crown surface
+        #ax.plot(Nx_age[idx5], s, '-', color='#00FFBF', alpha=0.05)
     #ax.errorbar(Nx_age[idx5], pct_min5, yerr=sigma, fmt='o', color='#00FFBF', label='x=%d, y=%d' % (x_coordinates[5], y_coordinates[5]))
     ax.errorbar(Nx_age[idx5], pct_min5, yerr=sigma, fmt='o', color='#00FFBF', label='Mid crown surface') # % (x_coordinates[5], y_coordinates[5]))
     ax.plot(Nx_age[idx5], np.mean(pct_min_samples5, axis=0), '-', color='#00FFBF')
 
-    for s in pct_min_samples6: # lower crown edj
-        ax.plot(Nx_age[idx6], s, '-', color='#045FB4', alpha=0.05)
+    #for s in pct_min_samples6: # lower crown edj
+        #ax.plot(Nx_age[idx6], s, '-', color='#045FB4', alpha=0.05)
     #ax.errorbar(Nx_age[idx6], pct_min6, yerr=sigma, fmt='o', color='#045FB4', label='x=%d, y=%d' % (x_coordinates[6], y_coordinates[6]))
     ax.errorbar(Nx_age[idx6], pct_min6, yerr=sigma, fmt='o', color='#045FB4', label='Low crown EDJ') # % (x_coordinates[6], y_coordinates[6]))
     ax.plot(Nx_age[idx6], np.mean(pct_min_samples6, axis=0), '-', color='#045FB4')
 
-    for s in pct_min_samples7: # lower crown surface
-        ax.plot(Nx_age[idx7], s, '-', color='#2E9AFE', alpha=0.05)
+    #for s in pct_min_samples7: # lower crown surface
+        #ax.plot(Nx_age[idx7], s, '-', color='#2E9AFE', alpha=0.05)
     #ax.errorbar(Nx_age[idx7], pct_min7, yerr=sigma, fmt='o', color='#2E9AFE', label='x=%d, y=%d' % (x_coordinates[7], y_coordinates[7]))
     ax.errorbar(Nx_age[idx7], pct_min7, yerr=sigma, fmt='o', color='#2E9AFE', label='Low crown surface') # % (x_coordinates[7], y_coordinates[7]))
     ax.plot(Nx_age[idx7], np.mean(pct_min_samples7, axis=0), '-', color='#2E9AFE')
 
-    for s in pct_min_samples8: # cervical edj
-        ax.plot(Nx_age[idx8], s, '-', color='#5F04B4', alpha=0.05)
+    #for s in pct_min_samples8: # cervical edj
+        #ax.plot(Nx_age[idx8], s, '-', color='#5F04B4', alpha=0.05)
     #ax.errorbar(Nx_age[idx8], pct_min8, yerr=sigma, fmt='o', color='#5F04B4', label='x=%d, y=%d' % (x_coordinates[8], y_coordinates[8]))
     ax.errorbar(Nx_age[idx8], pct_min8, yerr=sigma, fmt='o', color='#5F04B4', label='Cervical EDJ') # % (x_coordinates[8], y_coordinates[8]))
     ax.plot(Nx_age[idx8], np.mean(pct_min_samples8, axis=0), '-', color='#5F04B4')
 
-    for s in pct_min_samples9: # cervical surface
-        ax.plot(Nx_age[idx9], s, '-', color='#9A2EFE', alpha=0.05)
+    #for s in pct_min_samples9: # cervical surface
+        #ax.plot(Nx_age[idx9], s, '-', color='#9A2EFE', alpha=0.05)
     #ax.errorbar(Nx_age[idx9], pct_min9, yerr=sigma, fmt='o', color='#9A2EFE', label='x=%d, y=%d' % (x_coordinates[9], y_coordinates[9]))
     ax.errorbar(Nx_age[idx9], pct_min9, yerr=sigma, fmt='o', color='#9A2EFE', label='Cervical surface') # % (x_coordinates[9], y_coordinates[9]))
     ax.plot(Nx_age[idx9], np.mean(pct_min_samples9, axis=0), '-', color='#9A2EFE')
     
-    ax.set_ylim(.13, 0.83)
+    ax.set_ylim(.13, 1)
     ax.set_xlim(0., 280.)
     ax.set_title('Mineralization trajectories at different tooth locations')
     ax.set_ylabel('Estimated mineralization percent')
