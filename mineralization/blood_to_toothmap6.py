@@ -224,8 +224,8 @@ def z_calc(x_resized):
 
 def main():
 
-    #f = h5py.File('final_equalsize_dec2014.h5', 'r') #read in file
-    f = h5py.File('final.h5', 'r') #read in file
+    f = h5py.File('final_equalsize_dec2014.h5', 'r') #read in file
+    #f = h5py.File('final.h5', 'r') #read in file
     for name in f:
         print name
     dset1 = f['/age_mask']
@@ -257,8 +257,8 @@ def main():
     img = img.T
     #d18O_map = np.delete(d18O_map, np.s_[185:-1], 0)
     #img = np.delete(img, np.s_[0:8], 0)
-    img = img[8:, :] + 18.
-    img = gaussian_filter(img, (2,2), mode='nearest')
+    img = img[1:, :] + 18.
+    #img = gaussian_filter(img, (2,2), mode='nearest')
     
     x_resized = imresize1(img, iso_shape, method=Image.BILINEAR)
 

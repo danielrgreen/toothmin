@@ -28,27 +28,27 @@ import matplotlib.pyplot as plt
 
 start = 0.
 
-days_initial_period = 20.
+days_initial_period = 8.
 initial_water_d18O = -5.5
 initial_feed_d18O = -18.
 
 air_d18O = 23.5
 blood_halflife = 3. 
 
-length_of_first_switch = 30.
-first_H2O_switch_d18O = -8.
+length_of_first_switch = 20.
+first_H2O_switch_d18O = -9
 first_feed_switch_d18O = -18.
 
-length_of_second_switch = 15.
+length_of_second_switch = 25.
 second_H20_switch_d18O = -7
 second_feed_switch_d18O = -18.
 
-length_of_third_switch = 150.
+length_of_third_switch = 110.
 third_H2O_switch_d18O = -5.5
 third_feed_switch_d18O = -18.
 
 length_of_fourth_switch = 60.
-fourth_H2O_switch_d18O = -11.
+fourth_H2O_switch_d18O = -10.5
 fourth_feed_switch_d18O = -18.
 
 length_of_fifth_switch = 20.
@@ -300,8 +300,8 @@ def main():
     #ax.plot(ipts, c='r', marker='.', linestyle='none')
     #ax.plot(jpts, c='r', marker='.', linestyle='none')
     ax.set_title(b'Sheep blood $\delta^{18}$O varies with inputs & predicts tooth $\delta^{18}$O profiles')
-    ax.set_ylim(-9, -3)              #(minimum-2, maximum*1.1)
-    ax.set_xlim(3, 220)                       #(1., d18O_history.size)
+    ax.set_ylim(-12, -3)              #(minimum-2, maximum*1.1)
+    ax.set_xlim(3, 260)                       #(1., d18O_history.size)
     ax.legend(loc='best')
     ax.set_ylabel(r'$d^{18} \mathrm{O} \ \mathrm{in} \ \mathrm{VSMOW}$')
     ax.set_xlabel('time in days')
