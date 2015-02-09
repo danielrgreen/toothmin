@@ -26,42 +26,51 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
+rstandard = .0020052
+
 start = 0.
 
 days_initial_period = 8.
-initial_water_d18O = -5.5
-initial_feed_d18O = -18.
+initial_water_d18O = -7.
+initial_feed_d18O = 24.
 
 air_d18O = 23.5
 blood_halflife = 3. 
 
 length_of_first_switch = 20.
-first_H2O_switch_d18O = -9
-first_feed_switch_d18O = -18.
+first_H2O_switch_d18O = -9.5
+first_feed_switch_d18O = 24.
 
 length_of_second_switch = 25.
-second_H20_switch_d18O = -7
-second_feed_switch_d18O = -18.
+second_H20_switch_d18O = -8.
+second_feed_switch_d18O = 24.
 
-length_of_third_switch = 110.
-third_H2O_switch_d18O = -5.5
-third_feed_switch_d18O = -18.
+length_of_third_switch = 130.
+third_H2O_switch_d18O = -7.
+third_feed_switch_d18O = 24.
 
 length_of_fourth_switch = 60.
-fourth_H2O_switch_d18O = -10.5
-fourth_feed_switch_d18O = -18.
+fourth_H2O_switch_d18O = -19.5
+fourth_feed_switch_d18O = 24.
 
-length_of_fifth_switch = 20.
-fifth_H2O_switch_d18O = -5.
-fifth_feed_switch_d18O = -18.
+length_of_fifth_switch = 15.
+fifth_H2O_switch_d18O = -8.
+fifth_feed_switch_d18O = 24.
 
 likely_variance_blood = .25
 measurement_error = .1
-samples_per_point = 10
+samples_per_point = 10.
 sample_frequency = 2.
-    
 
-def calc_d1(start, finish, air, h, water1, feed1, water2, feed2):
+def mR(delta):
+    R = (delta/1000 +1)*.0020052
+    return R
+
+def mdelta(R):
+    delta = (R/.0020052 -1)*1000
+    return delta
+
+def calc_d1(start, finish, air, h, water1, feed1, water2, feed2, FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2):
     '''
     calculates evolving isotope ratios (d18O per mil) in blood given
     information about air, blood, water and feed isotope ratios, and
@@ -80,8 +89,8 @@ def calc_d1(start, finish, air, h, water1, feed1, water2, feed2):
     '''
 
     # Initial and equilibrium blood d18O
-    bloodA = (.62*water1+.24*feed1+.14*air)/(.62+(.24*.985)+(.14*1.038)) # starting blood d18O
-    bloodB = (.62*water2+.24*feed2+.14*air)/(.62+(.24*.985)+(.14*1.038)) # blood equilibrium d18O
+    bloodA = mdelta((FH2O*mR(water1)+Ffd*mR(feed1)+alphaO2*FO2*mR(air))/(FH2Oen+(alphaH2Oef*FH2Oef)+(alphaCO2H2O*FCO2))) # starting blood d18O
+    bloodB = mdelta((FH2O*mR(water2)+Ffd*mR(feed2)+alphaO2*FO2*mR(air))/(FH2Oen+(alphaH2Oef*FH2Oef)+(alphaCO2H2O*FCO2))) # blood equilibrium d18O
 
     # create time series (days) and vector for d18O
     t = np.linspace(start, finish, num=(finish-start+1)) # time t in days
@@ -97,7 +106,7 @@ def calc_d1(start, finish, air, h, water1, feed1, water2, feed2):
     return (dvalue, finish, bloodA, water2)
 
 
-def calc_d2(start, finish, air, h, bloodA, water2, feed2):
+def calc_d2(start, finish, air, h, bloodA, water2, feed2, FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2):
     '''
     calculates evolving isotope ratios (d18O per mil) in blood given
     information about air, blood, water and feed isotope ratios, and
@@ -114,7 +123,7 @@ def calc_d2(start, finish, air, h, bloodA, water2, feed2):
     '''
     
     # Initial and equilibrium blood d18O
-    bloodB = (.62*water2+.24*feed2+.14*air)/(.62+(.24*.985)+(.14*1.038)) # blood equilibrium d18O
+    bloodB = mdelta((FH2O*mR(water2)+Ffd*mR(feed2)+alphaO2*FO2*mR(air))/(FH2Oen+(alphaH2Oef*FH2Oef)+(alphaCO2H2O*FCO2))) # blood equilibrium d18O
     
     # create time series (days) and vector for d18O
     t = np.linspace(start, finish, num=(finish-start+1)) # time t in days
@@ -129,7 +138,7 @@ def calc_d2(start, finish, air, h, bloodA, water2, feed2):
     
     return (dvalue, finish, bloodA, water2)
 
-def calc_blood_hist():
+def calc_blood_hist(FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2):
     '''
     Takes initial inputs, calc_d1 and calc_d2 functions, and calculates
     overall blood, water, air and feed isotope histories.
@@ -140,7 +149,7 @@ def calc_blood_hist():
     dvalue, finish, bloodA, water1 = calc_d1(0., days_initial_period, air_d18O,
                                              blood_halflife, initial_water_d18O,
                                              initial_feed_d18O, initial_water_d18O,
-                                             first_feed_switch_d18O)
+                                             first_feed_switch_d18O, FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
 
     dvalue0 = dvalue
     finish0 = finish
@@ -153,7 +162,7 @@ def calc_blood_hist():
     dvalue, finish, bloodA, water2 = calc_d1(0., length_of_first_switch, air_d18O,
                                              blood_halflife, initial_water_d18O,
                                              initial_feed_d18O, first_H2O_switch_d18O,
-                                             first_feed_switch_d18O)
+                                             first_feed_switch_d18O, FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
 
     dvalue1 = dvalue
     finish1 = finish
@@ -163,7 +172,7 @@ def calc_blood_hist():
     # phase 2: start, finish, air, h, bloodA, water3, feed3
     dvalue, finish, bloodA, water2 = calc_d2(0., length_of_second_switch, air_d18O,
                                              blood_halflife, blood1, second_H20_switch_d18O,
-                                             second_feed_switch_d18O)
+                                             second_feed_switch_d18O, FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
 
     dvalue2 = dvalue
     finish2 = finish
@@ -173,7 +182,7 @@ def calc_blood_hist():
     # phase 3: start, finish, air, h, bloodA, water4, feed4
     dvalue, finish, bloodA, water2 = calc_d2(0., length_of_third_switch, air_d18O,
                                              blood_halflife, blood2, third_H2O_switch_d18O,
-                                             third_feed_switch_d18O)
+                                             third_feed_switch_d18O, FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
 
     dvalue3 = dvalue
     finish3 = finish
@@ -183,7 +192,7 @@ def calc_blood_hist():
     # phase 4: start, finish, air, h, bloodA, water5, feed5
     dvalue, finish, bloodA, water2 = calc_d2(0., length_of_fourth_switch, air_d18O,
                                              blood_halflife, blood3, fourth_H2O_switch_d18O,
-                                             fourth_feed_switch_d18O)
+                                             fourth_feed_switch_d18O, FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
 
     dvalue4 = dvalue
     finish4 = finish
@@ -193,7 +202,7 @@ def calc_blood_hist():
     # phase 5: start, finish, air, h, bloodA, water6, feed6
     dvalue, finish, bloodA, water2 = calc_d2(0., length_of_fifth_switch, air_d18O,
                                              blood_halflife, blood4, fifth_H2O_switch_d18O,
-                                             fifth_feed_switch_d18O)
+                                             fifth_feed_switch_d18O, FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
 
     dvalue5 = dvalue
     finish5 = finish
@@ -248,10 +257,25 @@ def sheeps():
 
 def main():
 
-    d18O_history, water_history, feed_history, air_history = calc_blood_hist()
+    FH2O = .62
+    #dH2O = -10
+    #RH2O = (dH2O/1000 +1)*rstandard
+    Ffd = .14
+    #dfd = 23.
+    #Rfd = (dfd/1000 +1)*rstandard
+    alphaO2 = .992
+    FO2 = .24
+    #dO2 = 23.5
+    #RO2 = (dO2/1000 +1)*rstandard
+    FH2Oen = .62
+    alphaH2Oef = .992
+    FH2Oef = .14
+    alphaCO2H2O = 1.038
+    FCO2 = .24
+
+    d18O_history, water_history, feed_history, air_history = calc_blood_hist(FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
 
     # plot blood d18O over time
-
 
     sigma_profile, sigma = noise(d18O_history, likely_variance_blood, measurement_error, samples_per_point, sample_frequency)
     apts = sigma_profile[:,0]
@@ -300,7 +324,7 @@ def main():
     #ax.plot(ipts, c='r', marker='.', linestyle='none')
     #ax.plot(jpts, c='r', marker='.', linestyle='none')
     ax.set_title(b'Sheep blood $\delta^{18}$O varies with inputs & predicts tooth $\delta^{18}$O profiles')
-    ax.set_ylim(-12, -3)              #(minimum-2, maximum*1.1)
+    ax.set_ylim(-15, -4)              #(minimum-2, maximum*1.1)
     ax.set_xlim(3, 260)                       #(1., d18O_history.size)
     ax.legend(loc='best')
     ax.set_ylabel(r'$d^{18} \mathrm{O} \ \mathrm{in} \ \mathrm{VSMOW}$')

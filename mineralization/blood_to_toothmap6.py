@@ -27,7 +27,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
-from bloodhist import calc_blood_hist
+from bloodhist_debug import calc_blood_hist
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from PIL import Image
 
@@ -224,7 +224,7 @@ def z_calc(x_resized):
 
 def main():
 
-    f = h5py.File('final_equalsize_dec2014.h5', 'r') #read in file
+    f = h5py.File('final_equalsize_jan2015.h5', 'r') #read in file
     #f = h5py.File('final.h5', 'r') #read in file
     for name in f:
         print name
@@ -292,17 +292,17 @@ def main():
 
     ax1 = fig.add_subplot(6, 1, 1)
     cimg1 = ax1.imshow(img, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=10, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=10.5, vmax=14, cmap=plt.get_cmap('bwr'))
     cax1 = fig.colorbar(cimg1)
 
     ax2 = fig.add_subplot(6, 1, 2)
     cimg2 = ax2.imshow(x_resized, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=10, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=10.5, vmax=14, cmap=plt.get_cmap('bwr'))
     cax2 = fig.colorbar(cimg2)
 
     ax3 = fig.add_subplot(6, 1, 3)
     cimg3 = ax3.imshow(iso_data, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=10, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=10.5, vmax=14, cmap=plt.get_cmap('bwr'))
     cax3 = fig.colorbar(cimg3)
 
     ax4 = fig.add_subplot(6, 1, 4)
@@ -313,17 +313,17 @@ def main():
 
     ax5 = fig.add_subplot(6, 1, 5)
     cimg5 = ax5.imshow(remodeled, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=10, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=10.5, vmax=14, cmap=plt.get_cmap('bwr'))
     cax5 = fig.colorbar(cimg5)
 
     ax6 = fig.add_subplot(6, 1, 6)
     reduced.shape = (reduced.size, 1)
     cimg6 = ax6.imshow(reduced.T, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=10, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=10.5, vmax=14, cmap=plt.get_cmap('bwr'))
     cax6 = fig.colorbar(cimg6)
 
     fig.subplots_adjust(hspace=.5)
-    fig.savefig('jan15_blood2toothmap6.pdf', dpi=300, figsize=8, format='pdf', edgecolor='none')
+    fig.savefig('jan15_blood2toothmap6b.pdf', dpi=300, figsize=8, format='pdf', edgecolor='none')
     plt.show()
 
     return 0

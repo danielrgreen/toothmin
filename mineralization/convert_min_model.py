@@ -375,8 +375,8 @@ def gen_min_movie(toothmodel):
         img[k] = img_interp(t)
 
     img = np.diff(img, axis=0)
-    sigma_t = 6
-    sigma_x, sigma_y = 1, 1
+    sigma_t = 4
+    sigma_x, sigma_y = 0, 0
     img = gaussian_filter(img, (sigma_t,sigma_x,sigma_y), mode='nearest')
     
     idx = np.isfinite(img)
@@ -385,7 +385,13 @@ def gen_min_movie(toothmodel):
 
     fig = plt.figure(figsize=(6,3), dpi=100)
     ax = fig.add_subplot(1,1,1)
-
+    plt.tick_params(\
+        axis='x',
+        which='both',
+        bottom='off',
+        top='off',
+        labelbottom='off')
+    
     im = ax.imshow(np.zeros(shape[::-1], dtype='f8'), origin='lower',
                                                 interpolation='nearest',
                                                 vmin=0., vmax=vmax)
@@ -396,7 +402,7 @@ def gen_min_movie(toothmodel):
 
         ax.set_title(r'$t = %d \ \mathrm{days}$' % t, fontsize=14)
         
-        fig.savefig('dec_rate_equalsize_k%04d.png' % k, dpi=100)
+        fig.savefig('jan_rate_equalsize3_k%04d.png' % k, dpi=100)
 
 def gen_isomap_movie(toothmodel, bloodhist):
 
@@ -424,7 +430,7 @@ def gen_isomap_movie(toothmodel, bloodhist):
         im.set_data(img[:,:,k].T)
         print 'printing image k%04d.png' % k
         ax.set_title(r'$t = %d \ \mathrm{days}$' % k, fontsize=14)
-        fig.savefig('november_isomaps01_03setdataT_01imgshapeT_k%04d.png' % k, dpi=100)
+        fig.savefig('jan01_k%04d.png' % k, dpi=100)
 
 def count_number(iso_data):
     '''
@@ -502,7 +508,7 @@ def isotope_data(toothmodel, bloodhist):
 def main():
 
     print 'Loading tooth model ...'
-    toothmodel = ToothModel('final_equalsize_dec2014.h5')
+    toothmodel = ToothModel('final_equalsize_jan2015.h5')
     age_max = np.max(toothmodel.ages)
     print 'Downsampling tooth model ...'
     #toothmodel_sm = toothmodel.downsample_model((50,12), 1)
