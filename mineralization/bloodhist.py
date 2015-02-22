@@ -49,11 +49,11 @@ length_of_third_switch = 130.
 third_H2O_switch_d18O = -7.
 third_feed_switch_d18O = 24.
 
-length_of_fourth_switch = 60.
-fourth_H2O_switch_d18O = -19.5
+length_of_fourth_switch = 6.
+fourth_H2O_switch_d18O = -14.5
 fourth_feed_switch_d18O = 24.
 
-length_of_fifth_switch = 15.
+length_of_fifth_switch = 150.
 fifth_H2O_switch_d18O = -8.
 fifth_feed_switch_d18O = 24.
 
@@ -94,11 +94,9 @@ def calc_d1(start, finish, air, h, water1, feed1, water2, feed2, FH2O, Ffd, alph
 
     # create time series (days) and vector for d18O
     t = np.linspace(start, finish, num=(finish-start+1)) # time t in days
-    dvalue = np.empty(finish-start+1) # empty vector for isotope ratio
 
     # calculate changing d18O over time
-    for d in dvalue:
-        dvalue = ((bloodA - bloodB)*(np.exp( (-(np.log(2))/h)*t))) + bloodB
+    dvalue = ((bloodA - bloodB)*(np.exp( (-(np.log(2))/h)*t))) + bloodB
 
     finish = t[-1]
     bloodA = dvalue[-1]

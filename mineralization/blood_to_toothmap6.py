@@ -27,12 +27,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
-from bloodhist_debug import calc_blood_hist
+from bloodhist import calc_blood_hist
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from PIL import Image
 
-# DECLARE SHAPE OF REAL ISOTOPE DATA FROM TOOTH
+# DECLARE SHAPE OF REAL ISOTOPE DATA FROM TOOTH, AGE
 iso_shape = (34, 5)
+age_frac = 1.0
 
 def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     '''
@@ -40,6 +41,7 @@ def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     '''
     n_days = blood_hist.size
     n_samples = pct_min_samples.shape[0]
+    stop = np.round(age_frac * age[-1]).astype('i4')
     
     n_tmp = max(age[-1], n_days)
     mnzt_rate = np.zeros((n_samples, n_tmp+1), dtype='f8')
@@ -51,7 +53,7 @@ def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     add_zeros = np.zeros((pct_min_samples.shape[0], pct_min_samples.shape[1]+1))
     add_zeros[:, :-1] = pct_min_samples
     pct_min_samples = add_zeros
-    
+
     for k, (a1, a2) in enumerate(zip(age[:-1], age[1:])):
         rate = (pct_min_samples[:, k+1] - pct_min_samples[:, k]) / (a2 - a1)
         
@@ -70,7 +72,8 @@ def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     # second method calculating isotope values per pixel   ###
     mnzt_rate = mnzt_rate / di_sum[:, None]
     mnzt_rate[mnzt_rate==0.] = np.nan
-    d18O_addition = mnzt_rate * blood_hist[None, :]
+    print mnzt_rate.shape, blood_hist.size
+    d18O_addition = mnzt_rate[:, :stop] * blood_hist[None, :stop]
     d18O_addition[np.isnan(d18O_addition)] = 0.
     tot_isotope = np.sum(d18O_addition, axis=1)
 
@@ -238,12 +241,28 @@ def main():
     ages = dset4[:]
     f.close()
 
+    FH2O = .62
+    #dH2O = -10
+    #RH2O = (dH2O/1000 +1)*rstandard
+    Ffd = .14
+    #dfd = 23.
+    #Rfd = (dfd/1000 +1)*rstandard
+    alphaO2 = .992
+    FO2 = .24
+    #dO2 = 23.5
+    #RO2 = (dO2/1000 +1)*rstandard
+    FH2Oen = .62
+    alphaH2Oef = .992
+    FH2Oef = .14
+    alphaCO2H2O = 1.038
+    FCO2 = .24
+
     age_expanded = np.einsum('ij,j->ij', age_mask, ages)
     
     Nx, Ny = np.max(locations, axis=0) + 1
     n_pix = locations.shape[0]
 
-    blood_hist, water_history, feed_history, air_history = calc_blood_hist()
+    blood_hist, water_history, feed_history, air_history = calc_blood_hist(FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
         
     mnzt_pct = mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist)
     
