@@ -27,7 +27,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
-from bloodhist import calc_blood_hist
+from blood_delta import calc_blood_step
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from PIL import Image
 
@@ -35,11 +35,11 @@ from PIL import Image
 iso_shape = (34, 5)
 age_frac = 1.0
 
-def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
+def blood_pixel_mnzt(pct_min_samples, age, blood_step):
     '''
     
     '''
-    n_days = blood_hist.size
+    n_days = blood_step.size
     n_samples = pct_min_samples.shape[0]
     stop = np.round(age_frac * age[-1]).astype('i4')
     
@@ -72,14 +72,14 @@ def blood_pixel_mnzt(pct_min_samples, age, blood_hist):
     # second method calculating isotope values per pixel   ###
     mnzt_rate = mnzt_rate / di_sum[:, None]
     mnzt_rate[mnzt_rate==0.] = np.nan
-    print mnzt_rate.shape, blood_hist.size
-    d18O_addition = mnzt_rate[:, :stop] * blood_hist[None, :stop]
+    print mnzt_rate.shape, blood_step.size
+    d18O_addition = mnzt_rate[:, :stop] * blood_step[None, :stop]
     d18O_addition[np.isnan(d18O_addition)] = 0.
     tot_isotope = np.sum(d18O_addition, axis=1)
 
     return tot_isotope
     
-def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist):
+def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_step):
     '''
 
     '''
@@ -90,7 +90,7 @@ def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist):
     for n in xrange(n_pix):
         samples = blood_pixel_mnzt(pct_min_samples[n],
                                    ages[age_mask[n]],
-                                   blood_hist)
+                                   blood_step)
         mnzt_pct[:, n] = np.percentile(samples, [5., 50., 95.])
     
     return mnzt_pct
@@ -262,9 +262,10 @@ def main():
     Nx, Ny = np.max(locations, axis=0) + 1
     n_pix = locations.shape[0]
 
-    blood_hist, water_history, feed_history, air_history = calc_blood_hist(FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
+    water_step, blood_step = calc_blood_step()
+    #blood_hist, water_history, feed_history, air_history = calc_blood_hist(FH2O, Ffd, alphaO2, FO2, FH2Oen, alphaH2Oef, FH2Oef, alphaCO2H2O, FCO2)
         
-    mnzt_pct = mnzt_all_pix(pct_min_samples, age_mask, ages, blood_hist)
+    mnzt_pct = mnzt_all_pix(pct_min_samples, age_mask, ages, blood_step)
     
     img = np.empty((Nx, Ny), dtype='f8')
     img[:] = np.nan

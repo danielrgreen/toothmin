@@ -25,34 +25,54 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def calc_water_step2(w_blocks, block_length):
+    '''
+    Expand blocks of water isotope value into one array.
+
+    :param w_blocks: Isotope value in each block.
+    :param block_length: Length (in days) of each block.
+    :return: The isotope value on each day.
+    '''
+
+    return np.repeat(np.array(w_blocks), block_length)
+
+    '''
+    w = np.empty(len(w_blocks) * block_length, dtype='f8')
+
+    for k,val in enumerate(w_blocks):
+        w[k*block_length:(k+1)*block_length] = val
+
+    return w
+    '''
+
 def calc_water_step(n_days, **kwargs):
     '''
 
     :param n_days:      Number of days to calculate water history
     :param kwargs:      Isotope values every 20 days in water history
-    :return:
+    :return:            Stepped water isotope history as a 1D float vector.
     '''
-    w0 = kwargs.get('w0', -3.)
-    w1 = kwargs.get('w1', -3.)
-    w2 = kwargs.get('w2', -5.)
-    w3 = kwargs.get('w3', -5.)
-    w4 = kwargs.get('w4', -4.)
-    w5 = kwargs.get('w5', -3.)
-    w6 = kwargs.get('w6', -3.)
-    w7 = kwargs.get('w7', -2.)
-    w8 = kwargs.get('w8', -3.)
-    w9 = kwargs.get('w9', -4.)
-    w10 = kwargs.get('w10', -5.)
-    w11 = kwargs.get('w11', -4.)
-    w12 = kwargs.get('w12', -4.)
-    w13 = kwargs.get('w13', -3.)
-    w14 = kwargs.get('w14', 0.)
-    w15 = kwargs.get('w15', 1.)
-    w16 = kwargs.get('w16', 1.)
-    w17 = kwargs.get('w17', 2.)
-    w18 = kwargs.get('w18', 3.)
-    w19 = kwargs.get('w19', 2.)
-    w20 = kwargs.get('w20', -1.)
+    w0 = kwargs.get('w0', -6.5)
+    w1 = kwargs.get('w1', -6.5)
+    w2 = kwargs.get('w2', -6.5)
+    w3 = kwargs.get('w3', -13.5)
+    w4 = kwargs.get('w4', -6.5)
+    w5 = kwargs.get('w5', -6.5)
+    w6 = kwargs.get('w6', -6.5)
+    w7 = kwargs.get('w7', -6.5)
+    w8 = kwargs.get('w8', -6.5)
+    w9 = kwargs.get('w9', -6.5)
+    w10 = kwargs.get('w10', -6.5)
+    w11 = kwargs.get('w11', -6.5)
+    w12 = kwargs.get('w12', -6.5)
+    w13 = kwargs.get('w13', -6.5)
+    w14 = kwargs.get('w14', -6.5)
+    w15 = kwargs.get('w15', -6.5)
+    w16 = kwargs.get('w16', -6.5)
+    w17 = kwargs.get('w17', -6.5)
+    w18 = kwargs.get('w18', -6.5)
+    w19 = kwargs.get('w19', -6.5)
+    w20 = kwargs.get('w20', -6.5)
     water_step = np.ones(n_days)
     water_step[0:20] = w0
     water_step[20:40] = w1
@@ -77,6 +97,16 @@ def calc_water_step(n_days, **kwargs):
     water_step[400:n_days] = w20
 
     return water_step
+
+def gaussian_sum(n_days, mu, sigma, A):
+    x = np.arange(n_days)
+    y = np.zeros(n_days, dtype='f8')
+
+    for m,s,a in zip(mu, sigma, A):
+        y += a * np.exp(-0.5*((x-m)/s)**2.)
+
+    return y
+
 
 def calc_water_gaussian(n_days, **kwargs):
     '''
@@ -138,7 +168,7 @@ def integrate_delta(delta_0, alpha, beta):
     :param delta_0: The initial delta (a constant)
     :param alpha:   The fraction that leaves the system each day (a constant)
     :param beta:    The amount added to the system on each day (an array)
-    :return: delta on each day. Has the same length as beta.
+    :return:        delta on each day. Has the same length as beta.
     '''
 
     n_days = beta.size
@@ -155,6 +185,14 @@ def integrate_delta(delta_0, alpha, beta):
     return delta
 
 def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
+    '''
+
+    :param d_O2:
+    :param d_water:
+    :param d_feed:
+    :param kwargs:
+    :return:
+    '''
     # Get defaults
     f_H2O = kwargs.get('f_H20', 0.62)
     f_O2 = kwargs.get('f_O2', 0.24)
@@ -242,10 +280,12 @@ def calc_blood_step(**kwargs):
     ax.plot(days, water_step, 'b')
     ax.plot(days, d_eq, 'k')
 
-    ax.set_ylim(-6., 6.)
+    ax.set_ylim(-16., 6.)
     #vmin = max(np.max(delta), np.max(water))
     #ax.set_ylim(1.2*vmin, 1.2*vmax)
-    plt.show()
+    #plt.show()
+
+    return water_step, delta
 
 def calc_blood_gaussian(**kwargs):
     '''
@@ -275,7 +315,9 @@ def calc_blood_gaussian(**kwargs):
     ax.set_ylim(-15., 5.)
     #vmin = max(np.max(delta), np.max(water))
     #ax.set_ylim(1.2*vmin, 1.2*vmax)
-    plt.show()
+    #plt.show()
+
+    return water_gaussian, delta
 
 def test_blood_delta():
     fig = plt.figure()
@@ -304,11 +346,11 @@ def test_blood_delta():
     ax.set_ylim(-15., -4.)
     #vmin = max(np.max(delta), np.max(water))
     #ax.set_ylim(1.2*vmin, 1.2*vmax)
-    plt.show()
+    #plt.show()
 
 def main():
-    calc_blood_gaussian()
-    calc_blood_step()
+    water_gaussian, gaussian_delta = calc_blood_gaussian()
+    water_step, step_delta = calc_blood_step()
 
 if __name__ == '__main__':
     main()

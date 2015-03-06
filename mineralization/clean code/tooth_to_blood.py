@@ -24,12 +24,12 @@ from blood_delta import calc_blood_step
 from blood_delta import calc_blood_gaussian
 from lmfit import minimize, Parameters
 
-def blood_pixel_mnzt(pct_min_samples, age, bloodhist):
+def blood_pixel_mnzt(pct_min_samples, age, blood_step):
     '''
     
     '''
     
-    n_days = bloodhist.size
+    n_days = blood_step.size
     n_samples = pct_min_samples.shape[0]
     
     n_tmp = max(age[-1], n_days)
@@ -45,7 +45,7 @@ def blood_pixel_mnzt(pct_min_samples, age, bloodhist):
     
     for k, (a1, a2) in enumerate(zip(age[:-1], age[1:])):
         rate = (pct_min_samples[:, k+1] - pct_min_samples[:, k]) / (a2 - a1)
-        
+        print 'calculating for pixel %04d' % k
         for a in xrange(a1, a2):
             mnzt_rate[:, a] = rate
 
@@ -61,13 +61,13 @@ def blood_pixel_mnzt(pct_min_samples, age, bloodhist):
     # second method calculating isotope values per pixel   ###
     mnzt_rate = mnzt_rate / di_sum[:, None]
     mnzt_rate[mnzt_rate==0.] = np.nan
-    d18O_addition = mnzt_rate * bloodhist[None, :]
+    d18O_addition = mnzt_rate * np.fliplr(blood_step[None, :])
     d18O_addition[np.isnan(d18O_addition)] = 0.
     tot_isotope = np.sum(d18O_addition, axis=1)
 
     return tot_isotope
 
-def mnzt_all_pix(pct_min_samples, age_mask, ages, bloodhist):
+def mnzt_all_pix(pct_min_samples, age_mask, ages, blood_step):
     '''
 
     '''
@@ -78,7 +78,7 @@ def mnzt_all_pix(pct_min_samples, age_mask, ages, bloodhist):
     for n in xrange(n_pix):
         samples = blood_pixel_mnzt(pct_min_samples[n],
                                    ages[age_mask[n]],
-                                   bloodhist)
+                                   blood_step)
         mnzt_pct[:, n] = np.percentile(samples, [5., 50., 95.])
     
     return mnzt_pct
@@ -143,8 +143,8 @@ class ToothModel:
         return pix_val_rand
 
     def _pix2img(self, pix_val, mode='sample', interp=False):
-        print 'pix_val.shape in pix2img =', pix_val.shape
-        
+
+        print 'test 0' # fast
         if mode == 'sample':
             pix_val = self._gen_rand_hist(pix_val)
         else:
@@ -152,19 +152,19 @@ class ToothModel:
         
         n_x = np.max(self.locations[:,0]) + 1
         n_y = np.max(self.locations[:,1]) + 1
-
+        print 'test 1' # fast
         img = np.empty((n_x, n_y, pix_val.shape[1]), dtype='f8')
         img[:] = np.nan
 
         idx0 = self.locations[:,0]
         idx1 = self.locations[:,1]
-        
+        print 'test 2' # fast
         img[idx0, idx1, :] = pix_val[:,:]
 
         if interp:
             img_interp = interp1d(self.ages, img)
             return img_interp
-        
+        print 'test 3' # takes 80-100 seconds
         return img
     
     def gen_mnzt_image(self, mode='sample', interp=False):
@@ -244,9 +244,6 @@ class ToothModel:
         
         for n in xrange(n_samples):
             img = self.gen_mnzt_image(mode='sample')
-            print 'shapes:'
-            print img_sm.shape
-            print img.shape
 
             for t in xrange(self.n_ages):
                 #img_sm[:,:,n,t] = imresize(img[:,:,t], shape)
@@ -259,13 +256,9 @@ class ToothModel:
         img_sm.shape = (shape[0]*shape[1], n_samples, self.n_ages) ########## 0,1 # no effect
 
         locations = np.indices((shape[0], shape[1])) ######## 0,1 # shape now reversed
-        print 'locations.shape:'
-        print locations.shape
         locations.shape = (2, shape[0]*shape[1]) ######## 0,1 # no effect
-        print locations.shape
         locations = np.swapaxes(locations, 0, 1) ######## 0,1 # no effect
-        print locations.shape
-        
+
         tmodel = ToothModel()
         tmodel.pct_min_interp = img_sm[:,:,:]
         tmodel.locations = locations[:,:]
@@ -276,16 +269,17 @@ class ToothModel:
 
         return tmodel
 
-    def gen_isotope_image(self, bloodhist, mode='sample'):
+    def gen_isotope_image(self, blood_step, mode='sample'):
         idx_mask = np.isnan(self.pct_min_interp)
         pct_min_interp = np.ma.array(self.pct_min_interp, mask=idx_mask, fill_value=0.)
         pct_min_diff = diff_with_first(pct_min_interp[:,:,:].filled(), axis=2)
 
-        n_days = bloodhist.size
+        n_days = blood_step.size
         pct_min_diff_days = np.empty((self.n_pix, self.n_samples, n_days), dtype='f8')
         pct_min_diff_days[:] = np.nan
         
         for k,(a1,a2) in enumerate(zip(self.ages[:-1], self.ages[1:])):
+            print 'age %03d' % k
             if a1 > n_days:
                 break
 
@@ -294,29 +288,55 @@ class ToothModel:
             if a2 > n_days:
                 a2 = n_days
             
-            pct_min_diff_days[:,:,a1:a2] = (pct_min_diff[:,:,k] / dt)[:,:,np.newaxis]
+            pct_min_diff_days[:,:,a1:a2] = (pct_min_diff[:,:,k] / dt)[:,:,None]
 
+        print 'test a' # takes 100 seconds
         pct_min_diff_days[np.isnan(pct_min_diff_days)] = 0.
-        pct_min_days = np.cumsum(pct_min_diff_days, axis=2)
+        print 'pct_min_diff_days.shape', pct_min_diff_days.shape
+        pct_min_days = np.cumsum(pct_min_diff_days, axis=2) # Maximum mineralization achieved
+        print 'pct_min_days.shape', pct_min_days.shape
         pct_min_days[pct_min_days==0.] = np.nan
-
+        print 'test b' # takes 100 seconds
+        print blood_step.shape
+        print blood_step
         isotope = np.cumsum(
-            bloodhist[np.newaxis, np.newaxis, :]
+            blood_step[None, None, :]
             * pct_min_diff_days,
             axis=2
         )
-        
+        print 'test c' # takes 60-100 seconds
         isotope /= pct_min_days
 
+        print 'isotope shape', isotope.shape
+        isotope = np.mean(isotope, axis=1)
+        print 'isotope shape', isotope.shape
+        Nx, Ny = np.max(self.locations, axis=0) + 1
+        n_pix = self.locations.shape[0]
+        img = np.empty((Nx, Ny, 6), dtype='f8')
+        img[:] = np.nan
+        for n in xrange(n_pix):
+            x, y = self.locations[n]
+            img[x, y, :] = isotope[n, [2,30,60,110,150,200]] # works after 3 days, not before 2nd, 1st or 0th day
+
+        fig = plt.figure(dpi=100)
+        for i in np.arange(5):
+            ax = plt.subplot(6,1,i+1)
+            cimg = ax.imshow(img[:,:,i].T, aspect='auto', interpolation='nearest', origin='lower', cmap=plt.get_cmap('bwr'))
+            cax = fig.colorbar(cimg)
+        plt.show()
+
+
+
+        print 'test d' # fast
         return self._pix2img(isotope, mode=mode, interp=False)
 
     '''
-    def gen_isotope_image(self, bloodhist, mode='sample'):
+    def gen_isotope_image(self, blood_step, mode='sample'):
         idx_mask = np.isnan(self.pct_min_interp)
         pct_min_interp = np.ma.array(self.pct_min_interp, mask=idx_mask, fill_value=0.)
         pct_min_diff = diff_with_first(pct_min_interp[:,:,:].filled(), axis=2)
 
-        n_days = bloodhist.size
+        n_days = blood_step.size
         pct_min_diff_days = np.empty((self.n_pix, self.n_samples, n_days), dtype='f8')
         pct_min_diff_days[:] = np.nan
         
@@ -336,7 +356,7 @@ class ToothModel:
         pct_min_days[pct_min_days==0.] = np.nan
 
         isotope = np.cumsum(
-            bloodhist[np.newaxis, np.newaxis, :]
+            blood_step[np.newaxis, np.newaxis, :]
             * pct_min_diff_days,
             axis=2
         )
@@ -374,7 +394,7 @@ def interp_over_nans(x_data, y_data):
 
 def gen_mnzt_movie(tooth_model, outfname):
     #tooth_model = tooth_model.downsample(shape)
-    #isotope_pct = tooth_model.isotope_pct(bloodhist)
+    #isotope_pct = tooth_model.isotope_pct(blood_step)
     #diff = isotope_pct - data
     #chisq = np.sum(diff**2)
 
@@ -431,10 +451,10 @@ def gen_mnzt_movie(tooth_model, outfname):
         
         fig.savefig(fn, dpi=100)
 
-def gen_isomap_movie(tooth_model, bloodhist):
+def gen_isomap_movie(tooth_model, blood_step):
 
     print 'generating movie...'
-    img = tooth_model.gen_isotope_image(bloodhist, mode='sample')
+    img = tooth_model.gen_isotope_image(blood_step, mode='sample')
     
     sigma_t = 0
     sigma_x, sigma_y = 0, 0
@@ -548,8 +568,12 @@ def import_iso_data(**kwargs):
                         per element in a row (length)
     '''
 
-    iso_shape = kwargs.get('iso_shape', (34, 5))
-    iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.00, 0.00, 0.00, 0.00, 0.00, 12.08, 12.91, 10.38, 13.29, 13.36, 12.85, 13.15, 12.35, 13.31, 12.89, 12.92, 13.35, 13.12, 13.21, 13.08, 13.30, 13.67, 12.45, 11.82, 11.32, 11.81, 9.76, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.21, 11.04, 12.81, 12.20, 12.69, 13.00, 13.07, 13.11, 12.98, 13.20, 13.37, 13.24, 12.26, 12.61, 13.19, 12.50, 13.01, 12.75, 13.08, 12.97, 13.15, 12.52, 12.33, 12.08, 11.87, 11.07, 11.65, 8.45, 0.00, 0.00, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 12.86, 12.69, 12.95, 12.66, 12.89, 13.52, 12.47, 12.91, 12.95, 12.87, 12.41, 12.72, 12.82, 12.38, 12.44, 12.89, 11.03, 12.63, 12.99, 13.13, 12.43, 7.35, 12.10, 11.42, 12.39, 10.08])
+    #iso_shape = kwargs.get('iso_shape', (34, 5))
+    #iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.00, 0.00, 0.00, 0.00, 0.00, 12.08, 12.91, 10.38, 13.29, 13.36, 12.85, 13.15, 12.35, 13.31, 12.89, 12.92, 13.35, 13.12, 13.21, 13.08, 13.30, 13.67, 12.45, 11.82, 11.32, 11.81, 9.76, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.21, 11.04, 12.81, 12.20, 12.69, 13.00, 13.07, 13.11, 12.98, 13.20, 13.37, 13.24, 12.26, 12.61, 13.19, 12.50, 13.01, 12.75, 13.08, 12.97, 13.15, 12.52, 12.33, 12.08, 11.87, 11.07, 11.65, 8.45, 0.00, 0.00, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 12.86, 12.69, 12.95, 12.66, 12.89, 13.52, 12.47, 12.91, 12.95, 12.87, 12.41, 12.72, 12.82, 12.38, 12.44, 12.89, 11.03, 12.63, 12.99, 13.13, 12.43, 7.35, 12.10, 11.42, 12.39, 10.08])
+
+    iso_shape = kwargs.get('iso_shape', (21, 4))
+    iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.05, 11.28, 11.65, 12.60, 13.67, 13.33, 13.04, 12.58, 12.81, 13.53, 13.48, 13.01, 12.17, 0.00, 0.00, 0.00, 12.64, 12.62, 12.94, 12.88, 12.65, 12.30, 11.85, 14.62, 11.77, 11.84, 12.11, 12.69, 13.80, 12.66, 12.66, 12.92, 12.93, 12.95, 13.37, 13.87, 13.23, 12.98, 12.67, 12.22, 12.48, 12.43, 12.14, 12.68, 13.19, 12.77, 11.42, 10.71, 12.15, 13.12, 13.41, 12.47, 11.54, 12.59, 12.96, 13.18, 14.13, 13.86, 12.79, 12.69, 12.15, 11.86, 12.65, 12.55, 12.85, 13.61, 13.43, 12.05, 11.93, 10.98, 12.90, 13.14, 12.19, 11.61, 10.96, 12.88, 13.04])
+
     iso_data[iso_data==0.] = np.nan
     iso_data, iso_data_x_ct = count_number(iso_shape, iso_data)
 
@@ -558,12 +582,10 @@ def import_iso_data(**kwargs):
 def gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step, mode='sample')
-    model_isomap = np.rot90(model_isomap, k=1)
-    print model_isomap.shape
+    #model_isomap = np.rot90(model_isomap, k=1)
     model_isomap[np.isnan(model_isomap)] = 0.
     model_isomap = np.mean(model_isomap, axis=2)
     model_isomap[model_isomap==0.] = np.nan
-    print model_isomap.shape
     #x_resized = imresize1(model_isomap, iso_shape, method=Image.BILINEAR)
     #temp_x_r = np.fliplr(x_resized.T)
     #model_resized = complex_resize(iso_shape, temp_x_r.flatten(), iso_data_x_ct)
@@ -585,20 +607,20 @@ def main():
     print 'loading tooth model ...'
     tooth_model = ToothModel('final_equalsize_jan2015.h5')
 
-    print 'downsampling tooth model...'
-    tooth_model_sm = tooth_model.downsample_model((50,30), 5)
+    #print 'downsampling tooth model...'
+    #tooth_model_sm = tooth_model.downsample_model((iso_shape), 1)
 
-    print 'Generating movies...'
+    #print 'Generating movies...'
     #gen_mnzt_movie(tooth_model, 'frames/fullres')
     #gen_mnzt_movie(tooth_model_sm, 'frames/50x30')
 
     print 'making isomaps...'
-    model_isomap, data_isomap = gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model_sm, blood_step)
+    model_isomap, data_isomap = gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step)
 
     print 'plotting figures...'
     fig = plt.figure(dpi=100)
     ax1 = plt.subplot(2,1,1)
-    cimg1 = ax1.imshow(model_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=10., vmax=13., cmap=plt.get_cmap('bwr'))
+    cimg1 = ax1.imshow(model_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=13., vmax=15., cmap=plt.get_cmap('bwr'))
     cax1 = fig.colorbar(cimg1)
     ax2 = plt.subplot(2,1,2)
     cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=10., vmax=14., cmap=plt.get_cmap('bwr'))
@@ -606,7 +628,7 @@ def main():
     plt.show()
 
     #gen_min_movie(tooth_model)
-    #gen_isomap_movie(tooth_model_sm, bloodhist)
+    #gen_isomap_movie(tooth_model_sm, blood_step)
     
     return 0
 
