@@ -272,7 +272,9 @@ class ToothModel:
     def gen_isotope_image(self, blood_step, mode='sample'):
         idx_mask = np.isnan(self.pct_min_interp)
         pct_min_interp = np.ma.array(self.pct_min_interp, mask=idx_mask, fill_value=0.)
+        print 'pct_min_interp shape', pct_min_interp.shape
         pct_min_diff = diff_with_first(pct_min_interp[:,:,:].filled(), axis=2)
+        print 'pct_min_diff.shape', pct_min_diff.shape
 
         n_days = blood_step.size
         pct_min_diff_days = np.empty((self.n_pix, self.n_samples, n_days), dtype='f8')
@@ -288,14 +290,49 @@ class ToothModel:
             if a2 > n_days:
                 a2 = n_days
             
-            pct_min_diff_days[:,:,a1:a2] = (pct_min_diff[:,:,k] / dt)[:,:,None]
+            pct_min_diff_days[:,:,a1:a2] = (pct_min_diff[:,:,k] / dt)[:,:,None] # All checks out except 0th, 1st, 2nd val
+
+        '''
+        #### DELETE WHEN DONE WITH DEBUGGING!!!!!!!!! ####
+        print 'before percentile'
+        print pct_min_diff_days.shape
+        pct_min_diff_days = np.percentile(pct_min_diff_days, [5., 50., 95.], axis = 1)
+        pct_min_diff_days = np.swapaxes(np.array(pct_min_diff_days), 0, 1)
+        print pct_min_diff_days.shape
+        print 'after percentile'
+        #### DELETE WHEN DONE WITH DEBUGGING!!!!!!!!! ####
+        '''
 
         print 'test a' # takes 100 seconds
         pct_min_diff_days[np.isnan(pct_min_diff_days)] = 0.
         print 'pct_min_diff_days.shape', pct_min_diff_days.shape
-        pct_min_days = np.cumsum(pct_min_diff_days, axis=2) # Maximum mineralization achieved
+        pct_min_days = np.cumsum(pct_min_diff_days, axis=2) # All checks out except 0th, 1st, 2nd val
         print 'pct_min_days.shape', pct_min_days.shape
         pct_min_days[pct_min_days==0.] = np.nan
+
+        '''
+        #### DELETE WHEN DONE WITH DEBUGGING!!!!!!!!! ####
+
+        print 'pct_min_days shape', pct_min_days.shape
+        pct_min_days1 = np.mean(pct_min_days, axis=1)
+        print 'pct_min_days shape1', pct_min_days1.shape
+        Nx, Ny = np.max(self.locations, axis=0) + 1
+        n_pix = self.locations.shape[0]
+        img1 = np.empty((Nx, Ny, 6), dtype='f8')
+        img1[:] = np.nan
+        for n in xrange(n_pix):
+            x, y = self.locations[n]
+            img1[x, y, :] = pct_min_days1[n, [2,3,6,12,20,35]] # works after 3 days, not at 2nd, 1st or 0th day
+
+        fig1 = plt.figure(dpi=100)
+        for i in np.arange(5):
+            ax1 = plt.subplot(6,1,i+1)
+            cimg1 = ax1.imshow(img1[:,:,i].T, aspect='auto', interpolation='nearest', origin='lower', cmap=plt.get_cmap('bwr'))
+            cax1 = fig1.colorbar(cimg1)
+
+        #### DELETE WHEN DONE WITH DEBUGGING!!!!!!!!! ####
+        '''
+
         print 'test b' # takes 100 seconds
         print blood_step.shape
         print blood_step
@@ -303,29 +340,60 @@ class ToothModel:
             blood_step[None, None, :]
             * pct_min_diff_days,
             axis=2
-        )
+        ) # Works at and after 3rd day. Something weird (all zero values?) happens before that.
+
         print 'test c' # takes 60-100 seconds
-        isotope /= pct_min_days
+        #isotope = isotope[:,:,40:]
+        #pct_min_days = pct_min_days[:,:,40:]
+
+        '''
+        #### DELETE WHEN DONE WITH DEBUGGING!!!!!!!!! ####
 
         print 'isotope shape', isotope.shape
-        isotope = np.mean(isotope, axis=1)
-        print 'isotope shape', isotope.shape
+        isotope1 = np.mean(isotope, axis=1)
+        print 'isotope shape1', isotope1.shape
         Nx, Ny = np.max(self.locations, axis=0) + 1
         n_pix = self.locations.shape[0]
-        img = np.empty((Nx, Ny, 6), dtype='f8')
-        img[:] = np.nan
+        img2 = np.empty((Nx, Ny, 6), dtype='f8')
+        img2[:] = np.nan
         for n in xrange(n_pix):
             x, y = self.locations[n]
-            img[x, y, :] = isotope[n, [2,30,60,110,150,200]] # works after 3 days, not before 2nd, 1st or 0th day
+            img2[x, y, :] = isotope1[n, [2,3,6,12,20,35]] # works after 3 days, not at 2nd, 1st or 0th day
 
-        fig = plt.figure(dpi=100)
+        fig2 = plt.figure(dpi=100)
         for i in np.arange(5):
-            ax = plt.subplot(6,1,i+1)
-            cimg = ax.imshow(img[:,:,i].T, aspect='auto', interpolation='nearest', origin='lower', cmap=plt.get_cmap('bwr'))
-            cax = fig.colorbar(cimg)
+            ax2 = plt.subplot(6,1,i+1)
+            cimg2 = ax2.imshow(img2[:,:,i].T, aspect='auto', interpolation='nearest', origin='lower', cmap=plt.get_cmap('bwr'))
+            cax2 = fig2.colorbar(cimg2)
+
+        #### DELETE WHEN DONE WITH DEBUGGING!!!!!!!!! ####
+        '''
+
+        isotope /= pct_min_days
+
+        '''
+        #### DELETE WHEN DONE WITH DEBUGGING!!!!!!!!! ####
+
+        print 'isotope shape', isotope.shape
+        isotope2 = np.mean(isotope, axis=1)
+        print 'isotope shape2', isotope2.shape
+        Nx, Ny = np.max(self.locations, axis=0) + 1
+        n_pix = self.locations.shape[0]
+        img3 = np.empty((Nx, Ny, 6), dtype='f8')
+        img3[:] = np.nan
+        for n in xrange(n_pix):
+            x, y = self.locations[n]
+            img3[x, y, :] = isotope2[n, [2,3,105,195,245,285]] # works after 3 days, not at 2nd, 1st or 0th day
+
+        fig3 = plt.figure(dpi=100)
+        for i in np.arange(5):
+            ax3 = plt.subplot(6,1,i+1)
+            cimg3 = ax3.imshow(img3[:,:,i].T, aspect='auto', interpolation='nearest', origin='lower', cmap=plt.get_cmap('bwr'), vmin=-10., vmax=-4.)
+            cax3 = fig3.colorbar(cimg3)
         plt.show()
 
-
+        #### DELETE WHEN DONE WITH DEBUGGING!!!!!!!!! ####
+        '''
 
         print 'test d' # fast
         return self._pix2img(isotope, mode=mode, interp=False)
