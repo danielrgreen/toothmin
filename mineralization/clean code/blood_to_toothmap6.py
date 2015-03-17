@@ -261,9 +261,9 @@ def main():
     #img = np.delete(img, np.s_[0:8], 0)
     img = img[1:, :] + 18.
     #img = gaussian_filter(img, (2,2), mode='nearest')
-    
+    print 'img.shape', img.shape
     x_resized = imresize1(img, iso_shape, method=Image.BILINEAR)
-
+    print 'x_resized.shape', x_resized.shape
     # Felicitas (34,5)
     #iso_data = np.array([0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.58, 11.39, 13.26, 12.50, 11.88, 9.63, 13.46, 12.83, 11.60, 12.15, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 10.38, 13.13, 13.37, 12.41, 13.31, 13.77, 13.51, 13.53, 13.41, 13.57, 13.99, 13.61, 13.43, 13.40, 12.40, 12.94, 12.43, 12.10, 11.13, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 11.00, 0.00, 0.00, 0.00, 0.00, 12.08, 12.91, 13.11, 12.70, 12.69, 12.23, 12.56, 11.53, 12.82, 12.36, 12.51, 10.69, 11.33, 13.33, 13.12, 13.21, 13.07, 13.76, 12.90, 14.63, 11.81, 9.76, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 12.21, 11.04, 12.81, 12.20, 12.69, 12.31, 12.44, 12.12, 10.84, 12.85, 12.90, 13.13, 13.74, 13.18, 11.91, 12.53, 13.10, 12.28, 12.92, 10.95, 12.83, 13.20, 13.25, 12.10, 11.95, 12.08, 11.65, 8.45, 0.00, 0.00, 0.00, 13.01, 12.39, 12.05, 12.25, 13.42, 12.68, 11.84, 12.43, 10.19, 11.24, 10.55, 11.33, 12.09, 12.56, 13.71, 12.03, 10.78, 12.75, 12.67, 12.50, 12.48, 12.50, 11.96, 12.21, 12.28, 9.88, 11.85, 12.44, 11.07, 11.18, 10.68, 11.42, 12.39, 10.08]) #old data
 
@@ -276,12 +276,18 @@ def main():
     #iso_data = iso_data.reshape(iso_shape[0], iso_shape[1])
     iso_data[iso_data==0.] = np.nan
     iso_data, iso_data_x_ct = count_number(iso_data)
+    print 'iso_data.shape', iso_data.shape
+    print 'iso_data_x_ct.shape', iso_data_x_ct.shape
     temp_x_r = np.fliplr(x_resized.T)
+    print 'temp_x_r.shape', temp_x_r.shape
     model_resized = complex_resize(temp_x_r.flatten(), iso_data_x_ct)
     remodeled = np.array(model_resized)
+    print 'model_resized.shape', model_resized.shape
     iso_data = iso_data
     x_resized = x_resized.T
+    print 'x_resized.T.shape', x_resized.shape
     iso_data = iso_data.T
+    print 'iso_data.T.shape', iso_data.shape
 
     iso_data_reduced1 = np.ma.masked_array(iso_data, np.isnan(iso_data))
     iso_data_reduced2 = np.mean(iso_data_reduced1, axis=0)
@@ -299,30 +305,30 @@ def main():
     
     fig = plt.figure()
 
-    ax1 = fig.add_subplot(6, 1, 1)
-    cimg1 = ax1.imshow(img, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=9.5, vmax=14, cmap=plt.get_cmap('bwr'))
+    ax1 = fig.add_subplot(1, 1, 1)
+    cimg1 = ax1.imshow(iso_data, aspect='auto', interpolation='nearest', origin='lower',
+                        vmin=9, vmax=15, cmap=plt.get_cmap('bwr'))
     cax1 = fig.colorbar(cimg1)
-
+    '''
     ax2 = fig.add_subplot(6, 1, 2)
     cimg2 = ax2.imshow(x_resized, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=9.5, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=9, vmax=15, cmap=plt.get_cmap('bwr'))
     cax2 = fig.colorbar(cimg2)
 
     ax3 = fig.add_subplot(6, 1, 3)
     cimg3 = ax3.imshow(iso_data, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=9.5, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=9, vmax=15, cmap=plt.get_cmap('bwr'))
     cax3 = fig.colorbar(cimg3)
 
     ax4 = fig.add_subplot(6, 1, 4)
     iso_data_reduced.shape = (iso_data_reduced.size, 1)
     cimg4 = ax4.imshow(iso_data_reduced.T, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=9, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=9, vmax=15, cmap=plt.get_cmap('bwr'))
     cax4 = fig.colorbar(cimg4)
 
     ax5 = fig.add_subplot(6, 1, 5)
     cimg5 = ax5.imshow(remodeled, aspect='equal', interpolation='nearest', origin='lower',
-                        vmin=9.5, vmax=14, cmap=plt.get_cmap('bwr'))
+                        vmin=9, vmax=15, cmap=plt.get_cmap('bwr'))
     cax5 = fig.colorbar(cimg5)
 
     ax6 = fig.add_subplot(6, 1, 6)
@@ -333,6 +339,7 @@ def main():
 
     fig.subplots_adjust(hspace=.5)
     fig.savefig('jan15_blood2toothmap6b.pdf', dpi=300, figsize=8, format='pdf', edgecolor='none')
+    '''
     plt.show()
 
     return 0

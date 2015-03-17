@@ -55,9 +55,9 @@ def calc_water_step(n_days, **kwargs):
     w0 = kwargs.get('w0', -6.5)
     w1 = kwargs.get('w1', -6.5)
     w2 = kwargs.get('w2', -6.5)
-    w3 = kwargs.get('w3', -6.5)
-    w4 = kwargs.get('w4', -13.5)
-    w5 = kwargs.get('w5', -13.5)
+    w3 = kwargs.get('w3', -19.5)
+    w4 = kwargs.get('w4', -19.5)
+    w5 = kwargs.get('w5', -19.5)
     w6 = kwargs.get('w6', -6.5)
     w7 = kwargs.get('w7', -6.5)
     w8 = kwargs.get('w8', -6.5)
@@ -76,11 +76,11 @@ def calc_water_step(n_days, **kwargs):
     water_step = np.ones(n_days)
     water_step[0:20] = w0
     water_step[20:40] = w1
-    water_step[40:60] = w2
-    water_step[60:80] = w3
+    water_step[40:45] = w2
+    water_step[45:80] = w3
     water_step[80:100] = w4
-    water_step[100:120] = w5
-    water_step[120:140] = w6
+    water_step[100:105] = w5
+    water_step[105:140] = w6
     water_step[140:160] = w7
     water_step[160:180] = w8
     water_step[180:200] = w9
@@ -204,6 +204,8 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     f_H2O_ef = kwargs.get('f_H2O_ef', 0.14)
     alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.038)
     f_CO2 = kwargs.get('f_CO2', 0.24)
+    ev_enrichment = kwargs.get('ev_enrichment', 1.2)
+
 
     # Calculate equilibrium on each day
     R_eq = (
@@ -218,14 +220,14 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
         + (alpha_CO2_H2O * f_CO2)
     )
 
-    return R2d(R_eq)
+    return R2d(R_eq) + ev_enrichment
 
 def blood_delta(d_O2, d_water, d_feed, **kwargs):
     # Calculate equilibrium on each day
     d_eq = blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs)
 
     # Integrate differential equation to get
-    t_half = kwargs.get('t_half', 3.)
+    t_half = kwargs.get('t_half', 20.)
     alpha = np.log(2.) / t_half
     beta = alpha * d_eq
 
@@ -264,7 +266,7 @@ def calc_blood_step(**kwargs):
     :return:            Stepped blood delta values in SMOW
     '''
 
-    feed = kwargs.get('feed', 24.)
+    feed = kwargs.get('feed', 25.5)
     air = kwargs.get('air', 23.5)
 
     water_step = calc_water_step(400)
@@ -276,9 +278,9 @@ def calc_blood_step(**kwargs):
 
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
-    ax.plot(days, delta, 'r')
-    ax.plot(days, water_step, 'b')
-    ax.plot(days, d_eq, 'k')
+    ax.plot(days, water_step, 'b', linewidth=3.0)
+    ax.plot(days, delta, 'r', linewidth=3.0)
+    #ax.plot(days, d_eq, 'k')
 
     #ax.set_ylim(-16., 6.)
     #vmin = max(np.max(delta), np.max(water_step))
@@ -296,7 +298,7 @@ def calc_blood_gaussian(**kwargs):
                         isotope delta values
     :return:            Gaussian blood history in delta SMOW
     '''
-    feed = kwargs.get('feed', 24.)
+    feed = kwargs.get('feed', 25.3)
     air = kwargs.get('air', 23.5)
 
     water_gaussian = calc_water_gaussian(400)
@@ -318,35 +320,6 @@ def calc_blood_gaussian(**kwargs):
     #plt.show()
 
     return water_gaussian, delta
-
-def test_blood_delta():
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
-
-    n_days = 339
-    feed = 24.
-    air = 23.5
-    water = np.ones(n_days, dtype='f8')
-    water[:8] = -7.
-    water[8:28] = -9.5
-    water[28:53] = -8.
-    water[53:183] = -7.
-    water[183:189] = -14.5
-    water[189:339] = -8.
-
-    d_eq = blood_d_equilibrium(air, water, feed)
-    delta = blood_delta(air, water, feed, t_half=3.)
-
-    days = np.arange(n_days)
-    ax.plot(days, delta, 'r')
-    ax.plot(days, water, 'b')
-    ax.plot(days, d_eq, 'k')
-
-    #ax.set_xlim(0., 300.)
-    #ax.set_ylim(-15., -4.)
-    #vmin = max(np.max(delta), np.max(water))
-    #ax.set_ylim(1.2*vmin, 1.2*vmax)
-    #plt.show()
 
 def main():
     water_gaussian, gaussian_delta = calc_blood_gaussian()
