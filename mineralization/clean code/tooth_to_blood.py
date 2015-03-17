@@ -266,7 +266,14 @@ class ToothModel:
         print 'calculating isotope ratios in tooth for each day of growth...' # takes 60-100 seconds
         isotope /= pct_min_days
 
-        return self._pix2imgu(isotope)
+        if mode == 'sample':
+            return self._pix2img(isotope)
+        elif isinstance(mode, list):
+            return [self._pix2img(isotope, mode=pct) for pct in mode]
+        elif isinstance(mode, int):
+            return [self._pix2img(isotope) for k in xrange(mode)]
+        else:
+            raise ValueError('mode not understood: {0}'.format(mode))
 
 def diff_with_first(x, axis=0):
     y = np.swapaxes(x, 0, axis)
@@ -514,17 +521,30 @@ def wizard(array, shape):
 
     return new_array
 
-def gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step):
+def gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
-    model_isomap = tooth_model.gen_isotope_image(blood_step, mode='sample') + 18.
-    model_isomap = np.delete(model_isomap, np.s_[0:1], 1)
-    remodeled = wizard(model_isomap, iso_shape)
-    temp_x_r = remodeled.T # was temp_x_r = np.fliplr(remodeled.T)
-    model_resized = complex_resize(iso_shape, temp_x_r.flatten(), iso_data_x_ct)
-    remodeled = np.array(model_resized)
-    data_isomap = iso_data
+    model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
+    for k in xrange(len(model_isomap)):
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.
+    print 'model_isomap[0].shape', model_isomap[0].shape
 
-    return model_isomap, data_isomap, remodeled
+    #model_isomap = np.delete(model_isomap, np.s_[0:1], 1)
+    #print model_isomap[:,:,0]
+
+    re_shape = (iso_shape[0], iso_shape[1], len(model_isomap))
+    remodeled = np.empty(re_shape, dtype='f8')
+
+    for i in xrange(re_shape[2]):
+        tmp = wizard(model_isomap[i], iso_shape)
+        remodeled[:,:,i] = np.array(complex_resize(iso_shape, tmp.T.flatten(), iso_data_x_ct))
+
+    #remodeled = wizard(model_isomap, iso_shape)
+    #model_resized = complex_resize(iso_shape, remodeled.T.flatten(), iso_data_x_ct)
+    #remodeled = np.array(model_resized)
+
+    #return model_isomap, data_isomap, remodeled
+
+    return model_isomap, iso_data, remodeled
 
 def compare(model_isomap, data_isomap, score_max=3., data_sigma=0.15, sigma_floor=0.05):
 
@@ -550,24 +570,25 @@ def main():
     print 'loading tooth model ...'
     tooth_model = ToothModel('final_equalsize_jan2015.h5')
 
-    tooth_model_sm = tooth_model.downsample_model((iso_shape[0]+5, iso_shape[1]+5), 10)
+    tooth_model_sm = tooth_model.downsample_model((iso_shape[0]+5, iso_shape[1]+5), 1)
 
     #print 'Generating movies...'
     #gen_mnzt_movie(tooth_model, 'frames/fullres')
     #gen_mnzt_movie(tooth_model_sm, 'frames/50x30')
 
     model_isomap, data_isomap, remodeled = gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model_sm, blood_step)
+    model_isomap = np.array(model_isomap)
 
     print 'plotting figures...'
     fig = plt.figure(dpi=100)
     ax1 = plt.subplot(3,1,1)
-    cimg1 = ax1.imshow(model_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
+    cimg1 = ax1.imshow(model_isomap[1,:,:].T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
     cax1 = fig.colorbar(cimg1)
     ax2 = plt.subplot(3,1,2)
     cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
     cax2 = fig.colorbar(cimg2)
     ax3 = plt.subplot(3,1,3)
-    cimg3 = ax3.imshow(remodeled.T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
+    cimg3 = ax3.imshow(remodeled[:,:,1].T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
     cax2 = fig.colorbar(cimg2)
     plt.show()
 
