@@ -526,7 +526,6 @@ def gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step, day
     model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
     for k in xrange(len(model_isomap)):
         model_isomap[k] = model_isomap[k][:,1:,day] + 18.
-    print 'model_isomap[0].shape', model_isomap[0].shape
 
     #model_isomap = np.delete(model_isomap, np.s_[0:1], 1)
     #print model_isomap[:,:,0]
@@ -578,6 +577,9 @@ def main():
 
     model_isomap, data_isomap, remodeled = gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model_sm, blood_step)
     model_isomap = np.array(model_isomap)
+
+    score = compare(remodeled, data_isomap)
+    print 'score = ', score
 
     print 'plotting figures...'
     fig = plt.figure(dpi=100)
