@@ -276,16 +276,16 @@ def calc_blood_step(**kwargs):
     d_eq = blood_d_equilibrium(air, water_step, feed)
     delta = blood_delta(air, water_step, feed, t_half=3.)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
-    ax.plot(days, water_step, 'b', linewidth=3.0)
-    ax.plot(days, delta, 'r', linewidth=3.0)
+    #fig = plt.figure()
+    #ax = fig.add_subplot(1,1,1)
+    #ax.plot(days, water_step, 'b', linewidth=3.0)
+    #ax.plot(days, delta, 'r', linewidth=3.0)
     #ax.plot(days, d_eq, 'k')
 
     #ax.set_ylim(-16., 6.)
     #vmin = max(np.max(delta), np.max(water_step))
     #ax.set_ylim(1.2*vmin, 1.2*vmax)
-    plt.show()
+    #plt.show()
 
     return water_step, delta
 

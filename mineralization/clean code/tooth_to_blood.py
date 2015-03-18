@@ -20,7 +20,7 @@ from PIL import Image
 from scipy.interpolate import interp1d
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
-from blood_delta import calc_blood_step
+from blood_delta import calc_blood_step, calc_water_step2, blood_delta
 from blood_delta import calc_blood_gaussian
 from lmfit import minimize, Parameters
 
@@ -488,11 +488,31 @@ def import_iso_data(**kwargs):
 
     return iso_shape, iso_data, iso_data_x_ct
 
+def load_iso_data(fname):
+    '''
+    Load a tooth isotope map from a CSV file.
+    :param fname: The filename of the CSV file.
+    :return:
+      iso_data       The tooth isotope image
+      iso_shape      Shape of the tooth image
+      iso_data_x_ct  Number of nans in each column
+    '''
+    iso_data = np.loadtxt(fname, delimiter=',').T
+    iso_data[iso_data==0.] = np.nan
+    iso_data = iso_data[:,::-1]
+
+    iso_data_x_ct = iso_data.shape[1] - np.sum(np.isnan(iso_data), axis=1)
+
+    iso_shape = iso_data.shape
+    #iso_data, iso_data_x_ct = count_number(iso_shape, iso_data)
+
+    return iso_data, iso_shape, iso_data_x_ct
+
 
 def wizard(array, shape):
     '''
-        Takes an array and broadcasts it into a new shape, ignoring NaNs.
-        '''
+    Takes an array and broadcasts it into a new shape, ignoring NaNs.
+    '''
 
     # Calculate shapes
     oldshape = array.shape
@@ -519,7 +539,7 @@ def wizard(array, shape):
 
     return new_array
 
-def grow_nan(string):
+def grow_nan(iso_column, number_delete):
     '''
     Takes a string of floats with nans at the end, and replaces the last float value
     with an additional nan. Designed to function with gen_isomaps, where unreliable
@@ -528,19 +548,31 @@ def grow_nan(string):
     :return:            a string of the same size with the last float replaced by a nan
     '''
 
-    nan_ct = np.sum(np.isnan(string))
-    print nan_ct
-    string[-(nan_ct+1)] = np.nan
+    nan_ct = np.sum(np.isnan(iso_column))
+    iso_column[-(nan_ct+number_delete):iso_column.shape[0]-nan_ct] = np.nan
 
-    return string
+    return iso_column
 
-def gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step, day=-1):
+def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
+    '''
+    Takes mineralization model and blood isotope model to create modeled tooth isotope data,
+    then downsamples these to the same resolution as real tooth isotope data, so that real
+    and modeled results can be compared.
+    :param iso_shape:           tuple, shape of real isotope data
+    :param iso_data:            real tooth isotope data as string or array of floats
+    :param iso_data_x_ct:       list with number nans per column in real isotope data
+    :param tooth_model:         Class object including information about tooth mineralization
+    :param blood_step:          string of blood isotope ratios per day as floats
+    :param day:                 day of mineralization at which to carry out comparison with data
+    :return:                    modeled tooth isotope data scaled to real data size, with the
+                                appropriate number of nans, and and isotope data
+    '''
 
     model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
     for k in xrange(len(model_isomap)):
         model_isomap[k] = model_isomap[k][:,1:,day] + 18.
         for c in xrange(model_isomap[k].shape[0]):
-            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:])
+            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2)
 
     re_shape = (iso_shape[0], iso_shape[1], len(model_isomap))
     remodeled = np.empty(re_shape, dtype='f8')
@@ -549,28 +581,128 @@ def gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step, day
         tmp = wizard(model_isomap[i], iso_shape)
         remodeled[:,:,i] = np.array(complex_resize(iso_shape, tmp.T.flatten(), iso_data_x_ct))
 
-    return model_isomap, iso_data, remodeled
+    return remodeled
 
 def compare(model_isomap, data_isomap, score_max=3., data_sigma=0.15, sigma_floor=0.05):
+    '''
 
-    mu = np.mean(model_isomap, axis=2)
+    :param model_isomap:        modeled tooth isotope data
+    :param data_isomap:         real tooth isotope data
+    :param score_max:           maximum effect of single pixel comparison on likelihood
+    :param data_sigma:
+    :param sigma_floor:
+    :return:
+    '''
+
+    mu = np.median(model_isomap, axis=2)
     sigma = np.std(model_isomap, axis=2)
     sigma = np.sqrt(sigma**2. + data_sigma**2. + sigma_floor**2.)
     score = (mu - data_isomap) / sigma
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
 
-    return np.sum(score)
+    return -np.sum(score**2)
+
+
+def water_hist_likelihood(w_iso_hist, **kwargs):
+    # Calculate water history on each day
+    block_length = int(kwargs.get('block_length', 10))
+    w_iso_hist = calc_water_step2(w_iso_hist, block_length)
+
+    # Water to blood history
+    d_O2 = kwargs.get('d_O2', 23.5)
+    d_feed = kwargs.get('d_feed', 25.3)
+    metabolic_kw = kwargs.get('metabolic_kw', {})
+    blood_hist = blood_delta(d_O2, w_iso_hist, d_feed, **metabolic_kw)
+
+    # Access tooth model
+    tooth_model = kwargs.get('tooth_model', None)
+    assert(tooth_model != None)
+
+    # Access tooth data
+    isomap_shape = kwargs.get('isomap_shape', None)
+    data_isomap = kwargs.get('data_isomap', None)
+    isomap_data_x_ct = kwargs.get('isomap_data_x_ct', None)
+    assert(isomap_shape != None)
+    assert(data_isomap != None)
+    assert(isomap_data_x_ct != None)
+
+    # Calculate model tooth isomap
+    model_isomap = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, blood_hist)
+
+    return compare(model_isomap, data_isomap), model_isomap
+
+
+def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwargs):
+    print 'importing isotope data...'
+    data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
+
+    fig = plt.figure(figsize=(8,3), dpi=100)
+    ax = fig.add_subplot(1,1,1)
+    ax.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=5., vmax=15., cmap='bwr')
+    plt.show()
+
+    print 'loading tooth model ...'
+    tooth_model_lg = ToothModel(model_fname)
+    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
+
+    # Set keyword arguments to be used in fitting procedure
+    fit_kwargs = kwargs.copy()
+
+    fit_kwargs['tooth_model'] = tooth_model
+    fit_kwargs['data_isomap'] = data_isomap
+    fit_kwargs['isomap_shape'] = isomap_shape
+    fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
+
+    # Test what we have so far
+    vmin, vmax = 5., 18.
+
+    fig = plt.figure(figsize=(10,10), dpi=200)
+    n_blocks = 30
+    fit_kwargs['block_length'] = 10.
+    n_rows, n_cols = 11, 2
+
+    ax = fig.add_subplot(n_rows, n_cols, 1)
+    ax.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
+
+    for k in xrange(n_rows-1):
+        w_iso_hist = -6.5 * np.ones(n_blocks)
+        w_iso_hist[k:k+6] = -19.5
+
+        print w_iso_hist
+
+        score, model_isomap = water_hist_likelihood(w_iso_hist, **fit_kwargs)
+        mu = np.median(model_isomap, axis=2)
+        sigma = np.std(model_isomap, axis=2)
+        sigma = np.sqrt(sigma**2. + 0.15**2 + 0.05**2)
+        resid_img = (mu - data_isomap) / sigma
+
+        ax = fig.add_subplot(n_rows, n_cols, 3+2*k)
+        ax.imshow(mu.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
+
+        ax = fig.add_subplot(n_rows, n_cols, 4+2*k)
+        ax.imshow(resid_img.T, aspect='auto', interpolation='nearest', origin='lower', vmin=-5., vmax=5., cmap='bwr')
+
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        x0 = xlim[0] + 0.05 * (xlim[1] - xlim[0])
+        y0 = ylim[1] - 0.05 * (ylim[1] - ylim[0])
+
+        ax.text(x0, y0, 'score: {0:.2f}'.format(score), fontsize=10, ha='left', va='top')
+        print 'score: {0:.2f}'.format(score)
+
+    fig.savefig('test-results.png', dpi=200)
+    plt.show()
+
 
 
 
 def main():
+    fit_tooth_data('/Users/darouet/Desktop/tooth_example.csv')
 
+    '''
     print 'importing isotope data...'
     iso_shape, iso_data, iso_data_x_ct = import_iso_data()
-
-    print 'importing blood isotope history...'
-    water_step, blood_step = calc_blood_step()
 
     print 'loading tooth model ...'
     tooth_model = ToothModel('final_equalsize_jan2015.h5')
@@ -580,6 +712,9 @@ def main():
     #print 'Generating movies...'
     #gen_mnzt_movie(tooth_model, 'frames/fullres')
     #gen_mnzt_movie(tooth_model_sm, 'frames/50x30')
+
+    print 'importing blood isotope history...'
+    water_step, blood_step = calc_blood_step()
 
     model_isomap, data_isomap, remodeled = gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model_sm, blood_step)
     model_isomap = np.array(model_isomap)
@@ -602,7 +737,8 @@ def main():
 
     #gen_min_movie(tooth_model)
     #gen_isomap_movie(tooth_model_sm, blood_step)
-    
+    '''
+
     return 0
 
 if __name__ == '__main__':
