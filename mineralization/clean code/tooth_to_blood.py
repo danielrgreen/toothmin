@@ -90,8 +90,6 @@ class ToothModel:
         else:
             pix_val = np.percentile(pix_val, mode, axis=1)
 
-        print pix_val.shape
-
         n_x = np.max(self.locations[:,0]) + 1
         n_y = np.max(self.locations[:,1]) + 1
         img = np.empty((n_x, n_y, pix_val.shape[1]), dtype='f8')
@@ -521,14 +519,28 @@ def wizard(array, shape):
 
     return new_array
 
+def grow_nan(string):
+    '''
+    Takes a string of floats with nans at the end, and replaces the last float value
+    with an additional nan. Designed to function with gen_isomaps, where unreliable
+    topmost model pixels can be replaced with nans, and so not be used for fitting.
+    :param string:      a string of floats with nans at the end
+    :return:            a string of the same size with the last float replaced by a nan
+    '''
+
+    nan_ct = np.sum(np.isnan(string))
+    print nan_ct
+    string[-(nan_ct+1)] = np.nan
+
+    return string
+
 def gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
     for k in xrange(len(model_isomap)):
         model_isomap[k] = model_isomap[k][:,1:,day] + 18.
-
-    #model_isomap = np.delete(model_isomap, np.s_[0:1], 1)
-    #print model_isomap[:,:,0]
+        for c in xrange(model_isomap[k].shape[0]):
+            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:])
 
     re_shape = (iso_shape[0], iso_shape[1], len(model_isomap))
     remodeled = np.empty(re_shape, dtype='f8')
@@ -536,12 +548,6 @@ def gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model, blood_step, day
     for i in xrange(re_shape[2]):
         tmp = wizard(model_isomap[i], iso_shape)
         remodeled[:,:,i] = np.array(complex_resize(iso_shape, tmp.T.flatten(), iso_data_x_ct))
-
-    #remodeled = wizard(model_isomap, iso_shape)
-    #model_resized = complex_resize(iso_shape, remodeled.T.flatten(), iso_data_x_ct)
-    #remodeled = np.array(model_resized)
-
-    #return model_isomap, data_isomap, remodeled
 
     return model_isomap, iso_data, remodeled
 
