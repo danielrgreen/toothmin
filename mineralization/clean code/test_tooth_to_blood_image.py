@@ -650,7 +650,7 @@ def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwarg
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
     # Test what we have so far
-    vmin, vmax = 5., 15.
+    vmin, vmax = 7., 19.
 
     fig = plt.figure()
     n_blocks = 35
@@ -659,9 +659,10 @@ def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwarg
     ax = fig.add_subplot(2, 1, 1)
     ax.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
 
-    water_values = np.array([-7.15515933, -4.38524375, -8.84227465, -2.46380972, -0.92243626, -0.403737, -19.12710286, -8.02225088, -12.18869832, -12.88801047, -4.80383977, -7.5202072, -7.11403771, -8.9975987, -0.30725391, -4.26886475, -20.19268659, -3.09069521, -6.93313956, -2.51149337, -16.20559857, -1.28424842, -3.22560518, -0.04213472, -8.92023621, -6.26987267, -2.18375318, 0.02833271, -7.80720114, -7.21194496, -0.41223282, 2.35658663, -5.10956306, -0.62120962, -3.03507511])
+    water_values = np.loadtxt('best-fit.dat')
     w_iso_hist = np.repeat(water_values, 10)
 
+    print w_iso_hist
     score, model_isomap = water_hist_likelihood(w_iso_hist, **fit_kwargs)
     mu = np.median(model_isomap, axis=2)
     sigma = np.std(model_isomap, axis=2)
@@ -672,7 +673,6 @@ def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwarg
     ax.imshow(mu.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
     print 'score: {0:.2f}'.format(score)
 
-    fig.savefig('test-results_6_70days.png', dpi=200)
     plt.show()
 
 
