@@ -22,7 +22,7 @@ from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
 from blood_delta import calc_blood_step, calc_water_step2, blood_delta
 from blood_delta import calc_blood_gaussian
-from lmfit import minimize, Parameters
+from scipy.optimize import curve_fit, minimize, leastsq
 
 class ToothModel:
     def __init__(self, fname=None):
@@ -84,7 +84,6 @@ class ToothModel:
 
     def _pix2img(self, pix_val, mode='sample', interp=False):
 
-        print 'collecting random pixel samples for image' # fast
         if mode == 'sample':
             pix_val = self._gen_rand_hist(pix_val)
         else:
@@ -654,46 +653,19 @@ def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwarg
     fit_kwargs['isomap_shape'] = isomap_shape
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
-    # Test what we have so far
-    vmin, vmax = 5., 18.
-
-    fig = plt.figure(figsize=(10,10), dpi=200)
     n_blocks = 30
     fit_kwargs['block_length'] = 10.
     n_rows, n_cols = 11, 2
 
-    ax = fig.add_subplot(n_rows, n_cols, 1)
-    ax.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
-
     for k in xrange(n_rows-1):
         w_iso_hist = -6.5 * np.ones(n_blocks)
         w_iso_hist[k:k+6] = -19.5
-
-        print w_iso_hist
 
         score, model_isomap = water_hist_likelihood(w_iso_hist, **fit_kwargs)
         mu = np.median(model_isomap, axis=2)
         sigma = np.std(model_isomap, axis=2)
         sigma = np.sqrt(sigma**2. + 0.15**2 + 0.05**2)
         resid_img = (mu - data_isomap) / sigma
-
-        ax = fig.add_subplot(n_rows, n_cols, 3+2*k)
-        ax.imshow(mu.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
-
-        ax = fig.add_subplot(n_rows, n_cols, 4+2*k)
-        ax.imshow(resid_img.T, aspect='auto', interpolation='nearest', origin='lower', vmin=-5., vmax=5., cmap='bwr')
-
-        xlim = ax.get_xlim()
-        ylim = ax.get_ylim()
-        x0 = xlim[0] + 0.05 * (xlim[1] - xlim[0])
-        y0 = ylim[1] - 0.05 * (ylim[1] - ylim[0])
-
-        ax.text(x0, y0, 'score: {0:.2f}'.format(score), fontsize=10, ha='left', va='top')
-        print 'score: {0:.2f}'.format(score)
-
-    fig.savefig('test-results.png', dpi=200)
-    plt.show()
-
 
 
 

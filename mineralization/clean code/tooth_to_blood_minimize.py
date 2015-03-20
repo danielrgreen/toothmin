@@ -22,7 +22,7 @@ from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
 from blood_delta import calc_blood_step, calc_water_step2, blood_delta
 from blood_delta import calc_blood_gaussian
-from lmfit import minimize, Parameters
+from scipy.optimize import curve_fit, minimize, leastsq
 
 class ToothModel:
     def __init__(self, fname=None):
@@ -84,7 +84,6 @@ class ToothModel:
 
     def _pix2img(self, pix_val, mode='sample', interp=False):
 
-        print 'collecting random pixel samples for image' # fast
         if mode == 'sample':
             pix_val = self._gen_rand_hist(pix_val)
         else:
@@ -601,7 +600,7 @@ def compare(model_isomap, data_isomap, score_max=3., data_sigma=0.15, sigma_floo
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
 
-    return -np.sum(score**2)
+    return np.sum(score**2)
 
 
 def water_hist_likelihood(w_iso_hist, **kwargs):
@@ -630,17 +629,21 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     # Calculate model tooth isomap
     model_isomap = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, blood_hist)
 
-    return compare(model_isomap, data_isomap), model_isomap
+    return compare(model_isomap, data_isomap)#, model_isomap
 
+def score_v_score(w_iso_hist, n, fit_kwargs):
+    f_min = lambda x: water_hist_likelihood(x, **fit_kwargs)
+    iso1 = w_iso_hist[n]
+    score1 = f_min(w_iso_hist)
+    iso2 = np.random.normal(iso1)
+    w_iso_hist_tmp = np.array(w_iso_hist)
+    w_iso_hist_tmp[n] = iso2
+    score2 = f_min(w_iso_hist_tmp)
+    return iso1, iso2, score1, score2
 
 def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
-
-    fig = plt.figure(figsize=(8,3), dpi=100)
-    ax = fig.add_subplot(1,1,1)
-    ax.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=5., vmax=15., cmap='bwr')
-    plt.show()
 
     print 'loading tooth model ...'
     tooth_model_lg = ToothModel(model_fname)
@@ -654,48 +657,49 @@ def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwarg
     fit_kwargs['isomap_shape'] = isomap_shape
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
-    # Test what we have so far
-    vmin, vmax = 5., 18.
+    n_blocks = 5
+    fit_kwargs['block_length'] = 70.
+    w_iso_hist = -5. * np.ones(n_blocks)
+    #guesses = np.ones(n_blocks)
+    #bounds = np.tile((-30., 5.), (n_blocks, 1))
+    trials = 30
+    record = np.empty((n_blocks*trials, n_blocks), dtype='f4')
 
-    fig = plt.figure(figsize=(10,10), dpi=200)
-    n_blocks = 60
-    fit_kwargs['block_length'] = 5.
-    n_rows, n_cols = 11, 2
+    for n in xrange(n_blocks):
+        for t in xrange(trials):
+            iso1, iso2, score1, score2 = score_v_score(w_iso_hist, n, fit_kwargs)
+            print 'START trial n = ', t
+            print 'w_iso_hist = ', w_iso_hist[n]
+            print 'iso1, iso2 = ', iso1, iso2
+            print 'score1, score2 = ', score1, score2
+            if np.greater(score1, score2) == True:
+                print 'score1 IS GREATER than score2: '
+                print 'old water hist[n] = ', w_iso_hist[n]
+                w_iso_hist[n] = iso2
+                print 'new water hist[n] = ', w_iso_hist[n]
+                #iso1, iso2, score1, score2 = score_v_score(w_iso_hist, n, fit_kwargs)
+            else:
+                print 'score1 IS NOT greater than score2: '
+                print 'old water hist[n] = ', w_iso_hist[n]
+                print 'next water hist should remain at ', w_iso_hist[n]
+            print 'END trial n = ', t
 
-    ax = fig.add_subplot(n_rows, n_cols, 1)
-    ax.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
+            record[(n*trials)+t] = w_iso_hist
+    print record
+    print w_iso_hist
 
-    for k in xrange(n_rows-1):
-        w_iso_hist = -8.0 * np.ones(n_blocks)
-        w_iso_hist[k+1:k+15] = -8.0
+    #f_min = lambda x: water_hist_likelihood(x, **fit_kwargs)
+    #result = minimize(f_min, w_iso_hist, method='SLSQP', bounds=bounds)
 
-        print w_iso_hist
+    #result = minimize(water_hist_likelihood, w_iso_hist, args='**fit_kwargs', method='BFGS')
+    #print result
 
-        score, model_isomap = water_hist_likelihood(w_iso_hist, **fit_kwargs)
-        mu = np.median(model_isomap, axis=2)
-        sigma = np.std(model_isomap, axis=2)
-        sigma = np.sqrt(sigma**2. + 0.15**2 + 0.05**2)
-        resid_img = (mu - data_isomap) / sigma
-
-        ax = fig.add_subplot(n_rows, n_cols, 3+2*k)
-        ax.imshow(mu.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
-
-        ax = fig.add_subplot(n_rows, n_cols, 4+2*k)
-        ax.imshow(resid_img.T, aspect='auto', interpolation='nearest', origin='lower', vmin=-5., vmax=5., cmap='bwr')
-
-        xlim = ax.get_xlim()
-        ylim = ax.get_ylim()
-        x0 = xlim[0] + 0.05 * (xlim[1] - xlim[0])
-        y0 = ylim[1] - 0.05 * (ylim[1] - ylim[0])
-
-        ax.text(x0, y0, 'score: {0:.2f}'.format(score), fontsize=10, ha='left', va='top')
-        print 'score: {0:.2f}'.format(score)
-
-    fig.savefig('test-results_6_70days.png', dpi=200)
-    plt.show()
-
-
-
+    #score, model_isomap = water_hist_likelihood(w_iso_hist, **fit_kwargs)
+    #mu = np.median(model_isomap, axis=2)
+    #sigma = np.std(model_isomap, axis=2)
+    #sigma = np.sqrt(sigma**2. + 0.15**2 + 0.05**2)
+    #resid_img = (mu - data_isomap) / sigma
+    #f_min = lambda x: water_hist_likelihood(x, **fit_kwargs)
 
 def main():
     fit_tooth_data('/Users/darouet/Desktop/tooth_example.csv')
