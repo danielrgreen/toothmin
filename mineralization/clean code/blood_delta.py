@@ -256,7 +256,7 @@ def test_integration():
     #ax.set_ylim(1.2*np.min(beta/alpha), 1.2*np.max(beta/alpha))
     #plt.show()
 
-def calc_blood_step(**kwargs):
+def calc_blood_step(water_step, **kwargs):
     '''
 
     :param water:       Takes an isotope water history 1D vector
@@ -268,8 +268,6 @@ def calc_blood_step(**kwargs):
 
     feed = kwargs.get('feed', 25.5)
     air = kwargs.get('air', 23.5)
-
-    water_step = calc_water_step(400)
 
     n_days = water_step.size
     days = np.arange(n_days)
@@ -323,7 +321,8 @@ def calc_blood_gaussian(**kwargs):
 
 def main():
     water_gaussian, gaussian_delta = calc_blood_gaussian()
-    water_step, step_delta = calc_blood_step()
+    water_step = calc_water_step(400)
+    water_step, step_delta = calc_blood_step(water_step)
 
 if __name__ == '__main__':
     main()

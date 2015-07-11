@@ -633,7 +633,7 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     return compare(model_isomap, data_isomap), model_isomap
 
 
-def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwargs):
+def fit_tooth_data(data_fname, model_fname='final_equalsize_dec2014.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
 
@@ -686,7 +686,7 @@ def main():
     iso_shape, iso_data, iso_data_x_ct = import_iso_data()
 
     print 'loading tooth model ...'
-    tooth_model = ToothModel('final_equalsize_jan2015.h5')
+    tooth_model = ToothModel('final_equalsize_dec2014.h5')
 
     tooth_model_sm = tooth_model.downsample_model((iso_shape[0]+5, iso_shape[1]+5), 1)
 

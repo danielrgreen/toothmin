@@ -632,18 +632,15 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     return compare(model_isomap, data_isomap), model_isomap
 
 
-def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwargs):
+def fit_tooth_data(data_fname, model_fname='final_equalsize_dec2014.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
 
-    fig = plt.figure(figsize=(8,3), dpi=100)
-    ax = fig.add_subplot(1,1,1)
-    ax.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=5., vmax=15., cmap='bwr')
-    plt.show()
+
 
     print 'loading tooth model ...'
-    tooth_model_lg = ToothModel(model_fname)
-    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
+    tooth_model = ToothModel(model_fname)
+    tooth_model_sm = tooth_model.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
 
     # Set keyword arguments to be used in fitting procedure
     fit_kwargs = kwargs.copy()
@@ -653,20 +650,51 @@ def fit_tooth_data(data_fname, model_fname='final_equalsize_jan2015.h5', **kwarg
     fit_kwargs['isomap_shape'] = isomap_shape
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
-    n_blocks = 30
-    fit_kwargs['block_length'] = 10.
-    n_rows, n_cols = 11, 2
+    # One year growth (normal)
+    #n_blocks = 12
+    #fit_kwargs['block_length'] = 30
+    #month_d180 = np.array([-1.95, -1.92, -2.94, -3.44, -2.22, -1.10, -0.67, -1.71, -0.81, -1.47, -2.31, -3.19]) # Dar Es Salaam
+    #month_d180 = np.array([-0.21, 0.30, -0.04, 0.25, -0.75, -0.19, -3.16, -4.53, -0.95, 0.29, -1.26, -1.73]) # Addis Ababa
+    #month_d180 = np.array([-1.39, -0.35, -2.42, -3.25, -3.08, -1.44, -0.98, -1.88, -1.33, -3.10, -3.80, -1.63]) # Entebbe
+    #month_d180 = np.array([-6.31, -7.09, -4.87, -3.33, -1.83, -1.22, -1.08, -0.47, -0.17, -0.48, -2.92, -5.90]) # Harrare
+    #month_d180 = np.array([-2.98, -2.20, -4.74, -5.94, -2.64, -3.80, -0.25, -1.80, -1.25, -4.15, -5.80, -5.42]) # Kinshasa
+    #month_d180 = np.array([-1.58, -1.54, -1.81, -3.08, -3.40, -3.69, -3.38, -3.78, -2.46, -2.19, -2.12, -1.79]) # Cape Town
+    #month_d180 = np.array([-4.31, -3.50, -4.14, -4.68, -4.87, -5.11, -4.77, -4.80, -4.71, -4.50, -4.53, -4.77]) # Marion Island
 
-    for k in xrange(n_rows-1):
-        w_iso_hist = -6.5 * np.ones(n_blocks)
-        w_iso_hist[k:k+6] = -19.5
+    # Two year growth (half speed)
+    n_blocks = 24
+    fit_kwargs['block_length'] = 15
+    #month_d180 = np.array([-1.95, -1.92, -2.94, -3.44, -2.22, -1.10, -0.67, -1.71, -0.81, -1.47, -2.31, -3.19, -1.95, -1.92, -2.94, -3.44, -2.22, -1.10, -0.67, -1.71, -0.81, -1.47, -2.31, -3.19]) # Dar Es Salaam
+    #month_d180 = np.array([-0.21, 0.30, -0.04, 0.25, -0.75, -0.19, -3.16, -4.53, -0.95, 0.29, -1.26, -1.73, -0.21, 0.30, -0.04, 0.25, -0.75, -0.19, -3.16, -4.53, -0.95, 0.29, -1.26, -1.73]) # Addis Ababa
+    #month_d180 = np.array([-1.39, -0.35, -2.42, -3.25, -3.08, -1.44, -0.98, -1.88, -1.33, -3.10, -3.80, -1.63, -1.39, -0.35, -2.42, -3.25, -3.08, -1.44, -0.98, -1.88, -1.33, -3.10, -3.80, -1.63]) # Entebbe
+    #month_d180 = np.array([-6.31, -7.09, -4.87, -3.33, -1.83, -1.22, -1.08, -0.47, -0.17, -0.48, -2.92, -5.90, -6.31, -7.09, -4.87, -3.33, -1.83, -1.22, -1.08, -0.47, -0.17, -0.48, -2.92, -5.90]) # Harrare
+    #month_d180 = np.array([-2.98, -2.20, -4.74, -5.94, -2.64, -3.80, -0.25, -1.80, -1.25, -4.15, -5.80, -5.42, -2.98, -2.20, -4.74, -5.94, -2.64, -3.80, -0.25, -1.80, -1.25, -4.15, -5.80, -5.42]) # Kinshasa
+    #month_d180 = np.array([-1.58, -1.54, -1.81, -3.08, -3.40, -3.69, -3.38, -3.78, -2.46, -2.19, -2.12, -1.79, -1.58, -1.54, -1.81, -3.08, -3.40, -3.69, -3.38, -3.78, -2.46, -2.19, -2.12, -1.79]) # Cape Town
+    month_d180 = np.array([-4.31, -3.50, -4.14, -4.68, -4.87, -5.11, -4.77, -4.80, -4.71, -4.50, -4.53, -4.77, -4.31, -3.50, -4.14, -4.68, -4.87, -5.11, -4.77, -4.80, -4.71, -4.50, -4.53, -4.77]) # Marion Island
 
-        score, model_isomap = water_hist_likelihood(w_iso_hist, **fit_kwargs)
-        mu = np.median(model_isomap, axis=2)
-        sigma = np.std(model_isomap, axis=2)
-        sigma = np.sqrt(sigma**2. + 0.15**2 + 0.05**2)
-        resid_img = (mu - data_isomap) / sigma
 
+
+    w_iso_hist = month_d180 * np.ones(n_blocks)
+
+    score, model_isomap = water_hist_likelihood(w_iso_hist, **fit_kwargs)
+    mu = np.median(model_isomap, axis=2)
+    sigma = np.std(model_isomap, axis=2)
+    sigma = np.sqrt(sigma**2. + 0.15**2 + 0.05**2)
+    #resid_img = (mu - data_isomap) / sigma
+
+    m_mu = np.ma.masked_array(mu, np.isnan(mu))
+    mu_r = np.mean(m_mu, axis=1)
+    mu_r.shape = (mu_r.size, 1)
+
+    fig = plt.figure(figsize=(8,3), dpi=100)
+    ax1 = fig.add_subplot(2,1,1)
+    cimg1 = ax1.imshow(mu.T, aspect='equal', interpolation='nearest', origin='lower', vmin=15., vmax=16., cmap='bwr')
+    cax1 = fig.colorbar(cimg1)
+    ax2 = fig.add_subplot(2,1,2)
+    cimg2 = ax2.imshow(mu_r.T, aspect='equal', interpolation='nearest', origin='lower', vmin=15., vmax=16., cmap='bwr')
+    #cax2 = fig.colorbar(cimg2)
+    fig.savefig('marion_2y_april_2015.pdf', dpi=300)
+    plt.show()
 
 
 def main():
