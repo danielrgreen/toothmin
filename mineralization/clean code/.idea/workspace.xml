@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="147c6fc5-fdbe-4c43-8ea3-6e97dc03c34a" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../m1-2_all_optimize.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../likelihood_min_model_TMCMC.py" afterPath="$PROJECT_DIR$/../likelihood_min_model_TMCMC.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../m1-2optimize.py" afterPath="$PROJECT_DIR$/../m1-2optimize.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../m1_new_optimize.py" afterPath="$PROJECT_DIR$/../m1_new_optimize.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../m1-2_all_optimize.py" afterPath="$PROJECT_DIR$/../m1-2_all_optimize.py" />
     </list>
     <ignored path="clean code.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -22,7 +19,7 @@
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/clean code$likelihood_min_model_TMCMC_point_5graphmultiple.coverage" NAME="likelihood_min_model_TMCMC_point_5graphmultiple Coverage Results" MODIFIED="1430423537525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$m1_2convert.coverage" NAME="m1-2convert Coverage Results" MODIFIED="1435605414155" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
-    <SUITE FILE_PATH="coverage/clean code$m1_2_all_optimize.coverage" NAME="m1-2_all_optimize Coverage Results" MODIFIED="1437098587918" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
+    <SUITE FILE_PATH="coverage/clean code$m1_2_all_optimize.coverage" NAME="m1-2_all_optimize Coverage Results" MODIFIED="1437100504614" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$june_2015_growthgraph_m2.coverage" NAME="june_2015_growthgraph_m2 Coverage Results" MODIFIED="1435709612433" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$test_tooth_to_blood_image.coverage" NAME="test_tooth_to_blood_image Coverage Results" MODIFIED="1426889307048" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize.coverage" NAME="tooth_to_blood_minimize Coverage Results" MODIFIED="1431982246610" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -97,21 +94,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="m1-2_all_optimize.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="m1-2_all_optimize.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/../m1-2_all_optimize.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="1215" max-vertical-offset="3090">
-              <caret line="108" column="29" selection-start-line="108" selection-start-column="29" selection-end-line="108" selection-end-column="29" />
+            <state vertical-scroll-proportion="0.035377357" vertical-offset="1470" max-vertical-offset="3090">
+              <caret line="103" column="19" selection-start-line="103" selection-start-column="19" selection-end-line="103" selection-end-column="19" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="likelihood_min_model_TMCMC.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="likelihood_min_model_TMCMC.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="5.8466983" vertical-offset="5051" max-vertical-offset="9225">
-              <caret line="503" column="22" selection-start-line="503" selection-start-column="22" selection-end-line="503" selection-end-column="22" />
+            <state vertical-scroll-proportion="-8.777778" vertical-offset="7758" max-vertical-offset="9225">
+              <caret line="534" column="30" selection-start-line="534" selection-start-column="30" selection-end-line="534" selection-end-column="30" />
               <folding />
             </state>
           </provider>
@@ -1011,18 +1008,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../m1-2_all_optimize.py">
+    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1215" max-vertical-offset="3090">
-          <caret line="108" column="29" selection-start-line="108" selection-start-column="29" selection-end-line="108" selection-end-column="29" />
+        <state vertical-scroll-proportion="-8.777778" vertical-offset="7758" max-vertical-offset="9225">
+          <caret line="534" column="30" selection-start-line="534" selection-start-column="30" selection-end-line="534" selection-end-column="30" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC.py">
+    <entry file="file://$PROJECT_DIR$/../m1-2_all_optimize.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="5.8466983" vertical-offset="5051" max-vertical-offset="9225">
-          <caret line="503" column="22" selection-start-line="503" selection-start-column="22" selection-end-line="503" selection-end-column="22" />
+        <state vertical-scroll-proportion="0.035377357" vertical-offset="1470" max-vertical-offset="3090">
+          <caret line="103" column="19" selection-start-line="103" selection-start-column="19" selection-end-line="103" selection-end-column="19" />
           <folding />
         </state>
       </provider>

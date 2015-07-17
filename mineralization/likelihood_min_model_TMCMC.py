@@ -49,7 +49,7 @@ import scipy.special as spec
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
 calibration_type = 'synchrotron' # pixel to density calibration method
-y_resampling = 0.1 # y pixel size of model compared to voxel size
+y_resampling = 1.0 # y pixel size of model compared to voxel size
 x_resampling = 1.0 # x pixel size of model compared to voxel size
 
 #xcoordinate1 = 349
@@ -532,7 +532,7 @@ def main():
         os.makedirs(dirname)
 
     # Calculate mineralization values for HDF5 file
-    fname = args.output
+    fname = args.output + 'es'
     if fname.endswith('.h5'):
         fname = fname[:-3]
     fname += '%.3d.h5' % part_idx

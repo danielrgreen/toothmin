@@ -51,7 +51,7 @@ def prior(m2_m1_converted, M1_initiation, M2_initiation):
 
     M1_initiation_expected = -49.
     M2_initiation_expected = 84.
-    sigma = 8.
+    sigma = 12.
 
     M1_initiation_score = ((M1_initiation - M1_initiation_expected)**2.) / sigma**2.
     if np.isfinite(M1_initiation_score) != True:
