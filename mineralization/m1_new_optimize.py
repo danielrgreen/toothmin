@@ -9,44 +9,30 @@ from time import time
 def est_tooth_extension(ext_param, **kwargs): # days, amplitude, slope, offset
     '''
     '''
-    model_extension, data_extension, m1days, zero_pt = extension(*ext_param, **kwargs)
+    model_extension, data_extension, zero_pt = extension(*ext_param, **kwargs)
 
-    return compare(model_extension, data_extension, m1days, zero_pt), model_extension
+    return compare(model_extension, data_extension, zero_pt), model_extension
 
-def extension(amplitude, slope, offset, days, data_extension, m2days):
-    height_max = 42. # in millimeters
+def extension(amplitude, slope, offset, days, data_extension):
+    height_max = 35. # in millimeters
     #offset = 84.
     model_extension = (amplitude * spec.erf(slope * (days - offset))) + (height_max - amplitude)
     zero_pt = (spec.erfinv((amplitude - height_max) / amplitude) + offset * slope) / slope
-    #print 'zero_pt = ', zero_pt
-    m1days = convert(m2days, amplitude, slope, offset)
 
-    return model_extension, data_extension, m1days, zero_pt
+    return model_extension, data_extension, zero_pt
 
-def compare(model_extension, data_extension, m1days, zero_pt):
+def compare(model_extension, data_extension, zero_pt):
     sigma = 6. # in mm
     score = (model_extension - data_extension) / sigma
     score[~np.isfinite(score)] = 0.
     score = np.sum((score**2)**.5)
     #print 'score = ', score
-    total_score = prior(m1days, zero_pt)
+    total_score = prior(zero_pt)
     return score+total_score
 
-def prior(m1days, zero_pt):
-    score1 = ((m1days[0] + 50)**2)**.5 / 5.
-    if np.isfinite(score1) != True:
-        score1 = 1000.
-    score2 = ((m1days[1] - 30)**2)**.5 / 20.
-    if np.isfinite(score2) != True:
-        score2 = 1000.
-    #score4 = (((m1days[3] - m1days[2]) - 50)**2)**.5 / 20.
-    #if np.isfinite(score4) != True:
-    #    score3 = 1000.
-    #print 'score4 = ', score4
-    score5 = ((zero_pt - 84)**2)**.5 / 5
-    total_score = score1+score2+score5 #+score3 #+score4
-    #print 'm1days = ', m1days[0], m1days[1], m1days[2]
-    #print 'total score = ', total_score
+def prior(zero_pt):
+    score1 = ((zero_pt + 50)**2)**.5 / 100
+    total_score = score1
 
     return total_score
 
@@ -69,8 +55,6 @@ def convert(m2days, amplitude, slope, offset):
 def optimize_curve(tooth_days, tooth_extension, **fit_kwargs):
     data_extension = tooth_extension
     days = tooth_days
-    m2days = np.array([84., 202., 263., 450., 500.])
-    fit_kwargs['m2days'] = m2days
     fit_kwargs['data_extension'] = data_extension
     fit_kwargs['days'] = days
 
@@ -80,20 +64,20 @@ def optimize_curve(tooth_days, tooth_extension, **fit_kwargs):
 
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([25., .001, -40.])
-    local_opt.set_upper_bounds([160., .01, 40.])
+    local_opt.set_lower_bounds([5., .001, -80.])
+    local_opt.set_upper_bounds([160., .01, 80.])
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 3)
     global_opt.set_maxeval(200000)
-    global_opt.set_lower_bounds([25., .001, -40.])
-    global_opt.set_upper_bounds([160., .01, 40.])
+    global_opt.set_lower_bounds([5., .001, -80.])
+    global_opt.set_upper_bounds([160., .01, 80.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(3)
 
     print 'Running global optimizer ...'
-    x_opt = global_opt.optimize([40., .005, -10.])
+    x_opt = global_opt.optimize([80., .006, 50.])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -103,34 +87,28 @@ def optimize_curve(tooth_days, tooth_extension, **fit_kwargs):
     t2 = time()
     run_time = t2-t1
 
-    m1days = convert(m2days, *x_opt)
-    for i in xrange(m2days.size):
-        print m2days[i], m1days[i]
-    switch_length =  m1days[2]-m1days[1]
-    print 'switch length = ', switch_length
-
-    days = np.linspace(50, 550, 501)
-    extension_erf, data_extension, m1days, zero_pt = extension(x_opt[0], x_opt[1], x_opt[2], days, data_extension, m2days)
+    days = np.linspace(-80, 350, 431)
+    extension_erf, data_extension, zero_pt = extension(x_opt[0], x_opt[1], x_opt[2], days, data_extension)
     diff_extension_erf = np.diff(extension_erf) * 1000
-    days = np.linspace(50, 550, 501)
-    second_score = prior(m1days, zero_pt)
-    print 'percent prior score = ', (minf/second_score)*100
+    days = np.linspace(-80, 350, 431)
+    second_score = prior(zero_pt)
+    print 'percent prior score = ', (second_score/minf)*100
 
     local_method = 'cobyla'
     global_method = 'msds'
-    textstr = '%.3f, %.6f, %.3f, \nmin = %.2f, time = %.1f seconds \nm1start = %.2f, m2start = %.2f \nM1_est_switch_len = %.2f \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], minf, run_time, m1days[0], zero_pt, switch_length, local_method, global_method)
+    textstr = '%.3f, %.6f, %.3f, \nmin = %.2f, time = %.1f seconds \nm1start = %.2f \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], minf, run_time, zero_pt, local_method, global_method)
     print textstr
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax2 = ax.twinx()
     ax2.plot(days[1::4], diff_extension_erf[::4], 'b.', label=r'$ \mathrm{extension} \ \Delta $', alpha=.5)
-    ax2.set_ylim([0,200])
-    ax2.set_xlim([50,550])
+    ax2.set_ylim([0,250])
+    ax2.set_xlim([-80,350])
     ax.plot(tooth_days, tooth_extension, marker='o', linestyle='none', color='b', label=r'$ \mathrm{extension} \ \mathrm{(observed)} $')
     ax.plot(days, extension_erf, linestyle='-', color='b', label=r'$ \mathrm{extension,} \ \mathrm{optimized} $')
-    ax.set_ylim([0,45])
-    ax.set_xlim([50,550])
+    ax.set_ylim([0,40])
+    ax.set_xlim([-80,350])
     plt.title('Enamel secretion and maturation progress over time')
     ax.set_xlabel('Days after birth')
     ax.set_ylabel('Progress from cusp tip in mm')
@@ -148,10 +126,16 @@ def optimize_curve(tooth_days, tooth_extension, **fit_kwargs):
 
 def main():
 
-    tooth_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 203., 222., 223., 251., 265., 285., 510., 510., 510., 510.])
-    tooth_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 24.59, 20.6, 26.23, 20.1, 30.60, 32.50, 41.79, 39.61, 39.39, 42.3])
+    # M2 data, extension, full data set
+    #tooth_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 203., 222., 223., 251., 265., 285., 510., 510., 510., 510.])
+    #tooth_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 24.59, 20.6, 26.23, 20.1, 30.60, 32.50, 41.79, 39.61, 39.39, 42.3])
+    # M2 data, extension, histology markers removed
     #tooth_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 222., 251., 510., 510., 510., 510.])
     #tooth_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 20.6, 20.1, 41.79, 39.61, 39.39, 42.3])
+    # M1 data, extension
+    tooth_days = np.array([1., 9., 11., 19., 21., 30., 31., 31., 38., 42., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
+    tooth_extension = np.array([9.38, 8.05, 11.32, 9.43, 13.34, 16.19, 13.85, 15.96, 15.32, 14.21, 17.99, 19.32, 19.32, 18.31, 17.53, 18.68, 18.49, 22.08, 23.14, 19.92, 27.97, 24.38, 25.53, 29.07, 27.65, 26.27, 27.55, 24.33, 29.03, 29.07, 30.36, 31.79, 31.37, 31.28, 35.79, 29.81, 31.79, 34.04, 33.21, 34.50, 33.76, 33.40, 36.34, 33.63])
+
 
     #evaluation_pts = np.array([84., 202., 263.])
 

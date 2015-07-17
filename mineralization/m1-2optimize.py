@@ -56,13 +56,14 @@ def convert(m2days, amplitude, slope, offset):
     #m2height = 75.123*spec.erf(.0028302*(m2days+70.17))+(42-75.12266) # max at 42
     #m2height = 44.182*spec.erf(.003736412*(m2days+53.0767))+(40.5-44.182) # max at 40.5 optimized with full data set on nlopt
     #m2height = 46.625*spec.erf(.0032506*(m2days+53.0767))+(42.46-46.625) # max at 40.5 optimized with synchrotron data set on nlopt
-    m2height = amplitude*spec.erf(slope*(m2days+offset))+(41-amplitude) # max at 40.5 optimized with synchrotron data set on nlopt
-    m2percent = m2height / 41
-    m1height = m2percent * 36
-    m1days = (25000000*spec.erfinv((50*m1height-283)/1517)-1577367)/152550
-
-    m1days_a = 163.873*spec.erfinv(0.0292948*(75.123*spec.erf(0.0028302*(m2days+70.17))-33.123)-0.0186437)-10.5459
-    m1days_b = 163.873*spec.erf(0.0282485*(75.123*spec.erf(0.0028302*(m2days+70.17))-33.123)-0.0186437)-10.5459
+    m2_height = amplitude*spec.erf(slope*(m2days+offset))+(41-amplitude) # max at 40.5 optimized with synchrotron data set on nlopt
+    m2_percent = m2_height / 41
+    m1_max_height = 35.
+    m1_height = m2_percent * m1_max_height
+    m1_amplitude = 36.428
+    m1_offset = -57.637
+    m1_slope = .004846
+    m1days = (spec.erf((m1_amplitude+m1_height-m1_max_height)/m1_amplitude) + (m1_offset*m1_slope)) / m1_slope
 
     return m1days
 
@@ -148,10 +149,12 @@ def optimize_curve(tooth_days, tooth_extension, **fit_kwargs):
 
 def main():
 
-    tooth_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 203., 222., 223., 251., 265., 285., 510., 510., 510., 510.])
-    tooth_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 24.59, 20.6, 26.23, 20.1, 30.60, 32.50, 41.79, 39.61, 39.39, 42.3])
-    #tooth_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 222., 251., 510., 510., 510., 510.])
-    #tooth_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 20.6, 20.1, 41.79, 39.61, 39.39, 42.3])
+    # M2 extension data full set including synchrotron + histology
+    #tooth_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 203., 222., 223., 251., 265., 285., 510., 510., 510., 510.])
+    #tooth_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 24.59, 20.6, 26.23, 20.1, 30.60, 32.50, 41.79, 39.61, 39.39, 42.3])
+    # M2 extension data partial set including synchrotron but not histology
+    tooth_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 222., 251., 510., 510., 510., 510.])
+    tooth_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 20.6, 20.1, 41.79, 39.61, 39.39, 42.3])
 
     #evaluation_pts = np.array([84., 202., 263.])
 

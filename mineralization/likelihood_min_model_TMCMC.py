@@ -351,8 +351,8 @@ def main():
     imgStack[idx] = np.nan
 
     Nx2 = Nx*46./1000.
-    Nx2_max = np.max(Nx2) * 1.005
-    Nx_age = (spec.erfinv((30.34 + Nx2 - Nx2_max)/30.34) -(11*.0061))/.0061
+    Nx2_max = np.max(Nx2) * 1.0005
+    Nx_age = (spec.erfinv((27.862 + Nx2 - Nx2_max)/27.862) + (-12.048*.006860))/.006860
     '''
     # Relate image length to day: output for time x-axis is 'age_plt'
     age_coeff = np.polyfit(Nx, age, 5)
@@ -489,7 +489,7 @@ def main():
         pct_min = pct_min[idx]
 
         # MCMC sampling
-        sigma = 0.03 * np.ones(pct_min.size, dtype='f8')
+        sigma = 0.05 * np.ones(pct_min.size, dtype='f8')
         mu_prior = -6. * np.ones(pct_min.size, dtype='f8')
         sigma_prior = 2. * np.ones(pct_min.size, dtype='f8')
             
