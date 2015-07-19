@@ -674,7 +674,7 @@ def water_hist_likelihood_fl(w_iso_hist, **kwargs):
 
     return model_isomap
 
-def fit_tooth_data(data_fname, model_fname='final_equalsize_dec2014.h5', **kwargs):
+def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
 

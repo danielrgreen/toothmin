@@ -685,7 +685,7 @@ def water_4_param(mu, switch_mu, switch_start, switch_length):
 
     return w_iso_hist
 
-def fit_tooth_data(data_fname, model_fname='final_equalsize_dec2014.h5', **kwargs):
+def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
 
@@ -725,7 +725,7 @@ def fit_tooth_data(data_fname, model_fname='final_equalsize_dec2014.h5', **kwarg
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 4)
-    global_opt.set_maxeval(50000)
+    global_opt.set_maxeval(1000)
     global_opt.set_lower_bounds([-50., -50., 15, 15])
     global_opt.set_upper_bounds([10., 10., 50, 70])
     global_opt.set_min_objective(f_objective)

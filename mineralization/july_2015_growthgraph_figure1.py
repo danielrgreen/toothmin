@@ -88,13 +88,15 @@ def final_convert(m2_m1_conversion, M1_amplitude, M1_slope, M1_offset, M2_amplit
 
     return m2_m1_converted
 
-def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit_kwargs):
-    m2_m1_conversion = np.array([84., 202., 263., 450., 500.])
-    fit_kwargs['m2_m1_conversion'] = m2_m1_conversion
-    fit_kwargs['M1_data_extension'] = M1_data_extension
+def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, M2_days, M2_data_extension, **fit_kwargs):
+    #m2_m1_conversion = np.array([84., 202., 263., 450., 500.])
+    #fit_kwargs['m2_m1_conversion'] = m2_m1_conversion
+    #fit_kwargs['M1_data_extension'] = M1_data_extension
     fit_kwargs['M1_days'] = M1_days
-    fit_kwargs['M2_data_extension'] = M2_data_extension
-    fit_kwargs['M2_days'] = M2_days
+    #fit_kwargs['M2_data_extension'] = M2_data_extension
+    #fit_kwargs['M2_days'] = M2_days
+    fit_kwargs['tooth_35p'] = tooth_35p
+    fit_kwargs['tooth_70p'] = tooth_70p
 
     t1 = time()
 
@@ -102,20 +104,20 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
 
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 6)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([15., .0035, -50., 45., .003, 20.])
-    local_opt.set_upper_bounds([80., .0055, -10., 65., .0045, 40.])
+    local_opt.set_lower_bounds([15., .0025, -40., 15., .0025, -20.])
+    local_opt.set_upper_bounds([120., .008, 40., 120., .008, 80.])
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
     global_opt.set_maxeval(600000)
-    global_opt.set_lower_bounds([15., .0035, -50., 45., .003, 20.])
-    global_opt.set_upper_bounds([80., .0055, -10., 65., .0045, 40.])
+    global_opt.set_lower_bounds([15., .0025, -40., 15., .0025, -20.])
+    global_opt.set_upper_bounds([120., .008, 40., 120., .008, 80.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(6)
 
     print 'Running global optimizer ...'
-    x_opt = global_opt.optimize([40., .005, -45., 50., .004, 29.])
+    x_opt = global_opt.optimize([40., .005, 0., 40., .004, 20.])
 
     minf = global_opt.last_optimum_value()
     print "minimum value = ", minf
@@ -189,8 +191,13 @@ def main():
     # M1 data, extension
     M1_days = np.array([1., 9., 11., 19., 21., 30., 31., 31., 38., 42., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
     M1_data_extension = np.array([9.38, 8.05, 11.32, 9.43, 13.34, 16.19, 13.85, 15.96, 15.32, 14.21, 17.99, 19.32, 19.32, 18.31, 17.53, 18.68, 18.49, 22.08, 23.14, 19.92, 27.97, 24.38, 25.53, 29.07, 27.65, 26.27, 27.55, 24.33, 29.03, 29.07, 30.36, 31.79, 31.37, 31.28, 35.79, 29.81, 31.79, 34.04, 33.21, 34.50, 33.76, 33.40, 36.34, 33.63])
+    # M1 mineralization data.
+    tooth_35p = np.array([2.07, 1.52, 2.39, 2.67, 4.60, 7.04, 4.55, 5.47, 5.47, 4.83, 8.19, 9.98, 9.75, 9.89, 9.29, 10.40, 8.88, 12.88, 14.49, 11.96, 19.04, 17.48, 16.74, 20.61, 18.86, 17.34, 19.92, 14.67, 22.03, 22.91, 24.47, 26.08, 26.13, 25.94, 34.45, 25.35, 26.91, 30.08, 30.68, 33.49, 28.29, 28.34, 35.83, 33.63])
+    tooth_70p = np.array([np.nan, np.nan, np.nan, np.nan, np.nan, 2.76, np.nan, np.nan, np.nan, np.nan, 3.68, 4.60, 4.69, 5.11, 4.88, 5.75, 4.74, 7.36, 8.97, 5.15, 13.62, 12.33, 11.13, 14.54, 13.25, 10.81, 13.25, 8.69, 15.78, 17.16, 19.27, 20.56, 19.87, 21.48, 30.27, 20.01, 22.17, 24.56, 26.27, 28.11, 23.55, 23.83, 36.34, 29.49])
 
-    optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension)
+
+
+    optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, M2_days, M2_data_extension)
 
     '''
     m2days = np.array([70., 80., 202., 263., 450., 500.])

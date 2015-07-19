@@ -1,354 +1,208 @@
-# Graphing growth data
+__author__ = 'darouet'
 
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.interpolate as interp
-import scipy.special
-from scipy.interpolate import UnivariateSpline
-from scipy.interpolate import spline
-from numpy import linspace
-import scipy.ndimage.interpolation as imginterp
-import scipy.ndimage.filters as filters
-from os.path import abspath, expanduser
-import os, os.path
-from datetime import datetime
-import argparse, sys, warnings
-from matplotlib.ticker import FuncFormatter
-import time
-import h5py
-import emcee
-from fit_positive_function import TMonotonicPointModel, TMCMC
-from scipy.optimize import curve_fit, minimize, leastsq
-from scipy.integrate import quad
-from scipy import pi, sin
 import scipy.special as spec
-from lmfit import Model
+import nlopt
+from time import time
 
-voxelsize = 46. # voxel resolution of your scan in microns?
-species = 'Ovis_aries' # the species used for this model
-calibration_type = 'undefined' # pixel to density calibration method
-y_resampling = 1 # y pixel size of model compared to voxel size
-x_resampling = 1 # x pixel size of model compared to voxel size
-
-# Load image
-    
-def load_image(fname):
-    img = plt.imread(abspath(fname))
-    return img
-
-def get_baseline(img, exactness=15.):
+def est_tooth_extension(ext_param, **kwargs): # days, amplitude, slope, offset
     '''
-    This function takes an image array of shape (Nx,Ny),
-    creates a float array to record the upper, lower enamel edges,
-    locates nonzero pixels to find the enamel in the image and
-    makes arrays for the upper and lowwer enamel edges.
     '''
-    
-    Ny, Nx = img.shape
-    edge = np.empty((2,Nx), dtype='i4')
-    edge[:,:] = -1
-    mask = (img > 0.)
-    for i in xrange(Nx):
-        nonzero = np.where(mask[:,i])[0]
-        if len(nonzero):
-            edge[0,i] = np.min(nonzero)
-            edge[1,i] = np.max(nonzero)
+    M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation = extension(*ext_param, **kwargs)
+    score = compare(M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation)
 
-    # Clip edges to region with nonzero image
-    
-    isReal = np.where(edge[0] >= 0)[0]
-    xMin, xMax = isReal[0], isReal[-1]
-    edge = edge[:,xMin:xMax+1]
-    x = np.linspace(xMin, xMax, xMax-xMin+1)    
-    
-    # Fit splines to edges
+    return score, M1_model_extension, M2_model_extension
 
-    spl = []
-    w = np.ones(len(x))
-    w[0] = 10.
-    w[-1] = 10.
-    for i in xrange(2):
-        spl.append( interp.UnivariateSpline(x, edge[i], w=w, s=len(w)/exactness) )
-    
-    return x, spl
+def extension(M1_amplitude, M1_slope, M1_offset, M2_amplitude, M2_slope, M2_offset, M1_days, M1_data_extension, M2_days, M2_data_extension, m2_m1_conversion):
 
-# Create markers and calculate distance along spline
+    M1_height_max = 35. # in millimeters
+    M1_model_extension = (M1_amplitude * spec.erf(M1_slope * (M1_days - M1_offset))) + (M1_height_max - M1_amplitude)
+    M1_initiation = (spec.erfinv((M1_amplitude - M1_height_max) / M1_amplitude) + M1_offset * M1_slope) / M1_slope
 
-def place_markers(x, spl, spacing=2.):
-    fineness = 10
-    xFine = np.linspace(x[0], x[-1], fineness*len(x))
-    yFine = spl(xFine)
-    derivFine = np.empty(len(xFine), dtype='f8')
-    for i,xx in enumerate(xFine):
-        derivFine[i] = spl.derivatives(xx)[1]
-    derivFine = filters.gaussian_filter1d(derivFine, fineness*spacing)
-    dx = np.diff(xFine)
-    dy = np.diff(yFine)
-    dist = np.sqrt(dx*dx + dy*dy)
-    dist = np.cumsum(dist)
-    nMarkers = int(dist[-1] / spacing)
-    if nMarkers > 1e5:
-		raise ValueError('nMarkers unreasonably high. Something has likely gone wrong.')
-    markerDist = np.linspace(spacing, spacing*nMarkers, nMarkers)
-    markerPos = np.empty((nMarkers, 2), dtype='f8')
-    markerDeriv = np.empty(nMarkers, dtype='f8')
-    cellNo = 0
-    for i, (xx, d) in enumerate(zip(xFine[1:], dist)):
-        if d >= (cellNo+1) * spacing:
-            markerPos[cellNo, 0] = xx
-            markerPos[cellNo, 1] = spl(xx)
-            markerDeriv[cellNo] = derivFine[i+1] #spl.derivatives(xx)[1]
-            cellNo += 1
-    
-    return markerPos, markerDeriv
+    M2_height_max = 41. # in millimeters
+    M2_model_extension = (M2_amplitude * spec.erf(M2_slope * (M2_days - M2_offset))) + (M2_height_max - M2_amplitude)
+    M2_initiation = (spec.erfinv((M2_amplitude - M2_height_max) / M2_amplitude) + M2_offset * M2_slope) / M2_slope
 
-def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, threshold=0.1):
-    #####
-    ds = np.sqrt(DeltaMarker[:,0]*DeltaMarker[:,0] + DeltaMarker[:,1]*DeltaMarker[:,1])
-    nSteps = img.shape[0] / step
-    stepSize = step / ds
-    n = np.linspace(0., nSteps, nSteps+1)
-    sampleOffset = np.einsum('i,ik,j->ijk', stepSize, DeltaMarker, n)
-    sampleStart = np.empty(markerPos.shape, dtype='f8')
-    sampleStart[:,:] = markerPos[:,:]
-    nMarkers, tmp = markerPos.shape
-    sampleStart.shape = (nMarkers, 1, 2)
-    sampleStart = np.repeat(sampleStart, nSteps+1, axis=1)
-    samplePos = sampleStart + sampleOffset
+    m2_m1_converted = convert(m2_m1_conversion, M1_amplitude, M1_slope, M1_offset, M2_amplitude, M2_slope, M2_offset)
 
-    samplePos.shape = (nMarkers*(nSteps+1),2)
-    resampImg = imginterp.map_coordinates(img.T, samplePos.T, order=1)
-    resampImg.shape = (nMarkers, nSteps+1)
-    #resampImg = np.rot90(resampImg, 1) ##########
-    scan = str(fname[-5])  ##########
-    age_label = int(fname[1:4])
+    return M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation
 
-    # CONVERSION
-    # Convert from pixel value to HAp density
-    # In this case, HAp density is calculated with mu values, keV(1)=119
-    if scan == 'g':
-        resampImg *= 2.**16
-        resampImg *= 0.0000689219599491
-        resampImg -= 1.54118269436172
-    else:
-        resampImg *= 2.**16
-        resampImg *= 0.00028045707501
-        resampImg -= 1.48671229207043
+def compare(M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation):
 
-    resampImg /= 3.15
-    idx = (resampImg < 0.05) | (resampImg > 1)
-    resampImg[idx] = np.nan
-    vmax = 0.7
-    vmin = 0.15
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
-    cimg = ax.imshow(resampImg.T, origin='lower', aspect='equal', interpolation='none', vmin=vmin, vmax=vmax)
-    ax.set_title(r'$t = %d \ \mathrm{days}$' % age_label, fontsize=14)
-    cax = fig.colorbar(cimg)
-    plt.show()
-    #fig.savefig('december_toothmin_im_%d_days.png' % age_label, dpi=300)
-    
-    return resampImg[:,:].T, age_label
+    sigma = 6. # in mm
 
-def est_tooth_extension(x, amplitude, slope, offset):
-    
-    height_max = 36. # in millimeters
-    extension_erf = (amplitude * spec.erf(slope * (x - offset))) + (height_max - amplitude)
+    M1_score = (M1_model_extension - M1_data_extension)**2. / sigma**2
+    M1_score[~np.isfinite(M1_score)] = 0.000001
+    M1_score = (1. / (2. * np.pi * sigma**2)) * np.exp(-.5*(M1_score))
+    M1_score = np.product(M1_score)
 
-    return extension_erf
+    M2_score = (M2_model_extension - M2_data_extension)**2. / sigma**2.
+    M2_score[~np.isfinite(M2_score)] = 0.000001
+    M2_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(M2_score))
+    M2_score = np.product(M2_score)
 
-def est_kdorf_gaussian(x, amplitude, slope, offset):
-    
-    height_max = 36. # in millimeters
-    kdorf_gaussian = amplitude * np.exp(-(x - offset)**2 / (2. * slope**2))
+    data_score = M1_score * M2_score
+    prior_score = prior(m2_m1_converted, M1_initiation, M2_initiation)
+    print data_score * prior_score * -1.
 
-    return kdorf_gaussian
+    return data_score * prior_score * -1.
 
-def curve_residuals(p0, pcurve_fit, x,y):
-    penalization = ((p0[2] - pcurve_fit[2]))**2 * .005/x.size
-    resids = ((y - est_tooth_extension(x, p0[0], p0[1], p0[2]))**2 + penalization)**.5
-    return resids
+def prior(m2_m1_converted, M1_initiation, M2_initiation):
 
-def kdorf_residuals(p0, pcurve_fit, x,y):
-    penalization = ((p0[2] - pcurve_fit[2]))**2 * 1/x.size
-    resids = ((y - est_kdorf_gaussian(x, p0[0], p0[1], p0[2]))**2 + penalization)**.5
-    return resids
+    M1_initiation_expected = -49.
+    M2_initiation_expected = 84.
+    sigma = 12.
 
-def est_p70_extension(x, amplitude, offset):
-    
-    height_max = 36. # in millimeters
-    extension_erf = (amplitude * spec.erf(.0058 * (x - offset))) + (height_max - amplitude)
+    M1_initiation_score = ((M1_initiation - M1_initiation_expected)**2.) / sigma**2.
+    if np.isfinite(M1_initiation_score) != True:
+        M1_initiation_score = 1000.
+    M1_initiation_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(M1_initiation_score))
 
-    return extension_erf
+    M2_initiation_score = ((M2_initiation - M2_initiation_expected)**2.) / sigma**2.
+    if np.isfinite(M2_initiation_score) != True:
+        M2_initiation_score = 1000.
+    M2_initiation_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(M2_initiation_score))
+    prior_score = M1_initiation_score * M2_initiation_score
 
-def p70_residuals(p0, pcurve_fit, x,y):
-    penalization = ((p0[1] - pcurve_fit[1]))**2 * .005/x.size
-    resids = ((y - est_p70_extension(x, p0[0], p0[1]))**2 + penalization)**.5
-    return resids
+    return prior_score
 
-
-
-def main():
-
+def convert(m2_m1_conversion, M1_amplitude, M1_slope, M1_offset, M2_amplitude, M2_slope, M2_offset):
     '''
-    parser = argparse.ArgumentParser(prog='enamelsample',
-             description='Resample image of enamel to standard grid',
-             add_help=True)
-    parser.add_argument('images', type=str, nargs='+', help='Images of enamel 1.')
-    #parser.add_argument('images2', type=str, nargs='+', help='Images of enamel 2.')
-    parser.add_argument('-sp', '--spacing', type=float, default=x_resampling, help='Marker spacing (in pixels).')
-    parser.add_argument('-ex', '--exact', type=float, default=10., help='Exactness of baseline spline.')
-    parser.add_argument('-l', '--order-by-length', action='store_true',
-                              help='Order teeth according to length.')
-    parser.add_argument('-s', '--show', action='store_true', help='Show plot.')
-    parser.add_argument('-o', '--output-dir', type=str, default='likelihood min model ',
-                              help='Directory in which to store output.')
-    parser.add_argument('-f', '--output', type=str, default='likelihood_min_model.h5',
-                        help='Name of mineralization model file to be created.')
-    parser.add_argument('-p', '--partitions', type=int, nargs=2, default=(1,1),
-                              help='Number of partitions, and partition to operate on.')
-    if 'python' in sys.argv[0]:
-        offset = 2
-    else:
-        offset = 1
-    args = parser.parse_args(sys.argv[offset:])
-
-    warnings.simplefilter('ignore')
-    
-    # Load and standardize each tooth image
-    alignedimg = []
-    Nx, Ny = [], []
-    age = []
-    
-    for i,fname in enumerate(args.images):
-        print 'Processing %s ...' % fname
-        
-        img = load_image(fname)
-        
-        # Extract age from filename
-        age.append(float(fname[1:4]))
-
-        # Generate a spline for each tooth edge
-        
-        x, spl = get_baseline(img, exactness=args.exact)
-        
-        # Place makers along the bottom edge
-        
-        markerPos, markerDeriv = place_markers(x, spl[1], spacing=args.spacing)
-        
-        # Calculate y values of edges
-        
-        y = []
-        for i in xrange(2):
-            y.append(spl[i](x))
-        
-        # Calculate perpendicular lines to edges
-        # Height of line is # in markerPos + #
-    
-        DeltaMarker = -np.ones((len(markerDeriv), 2), dtype='f8')
-        DeltaMarker[:,0] = markerDeriv[:]
-        markerPos2 = markerPos + 80. * DeltaMarker
-        
-        # Goal: take our x positions, step along the y positions, and get the
-        # values from the image.
-        # Plot everything
-      
-        # Resample image to standard grid
-        alignedimg.append(get_image_values_2(img, markerPos, DeltaMarker, fname))
     '''
+    M2_height = M2_amplitude*spec.erf(M2_slope*(m2_m1_conversion+M2_offset))+(41.-M2_amplitude) # max at 40.5 optimized with synchrotron data set on nlopt
+    M2_percent = M2_height / 41.
+    M1_max_height = 35.
+    M1_height = M2_percent * M1_max_height
+    m2_m1_converted = (spec.erfinv((M1_amplitude+M1_height-M1_max_height)/M1_amplitude) + (M1_offset*M1_slope)) / M1_slope
 
-    # My sheep model data from images, video
-    model_days = np.array([30., 40., 50., 60., 70., 80., 90., 100., 110., 120., 130., 140., 150., 160., 170., 180., 190., 200., 210., 220., 230., 240., 250., 260., 270., 280., 290., 300.])
-    model_completion = np.array([2.3, 2.3, 2.76, 2.76, 4.6, 9.2, 11.96, 11.96, 13.8, 13.8, 15.64, 16.56, 16.56, 20.7, 20.7, 22.08, 23.46, 23.46, 23.46, 23.46, 23.46, 24.38, 24.84, 24.84, 27.6, 27.6, np.nan, 30.36])
-    model_initiation = np.array([14.72, 15.64, 16.56, 17.48, 18.4, 24.84, 26.68, 26.68, 28.52, 28.52, 29.44, 30.36, 30.36, 31.28, 31.28, 31.74, 33.12, 33.12, 33.12, 33.12, 33.12, 33.58, 34.04, 34.04, 34.96, 34.96, np.nan, 34.96])
-    model_min_length = model_initiation - model_completion
-    model_length_percent = model_min_length / 39.
-    model_increase_per_day = np.array([1.104, 0.552, 1.564, 1.932, 0.092, 0., 0.16866667, 0.16866667, 0.16866667, 0.16866667, 0.16866667, 0.16866667, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.10514286, 0.092, 0.15333333, 0.15333333, 0.15333333, 0.138, 0.138, 0.184, 0.276, 0.21466667, 0.21466667, 0.21466667, 0., 0.552, 0.70533333, 0.70533333, 0.70533333, 1.104, 0.598, 0.598, 0., 0.299, 0.299, 0.299, 0.299, 0.1472, 0.1472, 0.1472, 0.1472, 0.1472, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.092, 0.0736, 0.0736, 0.0736, 0.0736, 0.0736, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0.05952941, 0., 0.092, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.05366667, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.04293333, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.03942857, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0.0368, 0., 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.03504762, 0.046, 0.046, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0., 0.046, 0.046, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.036, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.04025, 0.046, 0.046, 0.046, 0.046, 0.046, 0.046, 0.046, 0.046, 0.046, 0.046, 0.046, 0.046, 0.0644, 0.0644, 0.0644, 0.0644, 0.0644, 0.0644, 0.0644, 0.0644, 0.0644, 0.0644]) 
-    for i in xrange(np.size(model_increase_per_day)):
-        if model_increase_per_day[i] > 0.4:
-            model_increase_per_day[i] = 0.40
-    model_pct_increase_per_day = model_increase_per_day / np.max(model_increase_per_day)
+    return m2_m1_converted
 
-    # Kierdorf 2013 data
-    kday = np.array([13., 27., 41., 55., 75., 154., 168., 185., 200., 212., 230., 245.])
-    kext = np.array([177., 168., 180., 132., 110., 40., 36., 35., 33., 27., 28., 29.])
+def final_convert(m2_m1_conversion, M1_amplitude, M1_slope, M1_offset, M2_amplitude, M2_slope, M2_offset):
 
-    tooth_days = np.array([1., 9., 11., 19., 21., 30., 31., 31., 38., 42., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
-    tooth_extension = np.array([9.38, 8.05, 11.32, 9.43, 13.34, 16.19, 13.85, 15.96, 15.32, 14.21, 17.99, 19.32, 19.32, 18.31, 17.53, 18.68, 18.49, 22.08, 23.14, 19.92, 27.97, 24.38, 25.53, 29.07, 27.65, 26.27, 27.55, 24.33, 29.03, 29.07, 30.36, 31.79, 31.37, 31.28, 35.79, 29.81, 31.79, 34.04, 33.21, 34.50, 33.76, 33.40, 36.34, 33.63])
-    tooth_35p = np.array([2.07, 1.52, 2.39, 2.67, 4.60, 7.04, 4.55, 5.47, 5.47, 4.83, 8.19, 9.98, 9.75, 9.89, 9.29, 10.40, 8.88, 12.88, 14.49, 11.96, 19.04, 17.48, 16.74, 20.61, 18.86, 17.34, 19.92, 14.67, 22.03, 22.91, 24.47, 26.08, 26.13, 25.94, 34.45, 25.35, 26.91, 30.08, 30.68, 33.49, 28.29, 28.34, 35.83, 33.63])
-    tooth_70p = np.array([np.nan, np.nan, np.nan, np.nan, np.nan, 2.76, np.nan, np.nan, np.nan, np.nan, 3.68, 4.60, 4.69, 5.11, 4.88, 5.75, 4.74, 7.36, 8.97, 5.15, 13.62, 12.33, 11.13, 14.54, 13.25, 10.81, 13.25, 8.69, 15.78, 17.16, 19.27, 20.56, 19.87, 21.48, 30.27, 20.01, 22.17, 24.56, 26.27, 28.11, 23.55, 23.83, 36.34, 29.49])
-    tooth_mat_length = tooth_extension - tooth_70p / np.percentile(tooth_extension, 95)
+    M1_height = M1_amplitude*spec.erf(M1_slope*(m2_m1_conversion+M1_offset))+(35-M1_amplitude) # max at 40.5 optimized with synchrotron data set on nlopt
+    M1_percent = M1_height / 35
+    M2_max_height = 41.
+    M2_height = M1_percent * M2_max_height
+    m2_m1_converted = (spec.erfinv((M2_amplitude+M2_height-M2_max_height)/M2_amplitude) + (M2_offset*M2_slope)) / M2_slope
 
-    tooth_70p_days = np.array([30., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
-    tooth_70p_b = np.array([2.76, 3.68, 4.60, 4.69, 5.11, 4.88, 5.75, 4.74, 7.36, 8.97, 5.15, 13.62, 12.33, 11.13, 14.54, 13.25, 10.81, 13.25, 8.69, 15.78, 17.16, 19.27, 20.56, 19.87, 21.48, 30.27, 20.01, 22.17, 24.56, 26.27, 28.11, 23.55, 23.83, 36.34, 29.49])
+    return m2_m1_converted
 
-    p0_var_ext = np.array([30.34, .006102, -10.54])
-    p0_var_p35 = np.array([23., .008, 13.])
-    p0_var_p70 = np.array([25., 80.]) # slope (middle variable) is estimated at .0058
-    p0_var_kd = np.array([180., 105., 0.])
+def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit_kwargs):
+    m2_m1_conversion = np.array([84., 202., 263., 450., 500.])
+    fit_kwargs['m2_m1_conversion'] = m2_m1_conversion
+    fit_kwargs['M1_data_extension'] = M1_data_extension
+    fit_kwargs['M1_days'] = M1_days
+    fit_kwargs['M2_data_extension'] = M2_data_extension
+    fit_kwargs['M2_days'] = M2_days
 
-    days = np.linspace(-50, 400, 451)
-    ext_variables, ext_pcov = curve_fit(est_tooth_extension, tooth_days, tooth_extension, p0_var_ext)
-    p35_variables, p35_pcov = curve_fit(est_tooth_extension, tooth_days, tooth_35p, p0_var_p35)
-    p70_variables, p70_pcov = curve_fit(est_p70_extension, tooth_70p_days, tooth_70p_b, p0_var_p70)
-    p70_variables2, p70_pcov2 = leastsq(func=p70_residuals, x0=p70_variables, args=(p0_var_p70, tooth_70p_days, tooth_70p_b))
-    kdorf_var, kdorf_pcov = curve_fit(est_kdorf_gaussian, kday, kext, p0_var_kd)
-    kdorf_var2, kdorf_pcov2 = leastsq(func=kdorf_residuals, x0=kdorf_var, args=(p0_var_kd, kday, kext))
-    print 'ext', ext_variables
-    print 'p35', p35_variables
-    print 'p70', p70_variables
-    print 'p70.2', p70_variables2
-    print 'p0_p70', p0_var_p70
-    print 'kdorf', kdorf_var
-    print 'kdorf.2', kdorf_var2
-    print 'p0_kdorf', p0_var_kd
-    
-    extension_erf = est_tooth_extension(days, ext_variables[0], ext_variables[1], ext_variables[2])
-    p35_erf = est_tooth_extension(days, p35_variables[0], p35_variables[1], p35_variables[2])
-    p70_erf = est_p70_extension(days, p70_variables2[0], p70_variables2[1])
-    kdorf_gauss = est_kdorf_gaussian(days, kdorf_var2[0], kdorf_var2[1], kdorf_var2[2])
+    t1 = time()
 
-    diff_extension_erf = np.diff(extension_erf) * 1000
-    diff_p35_erf = np.diff(p35_erf) * 1000
-    diff_p70_erf = np.diff(p70_erf) * 1000
+    f_objective = lambda x, grad: est_tooth_extension(x, **fit_kwargs)[0]
 
-    #ext_zero = ext_variables[1] - ext_variables[2]*spec.erfinv((36. - ext_variables[0])/ext_variables[0])
-    #p35_zero = p35_variables[1] - p35_variables[2]*spec.erfinv((36. - p35_variables[0])/p35_variables[0])
-    #p70_zero = p70_variables2[1] - p70_variables2[2]*spec.erfinv((36. - p70_variables2[0])/p70_variables2[0])
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, 6)
+    local_opt.set_xtol_abs(.01)
+    local_opt.set_lower_bounds([15., .0035, -50., 45., .003, 20.])
+    local_opt.set_upper_bounds([80., .0055, -10., 65., .0045, 40.])
+    local_opt.set_min_objective(f_objective)
 
-    #gmod = Model(est_tooth_extension)
-    #gmod.eval(x=tooth_70p_b, amplitude=25., slope=.006, offset=110.)
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
+    global_opt.set_maxeval(600000)
+    global_opt.set_lower_bounds([15., .0035, -50., 45., .003, 20.])
+    global_opt.set_upper_bounds([80., .0055, -10., 65., .0045, 40.])
+    global_opt.set_min_objective(f_objective)
+    global_opt.set_local_optimizer(local_opt)
+    global_opt.set_population(6)
+
+    print 'Running global optimizer ...'
+    x_opt = global_opt.optimize([40., .005, -45., 50., .004, 29.])
+
+    minf = global_opt.last_optimum_value()
+    print "minimum value = ", minf
+    print "result code = ", global_opt.last_optimize_result()
+
+    t2 = time()
+    run_time = t2-t1
+
+    M1_initiation = (spec.erfinv((x_opt[0] - 35) / x_opt[0]) + x_opt[2] * x_opt[1]) / x_opt[1]
+    M2_initiation = (spec.erfinv((x_opt[3] - 35) / x_opt[3]) + x_opt[5] * x_opt[4]) / x_opt[4]
+
+    m2_m1_converted = convert(m2_m1_conversion, *x_opt)
+    switch_length =  m2_m1_converted[2]-m2_m1_converted[1]
+
+    days = np.linspace(-100, 550, 651)
+    M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation = extension(x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], days, M1_data_extension, days, M2_data_extension, m2_m1_conversion)
+    M1_diff_extension = np.diff(M1_model_extension) * 1000.
+    M2_diff_extension = np.diff(M2_model_extension) * 1000.
+    prior_score = prior(m2_m1_converted, M1_initiation, M2_initiation)
+    print 'prior score, data score = ', prior_score, minf/prior_score
+
+    local_method = 'cobyla'
+    global_method = 'msds'
+    textstr = '%.3f, %.6f, %.3f, \n%.3f, %.6f, %.3f, \nmin = %.3g, time = %.1f seconds \nm1start = %.2f, m2start = %.2f \nM1_est_switch_len = %.2f \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], minf, run_time, M1_initiation, M2_initiation, switch_length, local_method, global_method)
+    #textstr2 =
+    #textstr3 =
+    #textstr4 =
+    print textstr
 
     fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax2 = ax.twinx()
-    ax2.plot(days[1::4], diff_extension_erf[::4], 'b.', label=r'$ \mathrm{extension} \ \Delta $', alpha=.5)
-    ax2.plot(days[1::4], diff_p35_erf[::4], 'm.', label=r'$ \mathrm{maturation} \ \Delta $', alpha=.5)
-    ax2.plot(days[1::4], diff_p70_erf[::4], 'r.', label=r'$ \mathrm{completion} \ \Delta $', alpha=.5)
-    ax2.plot(kday, kext, marker='D', mfc='none', mec='g', linewidth=2, linestyle='none', label=r'$ \mathrm{Kierdorf} \ \mathrm{(observed)} $')
-    ax2.plot(days[::4], kdorf_gauss[::4], 'g-.', label=r'$ \mathrm{Kierdorf} \ \Delta $')
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax2 = ax1.twinx()
+    ax2.plot(days[1::4], M1_diff_extension[::4], 'b.', label=r'$M1 \mathrm{extension} \ \Delta $', alpha=.5)
+    ax2.plot(days[1::4], M2_diff_extension[::4], 'g.', label=r'$M2 \mathrm{extension} \ \Delta $', alpha=.5)
     ax2.set_ylim([0,250])
-    ax2.set_xlim([-50,400])
-    ax.plot(tooth_days, tooth_extension, marker='o', linestyle='none', color='b', label=r'$ \mathrm{extension} \ \mathrm{(observed)} $')
-    ax.plot(tooth_days, tooth_35p, marker='o', linestyle='none', color='m', label=r'$ \mathrm{maturation} \ \mathrm{(observed)} $')
-    ax.plot(tooth_days, tooth_70p, marker='o', linestyle='none', color='r', label=r'$ \mathrm{completion} \ \mathrm{(observed)} $')
-    ax.plot(days, extension_erf, linestyle='-', color='b', label=r'$ \mathrm{extension,} \ \mathrm{optimized} $')
-    ax.plot(days, p35_erf, linestyle='-', color='m', label=r'$ \mathrm{maturation,} \ \mathrm{optimized} $')
-    ax.plot(days, p70_erf, linestyle='-', color='r', label=r'$ \mathrm{completion,} \ \mathrm{optimized} $')
-    ax.set_ylim([0,40])
-    ax.set_xlim([-50,400])
-    plt.title('Enamel secretion and maturation progress over time')
-    ax.set_xlabel('Days after birth')
-    ax.set_ylabel('Progress from cusp tip in mm')
+    ax2.set_xlim([-100,550])
+    ax1.plot(M1_days, M1_data_extension, marker='o', linestyle='none', color='b', label=r'$M1 \mathrm{extension} \ \mathrm{(observed)} $')
+    ax1.plot(days, M1_model_extension, linestyle='-', color='b', label=r'$M1 \mathrm{extension,} \ \mathrm{optimized} $')
+    ax1.plot(M2_days, M2_data_extension, marker='o', linestyle='none', color='g', label=r'$M2 \mathrm{extension} \ \mathrm{(observed)} $')
+    ax1.plot(days, M2_model_extension, linestyle='-', color='g', label=r'$M2 \mathrm{extension,} \ \mathrm{optimized} $')
+    ax1.set_ylim([0,45])
+    ax1.set_xlim([-100,550])
+    plt.title('M1 and M2 extension over time: synchrotron')
+    ax1.set_xlabel('Days after birth')
+    ax1.set_ylabel('Progress from cusp tip in mm')
     ax2.set_ylabel('Secretion or maturation speed in um/day')
     #ax2.legend(loc='lower right', fancybox=True, framealpha=0.8)
     #ax.legend(loc='upper right', fancybox=True, framealpha=0.8)
-    h1, l1 = ax.get_legend_handles_labels()
+    h1, l1 = ax1.get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
-    ax.legend(h1+h2, l1+l2, loc='center right')
+    ax1.legend(h1+h2, l1+l2, loc='center right', fontsize=10)
+    ax1.text(180, 5, textstr, fontsize=8)
 
     plt.show()
+
+    final = final_convert(m2_m1_converted, *x_opt)
+    print 'm1 switch length = ', m2_m1_converted[2]-m2_m1_converted[1]
+    print 'm2 switch length = ', final[2]-final[1]
+
+def main():
+
+    # M2 extension data histology only
+    #M2_days = np.array([203., 223., 265., 285., 510.])
+    #M2_data_extension = np.array([24.59, 26.23, 30.60, 32.50, 41.79])
+    # M2 extension data full set including synchrotron + histology
+    #M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 203., 222., 223., 251., 265., 285., 510., 510., 510., 510.])
+    #M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 24.59, 20.6, 26.23, 20.1, 30.60, 32.50, 41.79, 39.61, 39.39, 42.3])
+    # M2 extension data partial set including synchrotron but not histology
+    M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 222., 251., 510., 510., 510., 510.])
+    M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 20.6, 20.1, 41.79, 39.61, 39.39, 42.3])
+    # M1 data, extension
+    M1_days = np.array([1., 9., 11., 19., 21., 30., 31., 31., 38., 42., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
+    M1_data_extension = np.array([9.38, 8.05, 11.32, 9.43, 13.34, 16.19, 13.85, 15.96, 15.32, 14.21, 17.99, 19.32, 19.32, 18.31, 17.53, 18.68, 18.49, 22.08, 23.14, 19.92, 27.97, 24.38, 25.53, 29.07, 27.65, 26.27, 27.55, 24.33, 29.03, 29.07, 30.36, 31.79, 31.37, 31.28, 35.79, 29.81, 31.79, 34.04, 33.21, 34.50, 33.76, 33.40, 36.34, 33.63])
+
+
+
+
+    optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension)
+
+    '''
+    m2days = np.array([70., 80., 202., 263., 450., 500.])
+    m1days = convert(m2days)
+
+    for i in xrange(m2days.size):
+        print m2days[i], m1days[i]
+    print 'switch length = ', m1days[3]-m1days[2]
+    '''
 
     return 0
 if __name__ == '__main__':
