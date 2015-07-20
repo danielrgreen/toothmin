@@ -33,12 +33,12 @@ def compare(M1_model_extension, M1_data_extension, M2_model_extension, M2_data_e
     sigma = 6. # in mm
 
     M1_score = (M1_model_extension - M1_data_extension)**2. / sigma**2
-    M1_score[~np.isfinite(M1_score)] = 0.000001
+    M1_score[~np.isfinite(M1_score)] = 10000000.
     M1_score = (1. / (2. * np.pi * sigma**2)) * np.exp(-.5*(M1_score))
     M1_score = np.product(M1_score)
 
     M2_score = (M2_model_extension - M2_data_extension)**2. / sigma**2.
-    M2_score[~np.isfinite(M2_score)] = 0.000001
+    M2_score[~np.isfinite(M2_score)] = 10000000.
     M2_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(M2_score))
     M2_score = np.product(M2_score)
 
@@ -107,7 +107,7 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
-    global_opt.set_maxeval(600000)
+    global_opt.set_maxeval(180000)
     global_opt.set_lower_bounds([15., .0035, -50., 45., .003, 20.])
     global_opt.set_upper_bounds([80., .0055, -10., 65., .0045, 40.])
     global_opt.set_min_objective(f_objective)

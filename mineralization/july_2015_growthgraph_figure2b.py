@@ -9,25 +9,30 @@ from time import time
 def est_tooth_extension(ext_param, **kwargs): # days, amplitude, slope, offset
     '''
     '''
-    p35_model_extension, tooth_35p, p70_model_extension, tooth_70p = extension(*ext_param, **kwargs)
-    score = compare(p35_model_extension, tooth_35p, p70_model_extension, tooth_70p)
+    p35_model_extension, tooth_35p, p70_model_extension, tooth_70p, kext_model_rate, kext = extension(*ext_param, **kwargs)
+    score = compare(p35_model_extension, tooth_35p, p70_model_extension, tooth_70p, kext_model_rate, kext)
 
     return score, p35_model_extension, p70_model_extension
 
-def extension(p35_amplitude, p35_slope, p35_offset, p70_amplitude, p70_slope, p70_offset, M1_days, tooth_35p, tooth_70p, tooth_70p_days):
+def extension(p35_amplitude, p35_slope, p35_offset, p70_amplitude, p70_slope, p70_offset, kext_amplitude, kext_offset, kext_slope, M1_days, tooth_35p, tooth_70p, tooth_70p_days, kext, kday):
 
     M1_height_max = 35. # in millimeters
     p35_model_extension = (p35_amplitude * spec.erf(p35_slope * (M1_days - p35_offset))) + (M1_height_max - p35_amplitude)
     p70_model_extension = (p70_amplitude * spec.erf(p70_slope * (tooth_70p_days - p70_offset))) + (M1_height_max - p70_amplitude)
 
+    kext /= 1000.
     #k_height_max = 32. # in millimeters
-    #kext_model_rate = (spec.erfinv((kext_amplitude + kday - k_height_max) / kext_amplitude) + kext_offset * kext_slope) / kext_slope
+    kext_model_rate = kext_amplitude * np.exp(-((kday - kext_offset)**2) / (2*kext_slope**2))
+    print kext_model_rate
 
-    return p35_model_extension, tooth_35p, p70_model_extension, tooth_70p
 
-def compare(p35_model_extension, tooth_35p, p70_model_extension, tooth_70p):
+    return p35_model_extension, tooth_35p, p70_model_extension, tooth_70p, kext_model_rate, kext
+
+def compare(p35_model_extension, tooth_35p, p70_model_extension, tooth_70p, kext_model_rate, kext):
 
     sigma = 6. # in mm
+
+    #kext_model_rate *= 1000.
 
     p35_score = (p35_model_extension - tooth_35p)**2. / sigma**2
     p35_score[~np.isfinite(p35_score)] = 10000000.
@@ -39,12 +44,14 @@ def compare(p35_model_extension, tooth_35p, p70_model_extension, tooth_70p):
     p70_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(p70_score))
     p70_score = np.product(p70_score)
 
-    #k_score = (kext_model_rate - kext)**2. / sigma**2.
-    #k_score[~np.isfinite(k_score)] = 10000000.
-    #k_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(k_score))
-    #k_score = np.product(k_score)
+    #print kext_model_rate
+    k_score = (kext_model_rate - kext)**2. / sigma**2.
+    k_score[~np.isfinite(k_score)] = 10000000.
+    k_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(k_score))
+    k_score = np.product(k_score)
+    #print 'k_score = ', k_score
 
-    data_score = p35_score * p70_score #+ k_score
+    data_score = p35_score * p70_score + k_score
     #prior_score = prior(m2_m1_converted, M1_initiation, M2_initiation)
     print -1 * data_score #* prior_score
 
@@ -99,30 +106,30 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     #fit_kwargs['M2_days'] = M2_days
     fit_kwargs['tooth_35p'] = tooth_35p
     fit_kwargs['tooth_70p'] = tooth_70p
-    #fit_kwargs['kday'] = kday
-    #fit_kwargs['kext'] = kext
+    fit_kwargs['kday'] = kday
+    fit_kwargs['kext'] = kext
     fit_kwargs['tooth_70p_days'] = tooth_70p_days
 
     t1 = time()
 
     f_objective = lambda x, grad: est_tooth_extension(x, **fit_kwargs)[0]
 
-    local_opt = nlopt.opt(nlopt.LN_COBYLA, 6)
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, 9)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([20., .004, 30., 18., .0035, 50.])
-    local_opt.set_upper_bounds([50., .0075, 60., 60., .008, 90.])
+    local_opt.set_lower_bounds([20., .004, 30., 18., .0035, 50., 18., .0035, 50.])
+    local_opt.set_upper_bounds([50., .0075, 60., 60., .008, 90., 60., .008, 90.])
     local_opt.set_min_objective(f_objective)
 
-    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
-    global_opt.set_maxeval(320000)
-    global_opt.set_lower_bounds([20., .004, 30., 18., .0035, 50.])
-    global_opt.set_upper_bounds([50., .0075, 60., 60., .008, 90.])
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 9)
+    global_opt.set_maxeval(32000)
+    global_opt.set_lower_bounds([20., .004, 30., 18., .0035, 50., 18., .0035, 50.])
+    global_opt.set_upper_bounds([50., .0075, 60., 60., .008, 90., 60., .008, 90.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
-    global_opt.set_population(6)
+    global_opt.set_population(9)
 
     print 'Running global optimizer ...'
-    x_opt = global_opt.optimize([40., .005, 40., 40., .0045, 60])
+    x_opt = global_opt.optimize([40., .005, 40., 40., .0045, 60., 40., .0045, 60.])
 
     minf = global_opt.last_optimum_value()
     print "minimum value = ", minf
@@ -136,15 +143,18 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     M1_height_max = 35.
 
     days = np.linspace(-100, 350, 451)
-    p35_model_extension, tooth_35p, p70_model_extension, tooth_70p = extension(x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], days, tooth_35p, tooth_70p, days)
+    p35_model_extension, tooth_35p, p70_model_extension, tooth_70p, kext_model_rate, kext = extension(x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], x_opt[6], x_opt[7], x_opt[8], days, tooth_35p, tooth_70p, days, kext, days)
     M1_model_extension = (M1_params[0] * spec.erf(M1_params[1] * (days - M1_params[2]))) + (M1_height_max - M1_params[0])
     p35_diff_extension = np.diff(p35_model_extension) * 1000.
     p70_diff_extension = np.diff(p70_model_extension) * 1000.
     M1_diff_extension = np.diff(M1_model_extension) * 1000.
+    kext_model_rate *= 1000.
+    print 'days shape', days.shape
+    print 'k ext model shape', kext_model_rate.shape
 
     local_method = 'cobyla'
     global_method = 'msds'
-    textstr = '%.3f, %.6f, %.3f, \n%.3f, %.6f, %.3f, \nmin = %.3g, time = %.1f seconds \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], minf, run_time, local_method, global_method)
+    textstr = '%.3f, %.6f, %.3f, \n%.3f, %.6f, %.3f, \n%.3f, %.6f, %.3f, \nmin = %.3g, time = %.1f seconds \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], x_opt[6], x_opt[7], x_opt[8], minf, run_time, local_method, global_method)
     print textstr
 
     fig = plt.figure()
@@ -153,9 +163,9 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     ax2.plot(days[1::4], M1_diff_extension[::4], 'b.', label=r'$ \mathrm{extension} \ \Delta $', alpha=.5)
     ax2.plot(days[1::4], p35_diff_extension[::4], 'm.', label=r'$ \mathrm{maturation} \ \Delta $', alpha=.5)
     ax2.plot(days[1::4], p70_diff_extension[::4], 'r.', label=r'$ \mathrm{completion} \ \Delta $', alpha=.5)
-    #ax2.plot(days[1::4], kext_model_rate[::4], 'g.', label=r' \mathrm{histology} \ \Delta $', alpha=.5)
+    ax2.plot(days[1::4], kext_model_rate[::4], 'g.-', label=r' \mathrm{histology} \ \Delta $', alpha=.5)
     ax2.plot(kday, kext, marker='D', fillstyle='none', linestyle='none', color='g', label=r'$ \mathrm{histology} \ \mathrm{(observed)} $')
-    ax2.set_ylim([0,250])
+    ax2.set_ylim([-100,250])
     ax2.set_xlim([-100,350])
     ax1.plot(M1_days, M1_data_extension, marker='o', linestyle='none', color='b', label=r'$ \mathrm{extension} \ \mathrm{(observed)} $')
     ax1.plot(days, M1_model_extension, linestyle='-', color='b', label=b'$ \mathrm{extension,} \ \mathrm{optimized} $')
@@ -163,7 +173,7 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     ax1.plot(days, p35_model_extension, linestyle='-', color='m', label=r'$ \mathrm{maturation,} \ \mathrm{optimized} $')
     ax1.plot(tooth_70p_days, tooth_70p, marker='o', linestyle='none', color='r', label=r'$ \mathrm{completion} \ \mathrm{(observed)} $')
     ax1.plot(days, p70_model_extension, linestyle='-', color='r', label=r'$ \mathrm{completion,} \ \mathrm{optimized} $')
-    ax1.set_ylim([0,40])
+    ax1.set_ylim([-100,40])
     ax1.set_xlim([-100,350])
     plt.title('M1 extension, maturation onset and completion over time')
     ax1.set_xlabel('Days after birth')
