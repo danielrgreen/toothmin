@@ -704,7 +704,7 @@ def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
 
     return converted_times
 
-def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
+def fit_tooth_data(data_fname, model_fname='equalsize_jul2015c.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
 
@@ -716,7 +716,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     fit_kwargs = kwargs.copy()
 
     switch_history = np.array([202., 263.])
-    m2_m1_params = np.array([56.031, .003240, 1.572, 41., 21.820, .007889, 29.118, 35.]) # With no limits, 2000k
+    m2_m1_params = np.array([53.031, .003468, 20.429, 41., 29.764, .005890, -19.482, 35.]) # With no limits, 2000k
     #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 33.764, .005488, -37.961, 35.]) # With limits, 600k
     converted_times = tooth_timing_convert(switch_history, *m2_m1_params)
     print converted_times
@@ -794,7 +794,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     #cax3 = fig.colorbar(cimg3)
 
 
-    fig.savefig('switch_no_limit_conversion_2015.pdf', dpi=300)
+    fig.savefig('switch_3rd_conversion_2015_on_time.pdf', dpi=300)
     plt.show()
     '''
     r_mu_sm = np.ravel(mu_sm)

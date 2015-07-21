@@ -107,7 +107,7 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
-    global_opt.set_maxeval(180000)
+    global_opt.set_maxeval(180)
     global_opt.set_lower_bounds([15., .0035, -50., 45., .003, 20.])
     global_opt.set_upper_bounds([80., .0055, -10., 65., .0045, 40.])
     global_opt.set_min_objective(f_objective)
@@ -131,7 +131,11 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
     switch_length =  m2_m1_converted[2]-m2_m1_converted[1]
 
     days = np.linspace(-100, 550, 651)
-    M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation = extension(x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], days, M1_data_extension, days, M2_data_extension, m2_m1_conversion)
+    # Plot test result
+    testp = np.array([27.792, 0.0066885, -4.4215, 52.787, 0.003353, 17.1276])
+    M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation = extension(testp[0], testp[1], testp[2], testp[3], testp[4], testp[5], days, M1_data_extension, days, M2_data_extension, m2_m1_conversion)
+    # Plot optimized result
+    #M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation = extension(x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], days, M1_data_extension, days, M2_data_extension, m2_m1_conversion)
     M1_diff_extension = np.diff(M1_model_extension) * 1000.
     M2_diff_extension = np.diff(M2_model_extension) * 1000.
     prior_score = prior(m2_m1_converted, M1_initiation, M2_initiation)
