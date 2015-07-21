@@ -17,6 +17,10 @@ import matplotlib.pyplot as plt
 import h5py
 from PIL import Image
 import pylab as Pylb
+import scipy.special as spec
+import nlopt
+from time import time
+
 
 from scipy.interpolate import interp1d
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
@@ -628,7 +632,7 @@ def compare(model_isomap, data_isomap, score_max=3., data_sigma=0.15, sigma_floo
 
 def water_hist_likelihood(w_iso_hist, **kwargs):
     # Calculate water history on each day
-    block_length = int(kwargs.get('block_length', 10))
+    block_length = int(kwargs.get('block_length'))
     w_iso_hist = calc_water_step2(w_iso_hist, block_length)
 
     # Water to blood history
@@ -656,7 +660,7 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
 
 def water_hist_likelihood_fl(w_iso_hist, **kwargs):
     # Calculate water history on each day
-    block_length = int(kwargs.get('block_length', 10))
+    block_length = int(kwargs.get('block_length'))
     w_iso_hist = calc_water_step2(w_iso_hist, block_length)
 
     # Water to blood history
@@ -674,6 +678,32 @@ def water_hist_likelihood_fl(w_iso_hist, **kwargs):
 
     return model_isomap
 
+def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
+    '''
+    Takes an array of events in days occurring in one tooth, calculates where
+    these will appear spatially during tooth extension, then maps these events
+    onto the spatial dimensions of a second tooth, and calculates when similar
+    events would have occurred in days to produce this mapping in the second
+    tooth.
+
+    Inputs:
+    conversion_times:   a 1-dimensional numpy array with days to be converted.
+    a1, s1, o1, max1:   the amplitude, slope, offset and max height of the error
+                        function describing the first tooth's extension, in mm,
+                        over time in days.
+    a2, s2, o2, max2:   the amplitude, slope, offset and max height of the error
+                        function describing the second tooth's extension, in mm,
+                        over time in days.
+    Returns:            converted 1-dimensional numpy array of converted days.
+
+    '''
+    t1_ext = a1*spec.erf(s1*(conversion_times+o1))+(max1-a1)
+    t1_pct = t1_ext / max1
+    t2_ext = t1_pct * max2
+    converted_times = (spec.erfinv((a2+t2_ext-max2)/a2) + (o2*s2)) / s2
+
+    return converted_times
+
 def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
@@ -685,13 +715,22 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
 
     fit_kwargs = kwargs.copy()
 
-    n_blocks = 24
-    fit_kwargs['block_length'] = 15
-    month_d180 = np.array([-6.5, -6.5, -6.5, -6.5, -19.35, -19.35, -19.35, -19.35, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5, -6.5])
+    switch_history = np.array([202., 263.])
+    m2_m1_params = np.array([56.031, .003240, 1.572, 41., 21.820, .007889, 29.118, 35.]) # With no limits, 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 33.764, .005488, -37.961, 35.]) # With limits, 600k
+    converted_times = tooth_timing_convert(switch_history, *m2_m1_params)
+    print converted_times
 
     # Create drinking water history from monthly d18O
-    w_iso_hist = month_d180 * np.ones(n_blocks)
 
+    n_blocks = 400
+    fit_kwargs['block_length'] = 1
+    d18O_switches = np.array([-6.5, -19.35, -6.5])
+
+    w_iso_hist = np.ones(n_blocks)
+    w_iso_hist[:converted_times[0]] = d18O_switches[0]
+    w_iso_hist[converted_times[0]:converted_times[1]] = d18O_switches[1]
+    w_iso_hist[converted_times[1]:] = d18O_switches[2]
 
     #fit_kwargs['tooth_model'] = tooth_model
     #model_isomap_full = water_hist_likelihood_fl(w_iso_hist, **fit_kwargs)
@@ -755,7 +794,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     #cax3 = fig.colorbar(cimg3)
 
 
-    fig.savefig('13pm_60d@60d_jun_2015.pdf', dpi=300)
+    fig.savefig('switch_no_limit_conversion_2015.pdf', dpi=300)
     plt.show()
     '''
     r_mu_sm = np.ravel(mu_sm)

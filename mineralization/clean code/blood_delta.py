@@ -225,9 +225,9 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
 def blood_delta(d_O2, d_water, d_feed, **kwargs):
     # Calculate equilibrium on each day
     d_eq = blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs)
-
     # Integrate differential equation to get
-    t_half = kwargs.get('t_half', 20.)
+    t_half = kwargs.get('t_half', 3.)
+    print t_half
     alpha = np.log(2.) / t_half
     beta = alpha * d_eq
 
