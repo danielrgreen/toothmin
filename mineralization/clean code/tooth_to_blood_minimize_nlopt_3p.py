@@ -22,6 +22,8 @@ from scipy.interpolate import interp1d
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
 from blood_delta import calc_blood_step, calc_water_step2, calc_water_gaussian, calc_blood_gaussian, blood_delta
+import scipy.special as spec
+
 from blood_delta import calc_blood_gaussian
 from scipy.optimize import curve_fit, minimize, leastsq
 
@@ -634,7 +636,7 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     return compare(model_isomap, data_isomap), model_isomap
 
 def water_hist_prior(w_iso_hist, **kwargs):
-    block_length = int(kwargs.get('block_length', 10))
+    block_length = int(kwargs.get('block_length', 1))
     w_change_sigma = kwargs.get('w_change_sigma', 40./30.)
 
     w_iso_day = np.repeat(w_iso_hist, block_length)
@@ -667,6 +669,9 @@ def water_hist_prob_4param(w_params, **kwargs):
     if w_params[3] > 50:
         p += -0.5 * ((w_params[3] - 50.) / 50.)**2.
     '''
+    list_tuple = (p, w_params)
+    my_list.append(list_tuple)
+
     return p, model_isomap
 
 def score_v_score(w_iso_hist, fit_kwargs, step_size=0.1):
@@ -685,7 +690,46 @@ def water_4_param(mu, switch_mu, switch_start, switch_length):
 
     return w_iso_hist
 
-def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
+def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
+    '''
+    Takes an array of events in days occurring in one tooth, calculates where
+    these will appear spatially during tooth extension, then maps these events
+    onto the spatial dimensions of a second tooth, and calculates when similar
+    events would have occurred in days to produce this mapping in the second
+    tooth.
+
+    Inputs:
+    conversion_times:   a 1-dimensional numpy array with days to be converted.
+    a1, s1, o1, max1:   the amplitude, slope, offset and max height of the error
+                        function describing the first tooth's extension, in mm,
+                        over time in days.
+    a2, s2, o2, max2:   the amplitude, slope, offset and max height of the error
+                        function describing the second tooth's extension, in mm,
+                        over time in days.
+    Returns:            converted 1-dimensional numpy array of converted days.
+
+    '''
+    print 'CONVERSION: days to be converted = ', conversion_times
+    t1_ext = a1*spec.erf(s1*(conversion_times-o1))+(max1-a1)
+    print 'CONVERSION: first ext lengths = ', t1_ext
+    t1_pct = t1_ext / max1
+    print 'CONVERSION: 1st and 2nd percentages = ', t1_pct
+    t2_ext = t1_pct * max2
+    print 'CONVERSION: second ext lengths = ', t2_ext
+    converted_times = (spec.erfinv((a2+t2_ext-max2)/a2) + (o2*s2)) / s2
+    print 'CONVERSION: converted days = ', converted_times
+
+    return converted_times
+
+def getkey(item):
+    return item[0]
+
+my_list = []
+
+def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
+    '''
+    '''
+
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
 
@@ -702,39 +746,42 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
 
+    #Prepare water history:
+    switch_history = np.array([202., 263.]) # The two days on which a switch actually happened, M2
+    # Model a M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
+    # Model c M1 combined with different M2 possibilities
+    m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
+    converted_times = tooth_timing_convert(switch_history, *m2_m1_params)
+    check_2 = converted_times
+
     fit_kwargs['block_length'] = 1
-    first_sample = 50.*np.random.random_sample(1.)-40.
-    second_sample = 50.*np.random.random_sample(1.)-40.
-    water_params = np.array([first_sample[0], second_sample[0], np.random.randint(1, 200), np.random.randint(1, 150)])
-    score, model_isomap = water_hist_prob_4param(water_params, **fit_kwargs)
-    trials = 400
-    step_size_s = 5.
-    step_size_l = 80
-    upper_bound = 10.
-    lower_bound = -40.
-    record_scores = np.empty((trials,2), dtype='f4')
+    #record_scores = np.empty((trials,2), dtype='f4')
 
     f_objective = lambda x, grad: water_hist_prob_4param(x, **fit_kwargs)[0]
+
+    # Parameters are main d18O, switch d18O, switch onset, switch length
+
+    trials = 20
 
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 4)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-50., -50., 15, 15])
-    local_opt.set_upper_bounds([10., 10., 50, 70])
+    local_opt.set_lower_bounds([-19., -25., 30., 20.])
+    local_opt.set_upper_bounds([-5., -5., 100., 70.])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 4)
-    global_opt.set_maxeval(1000)
-    global_opt.set_lower_bounds([-50., -50., 15, 15])
-    global_opt.set_upper_bounds([10., 10., 50, 70])
+    global_opt.set_maxeval(trials)
+    global_opt.set_lower_bounds([-19., -25., 30., 20.])
+    global_opt.set_upper_bounds([-5., -5., 100., 70.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(4)
-
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([-10., -10., 30., 30.])
+    x_opt = global_opt.optimize([-10., -10., 35., 45.])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -743,6 +790,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     t2 = time()
     run_time = t2-t1
     print 'run time = ', run_time
+    eval_p_sec = trials/run_time
 
 
     #return 0
@@ -799,43 +847,65 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015b.h5', **kwargs):
     ax.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
     '''
 
-    #print record_scores
-    #print water_params
-    w_iso_hist = water_4_param(*x_opt) # Or water_params
-    real_switch_hist = water_4_param(-6.45, -19.35, 32, 62)
+    # Model a M1 combined with different M2 possibilities
+    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 56.031, .003240, 1.1572, 41.]) # No limits, 'm1a-m2a', 2000k
+    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 56.031, .003240, 1.1572, 41.]) # Limits, 'm1c-m2a', 600k
+
+    # Optimize result from M1 to M2
+    switch_end = x_opt[2]+x_opt[3]
+    feed_array = np.array([x_opt[2], switch_end])
+    converted_times = tooth_timing_convert(feed_array, *m1_m2_params)
+    optimized_length = converted_times[1]-converted_times[0]
+
+    w_iso_hist = water_4_param(x_opt[0], x_opt[1], converted_times[0], optimized_length) # Or water_params
+    real_switch_hist = water_4_param(-6.5, -19.3, 202., 61.)
+
+    # Create check to see if conversion is right
+    check_water_hist = tooth_timing_convert(check_2, *m1_m2_params)
+    check_length = check_water_hist[1]-check_water_hist[0]
+    check_iso_hist = water_4_param(-6.5, -19.3, check_water_hist[0], check_length)
+    print 'm1 times based on real switch and conversion = ', check_2
+    print 'm2 times converting back from m1 = ', check_water_hist
+
+    print 'm1 times from x_opt minimization = ', x_opt[2], switch_end
+    print 'resulting m2 times converted from x_opt = ', converted_times
 
     t_save = time()
     #np.savetxt('best-fit_%s.dat' % t_save, w_iso_hist, fmt='%.5f')
     #fig.savefig('fit-sequence-{0}.svg'.format(t_save), dpi=150, bbox_inches='tight')
     #plt.show()
 
-    textstr = '%.2f, %.2f, %.2f, %.2f, \n min = %.2f, time = %.1f \n %s, %s' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], minf, run_time, local_method, global_method)
+    textstr = '%.2f, %.2f, %.2f, %.2f, \n min = %.2f, time = %.1f \n trials = %.1f, trials/sec = %.2f \n%s, %s' % (x_opt[0], x_opt[1], converted_times[0], optimized_length, minf, run_time, trials, eval_p_sec, local_method, global_method)
 
     fig = plt.figure()
     ax1 = fig.add_subplot(3,1,1)
     temp, blood_hist = calc_blood_step(w_iso_hist, **kwargs)
-    days = np.arange(blood_hist.size) + 170.
+    days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b', linewidth=3.0)
     ax1.plot(days, blood_hist, 'r', linewidth=3.0)
+    ax1.plot(days, check_iso_hist, 'g.-.', linewidth=1.0)
     vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
-    ax1.text(400, vmin, textstr, fontsize=8)
+    ax1.text(350, vmin, textstr, fontsize=8)
     ax1.set_ylim(1.2*vmin, 1.2*vmax)
+    ax1.set_xlim(50, 500)
 
     temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
     ax2 = fig.add_subplot(3,1,2)
-    ax2.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
-
+    cimg2 = ax2.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    cax2 = fig.colorbar(cimg2)
     residuals = np.mean(model_isomap, axis=2) - data_isomap
     ax3 = fig.add_subplot(3,1,3)
-    ax3.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
-
-
-
+    cimg3 = ax3.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    cax3 = fig.colorbar(cimg3)
 
     fig.savefig('bloodhist-{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
+
+    my_list.sort(key=getkey(my_list))
+    print 'list'
+    print my_list
 
     temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
 

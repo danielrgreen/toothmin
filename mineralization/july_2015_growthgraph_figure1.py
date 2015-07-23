@@ -72,7 +72,7 @@ def prior(m2_m1_converted, M1_initiation, M2_initiation):
 def convert(m2_m1_conversion, M1_amplitude, M1_slope, M1_offset, M2_amplitude, M2_slope, M2_offset):
     '''
     '''
-    M2_height = M2_amplitude*spec.erf(M2_slope*(m2_m1_conversion+M2_offset))+(41.-M2_amplitude) # max at 40.5 optimized with synchrotron data set on nlopt
+    M2_height = M2_amplitude*spec.erf(M2_slope*(m2_m1_conversion-M2_offset))+(41.-M2_amplitude) # max at 40.5 optimized with synchrotron data set on nlopt
     M2_percent = M2_height / 41.
     M1_max_height = 35.
     M1_height = M2_percent * M1_max_height
@@ -102,6 +102,16 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     #fit_kwargs['kday'] = kday
     #fit_kwargs['kext'] = kext
     fit_kwargs['tooth_70p_days'] = tooth_70p_days
+
+
+
+    # Model a M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
+
+    # Model c M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
+
+
 
     t1 = time()
 

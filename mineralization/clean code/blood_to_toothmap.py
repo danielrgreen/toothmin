@@ -697,7 +697,7 @@ def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
     Returns:            converted 1-dimensional numpy array of converted days.
 
     '''
-    t1_ext = a1*spec.erf(s1*(conversion_times+o1))+(max1-a1)
+    t1_ext = a1*spec.erf(s1*(conversion_times-o1))+(max1-a1)
     t1_pct = t1_ext / max1
     t2_ext = t1_pct * max2
     converted_times = (spec.erfinv((a2+t2_ext-max2)/a2) + (o2*s2)) / s2
@@ -716,8 +716,36 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015c.h5', **kwargs):
     fit_kwargs = kwargs.copy()
 
     switch_history = np.array([202., 263.])
-    m2_m1_params = np.array([53.031, .003468, 20.429, 41., 29.764, .005890, -19.482, 35.]) # With no limits, 2000k
-    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 33.764, .005488, -37.961, 35.]) # With limits, 600k
+    # Main parameter combinations
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 33.764, .005488, -37.961, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 27.792, .006689, -4.4215, 35.]) # Compromise, 'half', 0k
+
+    # Model a M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'half', 0k
+
+    # Model b M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 33.764, .005488, -37.961, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 33.764, .005488, -37.961, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 33.764, .005488, -37.961, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 33.764, .005488, -37.961, 35.]) # Compromise, 'half', 0k
+
+    # Model c M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 29.764, .005890, -19.482, 35.]) # Compromise, 'half', 0k
+
+    # Model half M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 27.792, .006689, -4.4215, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 27.792, .006689, -4.4215, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 27.792, .006689, -4.4215, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 27.792, .006689, -4.4215, 35.]) # Compromise, 'half', 0k
+
     converted_times = tooth_timing_convert(switch_history, *m2_m1_params)
     print converted_times
 
@@ -781,20 +809,26 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015c.h5', **kwargs):
     mu_sm_r = np.mean(m_mu_sm, axis=1)
     mu_sm_r.shape = (mu_sm_r.size, 1)
 
+    print score_sm
+    textstr = '%.1f' % score_sm
 
     fig = plt.figure(figsize=(10,4), dpi=100)
     #ax1 = fig.add_subplot(3,1,1)
     #cimg1 = ax1.imshow(mu_fl.T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
     #cax1 = fig.colorbar(cimg1)
-    ax2 = fig.add_subplot(1,1,1)
+    ax2 = fig.add_subplot(2,1,1)
     cimg2 = ax2.imshow(mu_sm.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
     cax2 = fig.colorbar(cimg2)
+    ax2 = fig.add_subplot(2,1,2)
+    cimg2 = ax2.imshow(data_isomap.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
+    cax2 = fig.colorbar(cimg2)
+    ax2.text(21, 4, textstr, fontsize=8)
     #ax3 = fig.add_subplot(3,1,3)
     #cimg3 = ax3.imshow(mu_sm_r.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
     #cax3 = fig.colorbar(cimg3)
 
 
-    fig.savefig('switch_3rd_conversion_2015_on_time.pdf', dpi=300)
+    fig.savefig('c-h_20150721_test_m1-m2.svg', dpi=300)
     plt.show()
     '''
     r_mu_sm = np.ravel(mu_sm)
