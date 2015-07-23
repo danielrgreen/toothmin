@@ -669,7 +669,8 @@ def water_hist_prob_4param(w_params, **kwargs):
     if w_params[3] > 50:
         p += -0.5 * ((w_params[3] - 50.) / 50.)**2.
     '''
-    list_tuple = (p, w_params)
+    list_params = np.array([w_params[0], w_params[1], w_params[2], w_params[3]])
+    list_tuple = (p, list_params)
     my_list.append(list_tuple)
 
     return p, model_isomap
@@ -709,15 +710,10 @@ def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
     Returns:            converted 1-dimensional numpy array of converted days.
 
     '''
-    print 'CONVERSION: days to be converted = ', conversion_times
     t1_ext = a1*spec.erf(s1*(conversion_times-o1))+(max1-a1)
-    print 'CONVERSION: first ext lengths = ', t1_ext
     t1_pct = t1_ext / max1
-    print 'CONVERSION: 1st and 2nd percentages = ', t1_pct
     t2_ext = t1_pct * max2
-    print 'CONVERSION: second ext lengths = ', t2_ext
     converted_times = (spec.erfinv((a2+t2_ext-max2)/a2) + (o2*s2)) / s2
-    print 'CONVERSION: converted days = ', converted_times
 
     return converted_times
 
@@ -749,9 +745,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #Prepare water history:
     switch_history = np.array([202., 263.]) # The two days on which a switch actually happened, M2
     # Model a M1 combined with different M2 possibilities
-    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
+    m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
     # Model c M1 combined with different M2 possibilities
-    m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
     converted_times = tooth_timing_convert(switch_history, *m2_m1_params)
     check_2 = converted_times
 
@@ -762,7 +758,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 20
+    trials = 2500
 
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 4)
@@ -875,6 +871,18 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #fig.savefig('fit-sequence-{0}.svg'.format(t_save), dpi=150, bbox_inches='tight')
     #plt.show()
 
+    my_list.sort(key=getkey)
+    save_list = my_list[:400:20]
+    print 'saved list'
+    print save_list
+    list_water_results = []
+    for s in save_list:
+        s_params = s[1]
+        s_times = s_params[2:]
+        s_times = tooth_timing_convert(s_times, *m1_m2_params)
+        s_params = np.array([s_params[0], s_params[1], s_times[0], s_times[1]])
+        list_water_results.append(water_4_param(*s_params))
+
     textstr = '%.2f, %.2f, %.2f, %.2f, \n min = %.2f, time = %.1f \n trials = %.1f, trials/sec = %.2f \n%s, %s' % (x_opt[0], x_opt[1], converted_times[0], optimized_length, minf, run_time, trials, eval_p_sec, local_method, global_method)
 
     fig = plt.figure()
@@ -882,9 +890,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     temp, blood_hist = calc_blood_step(w_iso_hist, **kwargs)
     days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
-    ax1.plot(days, w_iso_hist, 'b', linewidth=3.0)
-    ax1.plot(days, blood_hist, 'r', linewidth=3.0)
-    ax1.plot(days, check_iso_hist, 'g.-.', linewidth=1.0)
+    ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, blood_hist, 'r-', linewidth=2.0)
+    #ax1.plot(days, check_iso_hist, 'g.-.', linewidth=1.0)
+    for s in list_water_results:
+        ax1.plot(days, s, 'b-', alpha=0.05)
     vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, vmin, textstr, fontsize=8)
@@ -903,12 +913,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig.savefig('bloodhist-{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
-    my_list.sort(key=getkey(my_list))
+    my_list.sort(key=getkey)
     print 'list'
     print my_list
 
-    temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
-
+    save_list = my_list[:100:10]
+    print 'saved list'
+    print save_list
 
 def main():
 
