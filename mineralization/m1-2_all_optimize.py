@@ -89,7 +89,13 @@ def final_convert(m2_m1_conversion, M1_amplitude, M1_slope, M1_offset, M2_amplit
     return m2_m1_converted
 
 def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit_kwargs):
-    m2_m1_conversion = np.array([84., 202., 263., 450., 500.])
+    blood_day_measures = np.array([(57., -5.71), (199., -4.96), (203., -10.34), (207., -12.21), (211., -13.14), (215., -13.49), (219., -13.16), (239., -13.46), (261., -13.29), (281., -4.87), (289., -4.97), (297., -4.60), (309., -4.94)])
+    blood_days = np.array([i[0] for i in blood_day_measures])
+    blood_measures = np.array([i[1] for i in blood_day_measures])
+    water_iso_day_measures = np.array([(198., -6.6), (199., -19.4), (219., -19.3), (261., -19.4)])
+    water_iso_days = np.array([i[0] for i in water_iso_day_measures])
+    water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
+    m2_m1_conversion = np.array([84., 199., 261., 450., 500.])
     fit_kwargs['m2_m1_conversion'] = m2_m1_conversion
     fit_kwargs['M1_data_extension'] = M1_data_extension
     fit_kwargs['M1_days'] = M1_days

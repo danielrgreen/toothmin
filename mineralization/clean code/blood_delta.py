@@ -194,17 +194,17 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     :return:
     '''
     # Get defaults
-    f_H2O = kwargs.get('f_H20', 0.62)
-    f_O2 = kwargs.get('f_O2', 0.24)
+    f_H2O = kwargs.get('f_H20', 0.56) # was 0.62
+    f_O2 = kwargs.get('f_O2', 0.30) # was 0.24
     alpha_O2 = kwargs.get('alpha_O2', 0.992)
-    f_feed = kwargs.get('f_feed', 0.14)
+    f_feed = kwargs.get('f_feed', 0.14) # was 0.14
 
-    f_H2O_en = kwargs.get('f_H2O_en', 0.62)  # Fraction effluent H2O unfractionated
+    f_H2O_en = kwargs.get('f_H2O_en', 0.56)  # Fraction effluent H2O unfractionated. Was 0.62
     alpha_H2O_ef = kwargs.get('alpha_H2O_ef', 0.992)
-    f_H2O_ef = kwargs.get('f_H2O_ef', 0.14)
-    alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.038)
-    f_CO2 = kwargs.get('f_CO2', 0.24)
-    ev_enrichment = kwargs.get('ev_enrichment', 1.2)
+    f_H2O_ef = kwargs.get('f_H2O_ef', 0.14) # was 0.14
+    alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
+    f_CO2 = kwargs.get('f_CO2', 0.30) # was 0.24
+    ev_enrichment = kwargs.get('ev_enrichment', 2.3) # Was 1.2
 
 
     # Calculate equilibrium on each day
@@ -226,7 +226,7 @@ def blood_delta(d_O2, d_water, d_feed, **kwargs):
     # Calculate equilibrium on each day
     d_eq = blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs)
     # Integrate differential equation to get
-    t_half = kwargs.get('t_half', 3.)
+    t_half = kwargs.get('t_half', 3.) #*********************************
     print t_half
     alpha = np.log(2.) / t_half
     beta = alpha * d_eq
@@ -243,7 +243,7 @@ def test_integration():
     alpha = 0.05
     beta = np.ones(n_days, dtype='f8')
     beta[:n_days/5] = -1.
-    beta[n_days/5:2*n_days/5] = 3.
+    beta[n_days/5:2*n_days/5] = 20.
     beta[2*n_days/5:4*n_days/5] = 0.
     beta[4*n_days/5:] = -5.
     delta_0 = -2.
@@ -272,7 +272,7 @@ def calc_blood_step(water_step, **kwargs):
     n_days = water_step.size
     days = np.arange(n_days)
     d_eq = blood_d_equilibrium(air, water_step, feed)
-    delta = blood_delta(air, water_step, feed, t_half=3.)
+    delta = blood_delta(air, water_step, feed, t_half=3.) #**********************
 
     #fig = plt.figure()
     #ax = fig.add_subplot(1,1,1)
@@ -304,7 +304,7 @@ def calc_blood_gaussian(**kwargs):
     n_days = water_gaussian.size
     days = np.arange(n_days)
     d_eq = blood_d_equilibrium(air, water_gaussian, feed)
-    delta = blood_delta(air, water_gaussian, feed, t_half=3.)
+    delta = blood_delta(air, water_gaussian, feed, t_half=3.) #********************
 
     #fig = plt.figure()
     #ax = fig.add_subplot(1,1,1)

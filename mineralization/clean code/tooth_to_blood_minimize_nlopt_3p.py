@@ -635,40 +635,17 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
 
     return compare(model_isomap, data_isomap), model_isomap
 
-def water_hist_prior(w_iso_hist, **kwargs):
-    block_length = int(kwargs.get('block_length', 1))
-    w_change_sigma = kwargs.get('w_change_sigma', 40./30.)
-
-    w_iso_day = np.repeat(w_iso_hist, block_length)
-    dw = np.diff(w_iso_day)
-
-    return np.sum((dw/w_change_sigma)**2.)
-
 def water_hist_prob(w_iso_hist, **kwargs):
     p, model_isomap = water_hist_likelihood(w_iso_hist, **kwargs)
-    #p += water_hist_prior(w_iso_hist, **kwargs)
     return p, model_isomap
 
 def water_hist_prob_4param(w_params, **kwargs):
     print 'w_params:', w_params
-    '''
-    if (w_params[2] < 0) or (w_params[2] >= 350) or (w_params[3] < 0):
-        return 999999.,
-    if (w_params[2] + w_params[3]) > 350:
-        return 999999.
-    '''
+
     w_iso_hist = water_4_param(*w_params)
     p, model_isomap = water_hist_likelihood(w_iso_hist, **kwargs)
     print 'bare score = ', p
-    #p += 0.5 * (abs(w_params[0]-w_params[1])/1.5)**2
-    #p -= 0.5 * (w_params[3]/.0000001)**.3
-    #print 'prior score = ', p
-    '''
-    p += -0.5 * ((w_params[:2]+5.)/15.)**2.)
 
-    if w_params[3] > 50:
-        p += -0.5 * ((w_params[3] - 50.) / 50.)**2.
-    '''
     list_params = np.array([w_params[0], w_params[1], w_params[2], w_params[3]])
     list_tuple = (p, list_params)
     my_list.append(list_tuple)
@@ -733,6 +710,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     tooth_model_lg = ToothModel(model_fname)
     tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
 
+    # Make trial data
+    trial_water_hist = np.array([-6.5, -19.5, 41., 62.]) # ************* TRIAL WATER **************
+    trial_water_hist = water_4_param(*trial_water_hist)
+    trial_metabolic_kw = kwargs.get('metabolic_kw', {})
+    trial_blood_hist = blood_delta(23.5, trial_water_hist, 25.3, **trial_metabolic_kw)
+    trial_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, trial_blood_hist)
+
     # Set keyword arguments to be used in fitting procedure
     fit_kwargs = kwargs.copy()
 
@@ -741,13 +725,45 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fit_kwargs['isomap_shape'] = isomap_shape
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
+    # Blood and water isotope measurements from sheep 962
+    blood_day_measures = np.array([(57., -5.71), (199., -4.96), (203., -10.34), (207., -12.21), (211., -13.14), (215., -13.49), (219., -13.16), (239., -13.46), (261., -13.29), (281., -4.87), (289., -4.97), (297., -4.60), (309., -4.94)])
+    blood_days = np.array([i[0] for i in blood_day_measures])
+    blood_measures = np.array([i[1] for i in blood_day_measures])
+    water_iso_day_measures = np.array([(198., -6.6), (199., -19.4), (219., -19.3), (261., -19.4)])
+    water_iso_days = np.array([i[0] for i in water_iso_day_measures])
+    water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
 
     #Prepare water history:
-    switch_history = np.array([202., 263.]) # The two days on which a switch actually happened, M2
+    switch_history = np.array([199., 261.]) # The two days on which a switch actually happened, M2
     # Model a M1 combined with different M2 possibilities
-    m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'half', 0k
+    #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'histology', 0k
+
+    # Model b M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 33.764, .005488, -37.961, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 33.764, .005488, -37.961, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 33.764, .005488, -37.961, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 33.764, .005488, -37.961, 35.]) # Compromise, 'half', 0k
+    #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 33.764, .005488, -37.961, 35.]) # Compromise, 'histology', 0k
+
     # Model c M1 combined with different M2 possibilities
-    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
+    m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 29.764, .005890, -19.482, 35.]) # Compromise, 'half', 0k
+    #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 29.764, .005890, -19.482, 35.]) # Compromise, 'histology', 0k
+
+    # Model dec2014 M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 30.34, .0061, 11., 36.]) # No limits, 'dec2014', old method
+    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'b', 600k
+    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'c', 600k
+    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'half', 0k
+    #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'histology', 0k
+
+
     converted_times = tooth_timing_convert(switch_history, *m2_m1_params)
     check_2 = converted_times
 
@@ -758,26 +774,31 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 2500
+    trials = 2000
+    keep_pct = 5 # Percent of trials to record
+
+    keep_pct = int(trials*(keep_pct/100.))
+    keep_pct_jump = int(keep_pct/10.)
+
 
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 4)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-19., -25., 30., 20.])
-    local_opt.set_upper_bounds([-5., -5., 100., 70.])
+    local_opt.set_lower_bounds([-10., -25., 15., 30.])
+    local_opt.set_upper_bounds([-5., -15., 60., 70.])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 4)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([-19., -25., 30., 20.])
-    global_opt.set_upper_bounds([-5., -5., 100., 70.])
+    global_opt.set_lower_bounds([-10., -25., 15., 30.])
+    global_opt.set_upper_bounds([-5., -15., 60., 70.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(4)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([-10., -10., 35., 45.])
+    x_opt = global_opt.optimize([-6., -19.5, 52., 35.])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -788,64 +809,34 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     print 'run time = ', run_time
     eval_p_sec = trials/run_time
 
-
-    #return 0
-
-    '''
-    fig = plt.figure()
-    n_plots = 10
-    n_per_plot = (trials / (n_plots-1))
-    k_plot = 0
-    vmin, vmax = 9., 15.
-
-    ax = fig.add_subplot(n_plots+1, 1, 1)
-    ax.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
-
-    for t in xrange(trials):
-        if t % n_per_plot == 0:
-            ax = fig.add_subplot(n_plots+1, 1, k_plot+2)
-            ax.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
-            xlim = ax.get_xlim()
-            ylim = ax.get_ylim()
-            x0 = xlim[0] + 0.02 * (xlim[1]-xlim[0])
-            y0 = ylim[1] - 0.05 * (ylim[1]-ylim[0])
-            ax.text(x0, y0, r'$s \left( %d \right) = %.1f$' % (t, score),
-                    ha='left', va='top', fontsize=8)
-            k_plot += 1
-        step_size_s *= 0.9999
-        step_size_l *=.9996
-        new_water_params = np.empty(water_params.size)
-        new_water_params[:2] = water_params[:2] + np.random.normal(0., step_size_s, size=2)
-        new_water_params[2] = water_params[2] + np.random.randint(-step_size_l, step_size_l)
-        if new_water_params[2] < 1:
-            new_water_params[2] = 1
-        new_water_params[3] = water_params[3] + np.random.randint(-step_size_l, step_size_l)
-        if new_water_params[3] < 1:
-            new_water_params[3] = 1
-        new_water_params = np.array(new_water_params)
-        print 'old working = ', water_params
-        print 'new broken = ', new_water_params
-        score_prop, model_isomap_prop = water_hist_prob_4param(new_water_params, **fit_kwargs)
-        print 'score_prop', score_prop
-
-        print 'score({t:d}): {s:.3f}'.format(t=t, s=score), water_params
-
-        record_scores[t] = score, score_prop
-        if score_prop < score:
-            print '  score_prop < score:'
-            print '  old w_iso_hist = ', water_params
-            score = score_prop
-            model_isomap = model_isomap_prop
-            water_params = new_water_params
-            print '  new w_iso_hist = ', water_params
-
-    ax = fig.add_subplot(n_plots+1, 1, n_plots+1)
-    ax.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax, cmap='bwr')
-    '''
-
     # Model a M1 combined with different M2 possibilities
-    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 56.031, .003240, 1.1572, 41.]) # No limits, 'm1a-m2a', 2000k
-    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 56.031, .003240, 1.1572, 41.]) # Limits, 'm1c-m2a', 600k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
+
+    # Model b M1 combined with different M2 possibilities
+    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
+    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
+    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
+    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
+    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
+
+    # Model c M1 combined with different M2 possibilities
+    m1_m2_params = np.array([29.764, .005890, -19.482, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
+    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
+    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
+    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
+    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
+
+    # Model dec2014 M1 combined with different M2 possibilities
+    #m1_m2_params = np.array([30.34, .0061, 11., 36., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'dec2014', old method
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
+
 
     # Optimize result from M1 to M2
     switch_end = x_opt[2]+x_opt[3]
@@ -854,12 +845,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     optimized_length = converted_times[1]-converted_times[0]
 
     w_iso_hist = water_4_param(x_opt[0], x_opt[1], converted_times[0], optimized_length) # Or water_params
-    real_switch_hist = water_4_param(-6.5, -19.3, 202., 61.)
+    real_switch_hist = water_4_param(-6.467, -19.367, 199., 62.)
 
     # Create check to see if conversion is right
     check_water_hist = tooth_timing_convert(check_2, *m1_m2_params)
-    check_length = check_water_hist[1]-check_water_hist[0]
-    check_iso_hist = water_4_param(-6.5, -19.3, check_water_hist[0], check_length)
     print 'm1 times based on real switch and conversion = ', check_2
     print 'm2 times converting back from m1 = ', check_water_hist
 
@@ -872,54 +861,57 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #plt.show()
 
     my_list.sort(key=getkey)
-    save_list = my_list[:400:20]
+    save_list = my_list[:keep_pct:keep_pct_jump]
     print 'saved list'
     print save_list
     list_water_results = []
     for s in save_list:
         s_params = s[1]
         s_times = s_params[2:]
+        s_times[1] = s_times[0] + s_times[1]
         s_times = tooth_timing_convert(s_times, *m1_m2_params)
+        s_times[1] = s_times[1] - s_times[0]
         s_params = np.array([s_params[0], s_params[1], s_times[0], s_times[1]])
         list_water_results.append(water_4_param(*s_params))
 
-    textstr = '%.2f, %.2f, %.2f, %.2f, \n min = %.2f, time = %.1f \n trials = %.1f, trials/sec = %.2f \n%s, %s' % (x_opt[0], x_opt[1], converted_times[0], optimized_length, minf, run_time, trials, eval_p_sec, local_method, global_method)
+    textstr = 'x_opt = %.2f, %.2f, %.2f, %.2f \nm2_params = %.2f, %.2f, %.2f, %.2f \nmin = %.2f, time = %.1f \n trials = %.1f, trials/sec = %.2f \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[0], x_opt[1], converted_times[0], optimized_length, minf, run_time, trials, eval_p_sec, local_method, global_method)
 
     fig = plt.figure()
-    ax1 = fig.add_subplot(3,1,1)
+    ax1 = fig.add_subplot(5,1,1)
     temp, blood_hist = calc_blood_step(w_iso_hist, **kwargs)
     days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, trial_water_hist, 'b-.', linewidth=1.0)
     ax1.plot(days, blood_hist, 'r-', linewidth=2.0)
-    #ax1.plot(days, check_iso_hist, 'g.-.', linewidth=1.0)
+    ax1.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
+    ax1.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
     for s in list_water_results:
         ax1.plot(days, s, 'b-', alpha=0.05)
     vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, vmin, textstr, fontsize=8)
-    ax1.set_ylim(1.2*vmin, 1.2*vmax)
-    ax1.set_xlim(50, 500)
+    ax1.set_ylim(-25, 0)
+    ax1.set_xlim(-100, 550)
 
     temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
-    ax2 = fig.add_subplot(3,1,2)
-    cimg2 = ax2.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    ax2 = fig.add_subplot(5,1,2)
+    cimg2 = ax2.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax2 = fig.colorbar(cimg2)
-    residuals = np.mean(model_isomap, axis=2) - data_isomap
-    ax3 = fig.add_subplot(3,1,3)
-    cimg3 = ax3.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    ax3 = fig.add_subplot(5,1,3)
+    cimg3 = ax3.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax3 = fig.colorbar(cimg3)
+    residuals = np.mean(model_isomap, axis=2) - data_isomap
+    ax4 = fig.add_subplot(5,1,4)
+    cimg4 = ax4.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    cax4 = fig.colorbar(cimg4)
 
-    fig.savefig('bloodhist-{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    ax5 = fig.add_subplot(5,1,5)
+    cimg5 = ax5.imshow(np.mean(trial_model, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    cax5 = fig.colorbar(cimg5)
+
+    fig.savefig('jula-a_wOp56_O2p30_fOp14_{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
-
-    my_list.sort(key=getkey)
-    print 'list'
-    print my_list
-
-    save_list = my_list[:100:10]
-    print 'saved list'
-    print save_list
 
 def main():
 
