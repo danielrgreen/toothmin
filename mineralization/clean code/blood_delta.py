@@ -52,42 +52,42 @@ def calc_water_step(n_days, **kwargs):
     :param kwargs:      Isotope values every 20 days in water history
     :return:            Stepped water isotope history as a 1D float vector.
     '''
-    w0 = kwargs.get('w0', -6.5)
-    w1 = kwargs.get('w1', -6.5)
-    w2 = kwargs.get('w2', -6.5)
-    w3 = kwargs.get('w3', -19.5)
-    w4 = kwargs.get('w4', -19.5)
-    w5 = kwargs.get('w5', -19.5)
-    w6 = kwargs.get('w6', -6.5)
-    w7 = kwargs.get('w7', -6.5)
-    w8 = kwargs.get('w8', -6.5)
-    w9 = kwargs.get('w9', -6.5)
-    w10 = kwargs.get('w10', -6.5)
-    w11 = kwargs.get('w11', -6.5)
-    w12 = kwargs.get('w12', -6.5)
-    w13 = kwargs.get('w13', -6.5)
-    w14 = kwargs.get('w14', -6.5)
-    w15 = kwargs.get('w15', -6.5)
-    w16 = kwargs.get('w16', -6.5)
-    w17 = kwargs.get('w17', -6.5)
-    w18 = kwargs.get('w18', -6.5)
-    w19 = kwargs.get('w19', -6.5)
-    w20 = kwargs.get('w20', -6.5)
+    w0 = kwargs.get('w0', -6.467)
+    w1 = kwargs.get('w1', -6.467)
+    w2 = kwargs.get('w2', -6.467)
+    w3 = kwargs.get('w3', -6.467)
+    w4 = kwargs.get('w4', -6.467)
+    w5 = kwargs.get('w5', -6.467)
+    w6 = kwargs.get('w6', -6.467)
+    w7 = kwargs.get('w7', -6.467)
+    w8 = kwargs.get('w8', -6.467)
+    w9 = kwargs.get('w9', -6.467)
+    w10 = kwargs.get('w10', -19.367)
+    w11 = kwargs.get('w11', -19.367)
+    w12 = kwargs.get('w12', -19.367)
+    w13 = kwargs.get('w13', -6.467)
+    w14 = kwargs.get('w14', -6.467)
+    w15 = kwargs.get('w15', -6.467)
+    w16 = kwargs.get('w16', -6.467)
+    w17 = kwargs.get('w17', -6.467)
+    w18 = kwargs.get('w18', -6.467)
+    w19 = kwargs.get('w19', -6.467)
+    w20 = kwargs.get('w20', -6.467)
     water_step = np.ones(n_days)
     water_step[0:20] = w0
     water_step[20:40] = w1
-    water_step[40:45] = w2
-    water_step[45:80] = w3
+    water_step[40:60] = w2
+    water_step[60:80] = w3
     water_step[80:100] = w4
     water_step[100:105] = w5
     water_step[105:140] = w6
     water_step[140:160] = w7
     water_step[160:180] = w8
-    water_step[180:200] = w9
-    water_step[200:220] = w10
+    water_step[180:199] = w9
+    water_step[199:220] = w10
     water_step[220:240] = w11
-    water_step[240:260] = w12
-    water_step[260:280] = w13
+    water_step[240:261] = w12
+    water_step[261:280] = w13
     water_step[280:300] = w14
     water_step[300:320] = w15
     water_step[320:340] = w16
@@ -194,17 +194,17 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     :return:
     '''
     # Get defaults
-    f_H2O = kwargs.get('f_H20', 0.56) # was 0.62
-    f_O2 = kwargs.get('f_O2', 0.30) # was 0.24
-    alpha_O2 = kwargs.get('alpha_O2', 0.992)
-    f_feed = kwargs.get('f_feed', 0.14) # was 0.14
+    f_H2O = kwargs.get('f_H20', 0.64) # was 0.62
+    f_O2 = kwargs.get('f_O2', 0.24) # was 0.24
+    alpha_O2 = kwargs.get('alpha_O2', 0.992) # Was 0.992
+    f_feed = kwargs.get('f_feed', 0.12) # was 0.14
 
-    f_H2O_en = kwargs.get('f_H2O_en', 0.56)  # Fraction effluent H2O unfractionated. Was 0.62
-    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', 0.992)
-    f_H2O_ef = kwargs.get('f_H2O_ef', 0.14) # was 0.14
+    f_H2O_en = kwargs.get('f_H2O_en', 0.64)  # Fraction effluent H2O unfractionated. Was 0.62
+    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', 0.992) # Was 0.992
+    f_H2O_ef = kwargs.get('f_H2O_ef', 0.12) # was 0.14
     alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
-    f_CO2 = kwargs.get('f_CO2', 0.30) # was 0.24
-    ev_enrichment = kwargs.get('ev_enrichment', 2.3) # Was 1.2
+    f_CO2 = kwargs.get('f_CO2', 0.24) # was 0.24
+    ev_enrichment = kwargs.get('ev_enrichment', 0.5) # Was 1.2
 
 
     # Calculate equilibrium on each day
@@ -274,16 +274,25 @@ def calc_blood_step(water_step, **kwargs):
     d_eq = blood_d_equilibrium(air, water_step, feed)
     delta = blood_delta(air, water_step, feed, t_half=3.) #**********************
 
-    #fig = plt.figure()
-    #ax = fig.add_subplot(1,1,1)
-    #ax.plot(days, water_step, 'b', linewidth=3.0)
-    #ax.plot(days, delta, 'r', linewidth=3.0)
-    #ax.plot(days, d_eq, 'k')
 
-    #ax.set_ylim(-16., 6.)
-    #vmin = max(np.max(delta), np.max(water_step))
-    #ax.set_ylim(1.2*vmin, 1.2*vmax)
-    #plt.show()
+    # Blood and water isotope measurements from sheep 962
+    blood_day_measures = np.array([(57., -5.71), (199., -4.96), (203., -10.34), (207., -12.21), (211., -13.14), (215., -13.49), (219., -13.16), (239., -13.46), (261., -13.29), (281., -4.87), (289., -4.97), (297., -4.60), (309., -4.94)])
+    blood_days = np.array([i[0] for i in blood_day_measures])
+    blood_measures = np.array([i[1] for i in blood_day_measures])
+    water_iso_day_measures = np.array([(198., -6.6), (199., -19.4), (219., -19.3), (261., -19.4)])
+    water_iso_days = np.array([i[0] for i in water_iso_day_measures])
+    water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(days, water_step, 'b', linewidth=3.0)
+    ax.plot(days, delta, 'r', linewidth=3.0)
+    ax.plot(days, d_eq, 'k')
+    ax.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
+    ax.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
+
+    ax.set_ylim(-24., 6.)
+    plt.show()
 
     return water_step, delta
 

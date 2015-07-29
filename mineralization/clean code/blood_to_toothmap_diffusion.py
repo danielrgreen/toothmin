@@ -277,6 +277,22 @@ class ToothModel:
         else:
             raise ValueError('mode not understood: {0}'.format(mode))
 
+def min_iso_diffusion(blood_step, pct_min_days, pct_min_diff_days, diffuse_pct, diffuse_distance):
+    '''
+    Assembles information about mineralization and blood isotope history, assumes some daily
+    diffusion of isotopes during mineralization, and calculates isotope ratios for all tooth
+    locations over all times.
+    :param blood_step:          1-D array of blood isotope ratios per day
+    :param pct_min_days:        3-D array of % mineralization at each x,y coord per day
+    :param pct_min_diff_days:   3-D array of % mineralization addition at x,y per day
+    :param diffuse_pct:         number estimating % daily mineral addition whose isotope ratio
+                                is determined by local mineral isotope ratios
+    :param diffuse_distance:    the distance over which isotopes diffuse each day
+    :return:                    3-D array of isotope ratio at each x,y coordinate for each day.
+    '''
+
+    
+
 def diff_with_first(x, axis=0):
     y = np.swapaxes(x, 0, axis)
 
