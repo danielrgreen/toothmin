@@ -204,7 +204,7 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     f_H2O_ef = kwargs.get('f_H2O_ef', 0.12) # was 0.14
     alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
     f_CO2 = kwargs.get('f_CO2', 0.24) # was 0.24
-    ev_enrichment = kwargs.get('ev_enrichment', 0.5) # Was 1.2
+    ev_enrichment = kwargs.get('ev_enrichment', 0.2) # Was 1.2
 
 
     # Calculate equilibrium on each day
@@ -282,7 +282,7 @@ def calc_blood_step(water_step, **kwargs):
     water_iso_day_measures = np.array([(198., -6.6), (199., -19.4), (219., -19.3), (261., -19.4)])
     water_iso_days = np.array([i[0] for i in water_iso_day_measures])
     water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
-
+    '''
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     ax.plot(days, water_step, 'b', linewidth=3.0)
@@ -293,7 +293,7 @@ def calc_blood_step(water_step, **kwargs):
 
     ax.set_ylim(-24., 6.)
     plt.show()
-
+    '''
     return water_step, delta
 
 def calc_blood_gaussian(**kwargs):
