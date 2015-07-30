@@ -774,7 +774,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 2000
+    trials = 5000
     keep_pct = 5 # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -785,14 +785,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 4)
     local_opt.set_xtol_abs(.01)
     local_opt.set_lower_bounds([-10., -25., 15., 30.])
-    local_opt.set_upper_bounds([-5., -15., 60., 70.])
+    local_opt.set_upper_bounds([0., -10., 60., 70.])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 4)
     global_opt.set_maxeval(trials)
     global_opt.set_lower_bounds([-10., -25., 15., 30.])
-    global_opt.set_upper_bounds([-5., -15., 60., 70.])
+    global_opt.set_upper_bounds([0., -10., 60., 70.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(4)
@@ -878,19 +878,18 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     fig = plt.figure()
     ax1 = fig.add_subplot(5,1,1)
-    temp, blood_hist = calc_blood_step(w_iso_hist, **kwargs)
+    blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **kwargs)
     days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0)
-    #ax1.plot(days, trial_water_hist, 'b-.', linewidth=1.0)
     ax1.plot(days, blood_hist, 'r-', linewidth=2.0)
     ax1.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax1.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
     for s in list_water_results:
         ax1.plot(days, s, 'b-', alpha=0.05)
-    vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
-    vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
-    ax1.text(350, vmin, textstr, fontsize=8)
+    #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
+    #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
+    ax1.text(350, -15, textstr, fontsize=8)
     ax1.set_ylim(-25, 0)
     ax1.set_xlim(-100, 550)
 
@@ -910,12 +909,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg5 = ax5.imshow(np.mean(trial_model, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    fig.savefig('a-a_self_reconstruct_{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('a-a_ee=0p6_{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/m2_predicted_a_a_half=3.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/962_tooth_iso_data.csv')
 
     return 0
 

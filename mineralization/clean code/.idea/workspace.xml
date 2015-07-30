@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="147c6fc5-fdbe-4c43-8ea3-6e97dc03c34a" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tooth_to_blood_minimize_diffusion.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/blood_delta.py" afterPath="$PROJECT_DIR$/blood_delta.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/blood_to_toothmap_diffusion.py" afterPath="$PROJECT_DIR$/blood_to_toothmap_diffusion.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_blood_minimize.py" afterPath="$PROJECT_DIR$/tooth_to_blood_minimize.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" afterPath="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
     </list>
     <ignored path="clean code.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -29,21 +28,21 @@
     <SUITE FILE_PATH="coverage/clean code$december_2014_growthgraph_figure1.coverage" NAME="december_2014_growthgraph_figure1 Coverage Results" MODIFIED="1435280561369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$rainpick2.coverage" NAME="rainpick2 Coverage Results" MODIFIED="1424476151407" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../../rainfall" />
     <SUITE FILE_PATH="coverage/clean code$blood_to_toothmap.coverage" NAME="blood_to_toothmap Coverage Results" MODIFIED="1438126998522" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_nlopt_3p.coverage" NAME="tooth_to_blood_minimize_nlopt_3p Coverage Results" MODIFIED="1438127692243" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_nlopt_3p.coverage" NAME="tooth_to_blood_minimize_nlopt_3p Coverage Results" MODIFIED="1438219811484" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$july_2015_growthgraph_figure2b.coverage" NAME="july_2015_growthgraph_figure2b Coverage Results" MODIFIED="1437375371645" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$july_2015_growthgraph_figure1.coverage" NAME="july_2015_growthgraph_figure1 Coverage Results" MODIFIED="1437436305070" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$likelihood_min_model_TMCMC_point_5graphmultiple.coverage" NAME="likelihood_min_model_TMCMC_point_5graphmultiple Coverage Results" MODIFIED="1430423537525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$m1_optimize_alone.coverage" NAME="m1_optimize_alone Coverage Results" MODIFIED="1437606170167" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$m1_2_all_optimize.coverage" NAME="m1-2_all_optimize Coverage Results" MODIFIED="1437521609162" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize.coverage" NAME="tooth_to_blood_minimize Coverage Results" MODIFIED="1431982246610" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize.coverage" NAME="tooth_to_blood_minimize Coverage Results" MODIFIED="1438199066323" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$test_tooth_to_blood_image.coverage" NAME="test_tooth_to_blood_image Coverage Results" MODIFIED="1426889307048" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_new_optimize.coverage" NAME="m1_new_optimize Coverage Results" MODIFIED="1436906173539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_reduced_minimize.coverage" NAME="tooth_to_blood_reduced_minimize Coverage Results" MODIFIED="1427403781115" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$test_resize.coverage" NAME="test_resize Coverage Results" MODIFIED="1426134745286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_2optimize.coverage" NAME="m1-2optimize Coverage Results" MODIFIED="1436903872478" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_special3paramMay2015.coverage" NAME="tooth_to_blood_minimize_special3paramMay2015 Coverage Results" MODIFIED="1438200197123" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_gaussian.coverage" NAME="tooth_to_blood_minimize_gaussian Coverage Results" MODIFIED="1436472823265" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$create_sequential_model_data_comparisons_figure.coverage" NAME="create_sequential_model_data_comparisons_figure Coverage Results" MODIFIED="1426879017792" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_special3paramMay2015.coverage" NAME="tooth_to_blood_minimize_special3paramMay2015 Coverage Results" MODIFIED="1438037404503" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
@@ -60,8 +59,8 @@
       <file leaf-file-name="tooth_to_blood_minimize_nlopt_3p.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="3665" max-vertical-offset="13995">
-              <caret line="713" column="53" selection-start-line="713" selection-start-column="53" selection-end-line="713" selection-end-column="53" />
+            <state vertical-scroll-proportion="-7.851852" vertical-offset="13453" max-vertical-offset="13980">
+              <caret line="911" column="25" selection-start-line="911" selection-start-column="25" selection-end-line="911" selection-end-column="25" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
               </folding>
@@ -69,21 +68,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="tooth_to_blood_minimize_diffusion.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_diffusion.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="13336" max-vertical-offset="13860">
-              <caret line="782" column="17" selection-start-line="782" selection-start-column="17" selection-end-line="782" selection-end-column="17" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="blood_delta.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="blood_delta.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/blood_delta.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.516129" vertical-offset="2371" max-vertical-offset="5115">
-              <caret line="174" column="0" selection-start-line="174" selection-start-column="0" selection-end-line="174" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="2836" max-vertical-offset="5115">
+              <caret line="206" column="49" selection-start-line="206" selection-start-column="49" selection-end-line="206" selection-end-column="49" />
               <folding />
             </state>
           </provider>
@@ -92,7 +81,7 @@
       <file leaf-file-name="blood_to_toothmap.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/blood_to_toothmap.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="8336" max-vertical-offset="13800">
+            <state vertical-scroll-proportion="0.0" vertical-offset="12886" max-vertical-offset="13800">
               <caret line="573" column="48" selection-start-line="573" selection-start-column="31" selection-end-line="573" selection-end-column="48" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
@@ -101,11 +90,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="blood_to_toothmap_diffusion.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blood_to_toothmap_diffusion.py">
+      <file leaf-file-name="tooth_to_blood_minimize_special3paramMay2015.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-6.740741" vertical-offset="12343" max-vertical-offset="14205">
-              <caret line="835" column="0" selection-start-line="829" selection-start-column="0" selection-end-line="835" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.8248848" vertical-offset="10142" max-vertical-offset="13755">
+              <caret line="700" column="14" selection-start-line="700" selection-start-column="14" selection-end-line="700" selection-end-column="14" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
               </folding>
@@ -132,7 +121,6 @@
         <option value="$PROJECT_DIR$/test_tooth_to_blood_image.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood.py" />
         <option value="$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_5graphmultiple.py" />
-        <option value="$PROJECT_DIR$/tooth_to_blood_minimize.py" />
         <option value="$PROJECT_DIR$/../m1-2convert.py" />
         <option value="$PROJECT_DIR$/../june_2015_growthgraph_m2.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize_gaussian.py" />
@@ -147,12 +135,13 @@
         <option value="$PROJECT_DIR$/../july_2015_growthgraph_figure1.py" />
         <option value="$PROJECT_DIR$/../m1_optimize_alone.py" />
         <option value="$PROJECT_DIR$/../m1-2_all_optimize.py" />
-        <option value="$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py" />
         <option value="$PROJECT_DIR$/blood_to_toothmap.py" />
-        <option value="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
         <option value="$PROJECT_DIR$/blood_to_toothmap_diffusion.py" />
-        <option value="$PROJECT_DIR$/blood_delta.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize_diffusion.py" />
+        <option value="$PROJECT_DIR$/tooth_to_blood_minimize.py" />
+        <option value="$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py" />
+        <option value="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
+        <option value="$PROJECT_DIR$/blood_delta.py" />
       </list>
     </option>
   </component>
@@ -160,9 +149,9 @@
     <detection-done>true</detection-done>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-6" />
+    <option name="x" value="8" />
     <option name="y" value="22" />
-    <option name="width" value="1164" />
+    <option name="width" value="1410" />
     <option name="height" value="815" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -210,67 +199,7 @@
       <recent name="$PROJECT_DIR$/.." />
     </key>
   </component>
-  <component name="RunManager" selected="Python.tooth_to_blood_minimize_diffusion">
-    <configuration default="false" name="blood_to_toothmap" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="clean code" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/blood_to_toothmap.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <RunnerSettings RunnerId="PythonRunner" />
-      <ConfigurationWrapper RunnerId="PythonRunner" />
-      <method />
-    </configuration>
-    <configuration default="false" name="tooth_to_blood_minimize_nlopt_3p" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="clean code" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <RunnerSettings RunnerId="PythonRunner" />
-      <ConfigurationWrapper RunnerId="PythonRunner" />
-      <method />
-    </configuration>
-    <configuration default="false" name="blood_delta" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="clean code" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/blood_delta.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <RunnerSettings RunnerId="PythonRunner" />
-      <ConfigurationWrapper RunnerId="PythonRunner" />
-      <method />
-    </configuration>
+  <component name="RunManager" selected="Python.tooth_to_blood_minimize_nlopt_3p">
     <configuration default="false" name="blood_to_toothmap_diffusion" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -305,6 +234,66 @@
       <module name="clean code" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_blood_minimize_diffusion.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="tooth_to_blood_minimize" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="clean code" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_blood_minimize.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="tooth_to_blood_minimize_special3paramMay2015" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="clean code" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="tooth_to_blood_minimize_nlopt_3p" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="clean code" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <RunnerSettings RunnerId="PythonRunner" />
@@ -500,19 +489,19 @@
       <method />
     </configuration>
     <list size="5">
-      <item index="0" class="java.lang.String" itemvalue="Python.blood_to_toothmap" />
-      <item index="1" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_nlopt_3p" />
-      <item index="2" class="java.lang.String" itemvalue="Python.blood_delta" />
-      <item index="3" class="java.lang.String" itemvalue="Python.blood_to_toothmap_diffusion" />
-      <item index="4" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_diffusion" />
+      <item index="0" class="java.lang.String" itemvalue="Python.blood_to_toothmap_diffusion" />
+      <item index="1" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_diffusion" />
+      <item index="2" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize" />
+      <item index="3" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_special3paramMay2015" />
+      <item index="4" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_nlopt_3p" />
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_diffusion" />
-        <item index="1" class="java.lang.String" itemvalue="Python.blood_to_toothmap_diffusion" />
-        <item index="2" class="java.lang.String" itemvalue="Python.blood_delta" />
-        <item index="3" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_nlopt_3p" />
-        <item index="4" class="java.lang.String" itemvalue="Python.blood_to_toothmap" />
+        <item index="0" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_nlopt_3p" />
+        <item index="1" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_special3paramMay2015" />
+        <item index="2" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize" />
+        <item index="3" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_diffusion" />
+        <item index="4" class="java.lang.String" itemvalue="Python.blood_to_toothmap_diffusion" />
       </list>
     </recent_temporary>
   </component>
@@ -530,7 +519,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-6" y="22" width="1164" height="815" extended-state="0" />
+    <frame x="8" y="22" width="1410" height="815" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32965517" sideWeight="0.4992908" order="7" side_tool="false" content_ui="tabs" />
@@ -896,13 +885,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="107" max-vertical-offset="12825">
-          <caret line="697" column="0" selection-start-line="697" selection-start-column="0" selection-end-line="697" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../july_2015_growthgraph_figure1.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="945" max-vertical-offset="3555">
@@ -931,13 +913,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="9150" max-vertical-offset="13290">
-          <caret line="617" column="0" selection-start-line="615" selection-start-column="0" selection-end-line="617" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../m1-2_all_optimize.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="1207" max-vertical-offset="3255">
@@ -945,13 +920,19 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/blood_to_toothmap.py">
+    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_diffusion.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="8336" max-vertical-offset="13800">
-          <caret line="573" column="48" selection-start-line="573" selection-start-column="31" selection-end-line="573" selection-end-column="48" />
-          <folding>
-            <element signature="e#400#418#0" expanded="true" />
-          </folding>
+        <state vertical-scroll-proportion="0.0" vertical-offset="13336" max-vertical-offset="13860">
+          <caret line="782" column="17" selection-start-line="782" selection-start-column="17" selection-end-line="782" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.82718897" vertical-offset="9916" max-vertical-offset="12645">
+          <caret line="697" column="0" selection-start-line="697" selection-start-column="0" selection-end-line="697" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -965,18 +946,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_diffusion.py">
+    <entry file="file://$PROJECT_DIR$/blood_to_toothmap.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="13336" max-vertical-offset="13860">
-          <caret line="782" column="17" selection-start-line="782" selection-start-column="17" selection-end-line="782" selection-end-column="17" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="10535" max-vertical-offset="13995">
-          <caret line="713" column="53" selection-start-line="713" selection-start-column="53" selection-end-line="713" selection-end-column="53" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="8336" max-vertical-offset="13800">
+          <caret line="573" column="48" selection-start-line="573" selection-start-column="31" selection-end-line="573" selection-end-column="48" />
           <folding>
             <element signature="e#400#418#0" expanded="true" />
           </folding>
@@ -985,9 +958,29 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/blood_delta.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.516129" vertical-offset="2371" max-vertical-offset="5115">
-          <caret line="174" column="0" selection-start-line="174" selection-start-column="0" selection-end-line="174" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="2836" max-vertical-offset="5115">
+          <caret line="206" column="49" selection-start-line="206" selection-start-column="49" selection-end-line="206" selection-end-column="49" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-7.851852" vertical-offset="13453" max-vertical-offset="13980">
+          <caret line="911" column="25" selection-start-line="911" selection-start-column="25" selection-end-line="911" selection-end-column="25" />
+          <folding>
+            <element signature="e#400#418#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.8248848" vertical-offset="10142" max-vertical-offset="13755">
+          <caret line="700" column="14" selection-start-line="700" selection-start-column="14" selection-end-line="700" selection-end-column="14" />
+          <folding>
+            <element signature="e#400#418#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

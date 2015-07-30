@@ -204,7 +204,7 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     f_H2O_ef = kwargs.get('f_H2O_ef', 0.12) # was 0.14
     alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
     f_CO2 = kwargs.get('f_CO2', 0.24) # was 0.24
-    ev_enrichment = kwargs.get('ev_enrichment', 0.2) # Was 1.2
+    ev_enrichment = kwargs.get('ev_enrichment', 0.6) # Was 1.2
 
 
     # Calculate equilibrium on each day
@@ -227,7 +227,7 @@ def blood_delta(d_O2, d_water, d_feed, **kwargs):
     d_eq = blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs)
     # Integrate differential equation to get
     t_half = kwargs.get('t_half', 3.) #*********************************
-    print t_half
+    print 't_half = ', t_half
     alpha = np.log(2.) / t_half
     beta = alpha * d_eq
 
@@ -256,7 +256,7 @@ def test_integration():
     #ax.set_ylim(1.2*np.min(beta/alpha), 1.2*np.max(beta/alpha))
     #plt.show()
 
-def calc_blood_step(water_step, **kwargs):
+def calc_blood_step(**kwargs):
     '''
 
     :param water:       Takes an isotope water history 1D vector
@@ -265,6 +265,8 @@ def calc_blood_step(water_step, **kwargs):
                         delta values
     :return:            Stepped blood delta values in SMOW
     '''
+
+    water_step = calc_water_step(400)
 
     feed = kwargs.get('feed', 25.5)
     air = kwargs.get('air', 23.5)
@@ -329,9 +331,7 @@ def calc_blood_gaussian(**kwargs):
     return water_gaussian, delta
 
 def main():
-    water_gaussian, gaussian_delta = calc_blood_gaussian()
-    water_step = calc_water_step(400)
-    water_step, step_delta = calc_blood_step(water_step)
+    water_step, step_delta = calc_blood_step()
 
 if __name__ == '__main__':
     main()

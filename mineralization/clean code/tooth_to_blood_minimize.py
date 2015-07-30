@@ -746,7 +746,7 @@ def fit_tooth_data(data_fname, model_fname='final_equalsize_dec2014.h5', **kwarg
     print w_iso_hist
 
     t_save = time()
-    np.savetxt('best-fit_%s.dat' % t_save, w_iso_hist, fmt='%.5f')
+    #np.savetxt('best-fit_%s.dat' % t_save, w_iso_hist, fmt='%.5f')
     fig.savefig('fit-sequence-{0}.png'.format(t_save), dpi=150, bbox_inches='tight')
     plt.show()
 
