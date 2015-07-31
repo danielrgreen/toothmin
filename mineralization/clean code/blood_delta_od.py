@@ -232,9 +232,63 @@ def blood_delta(d_O2, d_water, d_feed, **kwargs):
 
     return integrate_delta(d_eq[0], alpha, beta)
 
-def tooth_phosphate_reservoir(d_blood, **kwargs):
+def tooth_phosphate_reservoir_06(d_blood, **kwargs):
 
-    t_half = kwargs.get('t_half', 15.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    t_half = kwargs.get('t_half', 6.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    alpha = np.log(2.) / t_half
+    beta = alpha * d_blood
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    return d_tooth_phosphate
+
+def tooth_phosphate_reservoir_08(d_blood, **kwargs):
+
+    t_half = kwargs.get('t_half', 8.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    alpha = np.log(2.) / t_half
+    beta = alpha * d_blood
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    return d_tooth_phosphate
+
+def tooth_phosphate_reservoir_10(d_blood, **kwargs):
+
+    t_half = kwargs.get('t_half', 10.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    alpha = np.log(2.) / t_half
+    beta = alpha * d_blood
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    return d_tooth_phosphate
+
+def tooth_phosphate_reservoir_12(d_blood, **kwargs):
+
+    t_half = kwargs.get('t_half', 12.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    alpha = np.log(2.) / t_half
+    beta = alpha * d_blood
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    return d_tooth_phosphate
+
+def tooth_phosphate_reservoir_14(d_blood, **kwargs):
+
+    t_half = kwargs.get('t_half', 14.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    alpha = np.log(2.) / t_half
+    beta = alpha * d_blood
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    return d_tooth_phosphate
+
+def tooth_phosphate_reservoir_16(d_blood, **kwargs):
+
+    t_half = kwargs.get('t_half', 16.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    alpha = np.log(2.) / t_half
+    beta = alpha * d_blood
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    return d_tooth_phosphate
+
+def tooth_phosphate_reservoir_18(d_blood, **kwargs):
+
+    t_half = kwargs.get('t_half', 18.) #**********PHOSPHATE RESERVOIR TURNOVER*************
     alpha = np.log(2.) / t_half
     beta = alpha * d_blood
     d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
