@@ -21,7 +21,7 @@ from PIL import Image
 from scipy.interpolate import interp1d
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
-from blood_delta import calc_blood_step, calc_water_step2, calc_water_gaussian, calc_blood_gaussian, blood_delta
+from blood_delta import calc_blood_step, calc_water_step2, calc_water_gaussian, calc_blood_gaussian, blood_delta, tooth_phosphate_reservoir
 import scipy.special as spec
 
 from blood_delta import calc_blood_gaussian
@@ -618,6 +618,7 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     d_feed = kwargs.get('d_feed', 25.3)
     metabolic_kw = kwargs.get('metabolic_kw', {})
     blood_hist = blood_delta(d_O2, w_iso_hist, d_feed, **metabolic_kw)
+    tooth_phosphate_eq = tooth_phosphate_reservoir(blood_hist, **kwargs)
     # Access tooth model
     tooth_model = kwargs.get('tooth_model', None)
     assert(tooth_model != None)
@@ -631,7 +632,7 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     assert(isomap_data_x_ct != None)
 
     # Calculate model tooth isomap
-    model_isomap = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, blood_hist)
+    model_isomap = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, tooth_phosphate_eq)
 
     return compare(model_isomap, data_isomap), model_isomap
 
@@ -710,13 +711,6 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     tooth_model_lg = ToothModel(model_fname)
     tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
 
-    # Make trial data
-    trial_water_hist = np.array([-6.5, -19.5, 49., 34.]) # ************* TRIAL WATER **************
-    trial_water_hist = water_4_param(*trial_water_hist)
-    trial_metabolic_kw = kwargs.get('metabolic_kw', {})
-    trial_blood_hist = blood_delta(23.5, trial_water_hist, 25.3, **trial_metabolic_kw)
-    trial_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, trial_blood_hist)
-
     # Set keyword arguments to be used in fitting procedure
     fit_kwargs = kwargs.copy()
 
@@ -736,7 +730,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #Prepare water history:
     switch_history = np.array([199., 261.]) # The two days on which a switch actually happened, M2
     # Model a M1 combined with different M2 possibilities
-    m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
+    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'a', 2000k
     #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'b', 600k
     #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'c', 600k
     #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'half', 0k
@@ -750,7 +744,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 33.764, .005488, -37.961, 35.]) # Compromise, 'histology', 0k
 
     # Model c M1 combined with different M2 possibilities
-    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
+    m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
     #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'b', 600k
     #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'c', 600k
     #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 29.764, .005890, -19.482, 35.]) # Compromise, 'half', 0k
@@ -774,8 +768,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 5000
-    keep_pct = 5 # Percent of trials to record
+    trials = 100000
+    keep_pct = 10. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/10.)
@@ -784,21 +778,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 4)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-10., -25., 15., 30.])
-    local_opt.set_upper_bounds([0., -10., 60., 70.])
+    local_opt.set_lower_bounds([-13., -30., 15., 22.])
+    local_opt.set_upper_bounds([-3., -9., 45., 70.])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 4)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([-10., -25., 15., 30.])
-    global_opt.set_upper_bounds([0., -10., 60., 70.])
+    global_opt.set_lower_bounds([-13., -30., 15., 22.])
+    global_opt.set_upper_bounds([-3., -9., 45., 70.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(4)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([-6., -19.5, 52., 35.])
+    x_opt = global_opt.optimize([-6., -19.5, 32., 35.])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -810,7 +804,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     eval_p_sec = trials/run_time
 
     # Model a M1 combined with different M2 possibilities
-    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
@@ -824,7 +818,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
 
     # Model c M1 combined with different M2 possibilities
-    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
+    m1_m2_params = np.array([29.764, .005890, -19.482, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
     #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
     #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
     #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
@@ -837,6 +831,16 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
 
+
+    # Make trial forward data *******FORWARD BASED ON EXPECTATIONS PRIOR TO INVERSION*******
+    trial_switch_real = np.array([199., 261.])
+    trial_convert = tooth_timing_convert(trial_switch_real, *m2_m1_params)
+    trial_water_hist = np.array([-6.5, -19.4, trial_convert[0], trial_convert[1]-trial_convert[0]])
+    trial_water_hist = water_4_param(*trial_water_hist)
+    trial_metabolic_kw = kwargs.get('metabolic_kw', {})
+    trial_blood_hist = blood_delta(23.5, trial_water_hist, 25.3, **trial_metabolic_kw)
+    trial_phosphate_eq = tooth_phosphate_reservoir(trial_blood_hist, **kwargs)
+    trial_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, trial_phosphate_eq)
 
     # Optimize result from M1 to M2
     switch_end = x_opt[2]+x_opt[3]
@@ -879,10 +883,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig = plt.figure()
     ax1 = fig.add_subplot(5,1,1)
     blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **kwargs)
+    phosphate_eq = tooth_phosphate_reservoir(blood_hist, **kwargs)
     days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0)
     ax1.plot(days, blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, phosphate_eq, 'y-.', linewidth=1.0)
     ax1.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax1.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
     for s in list_water_results:
@@ -895,21 +901,31 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
     ax2 = fig.add_subplot(5,1,2)
+    ax2text = 'Inverse model result'
+    ax2.text(21, 3, ax2text, fontsize=8)
     cimg2 = ax2.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax2 = fig.colorbar(cimg2)
+
     ax3 = fig.add_subplot(5,1,3)
+    ax3text = '962 data'
+    ax3.text(21, 3, ax3text, fontsize=8)
     cimg3 = ax3.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax3 = fig.colorbar(cimg3)
+
     residuals = np.mean(model_isomap, axis=2) - data_isomap
     ax4 = fig.add_subplot(5,1,4)
+    ax4text = 'model - data residuals'
+    ax4.text(21, 3, ax4text, fontsize=8)
     cimg4 = ax4.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
     cax4 = fig.colorbar(cimg4)
 
     ax5 = fig.add_subplot(5,1,5)
+    ax5text = 'forward model expectation'
+    ax5.text(21, 3, ax5text, fontsize=8)
     cimg5 = ax5.imshow(np.mean(trial_model, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    fig.savefig('a-a_ee=0p6_{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('c-a_phosphate=15p0d_ee=1p6_{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
 def main():

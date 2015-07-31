@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="147c6fc5-fdbe-4c43-8ea3-6e97dc03c34a" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/blood_delta.py" afterPath="$PROJECT_DIR$/blood_delta.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_blood_minimize.py" afterPath="$PROJECT_DIR$/tooth_to_blood_minimize.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" afterPath="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
     </list>
     <ignored path="clean code.iws" />
@@ -28,7 +27,7 @@
     <SUITE FILE_PATH="coverage/clean code$december_2014_growthgraph_figure1.coverage" NAME="december_2014_growthgraph_figure1 Coverage Results" MODIFIED="1435280561369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$rainpick2.coverage" NAME="rainpick2 Coverage Results" MODIFIED="1424476151407" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../../rainfall" />
     <SUITE FILE_PATH="coverage/clean code$blood_to_toothmap.coverage" NAME="blood_to_toothmap Coverage Results" MODIFIED="1438126998522" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_nlopt_3p.coverage" NAME="tooth_to_blood_minimize_nlopt_3p Coverage Results" MODIFIED="1438219811484" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_nlopt_3p.coverage" NAME="tooth_to_blood_minimize_nlopt_3p Coverage Results" MODIFIED="1438345957116" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$july_2015_growthgraph_figure2b.coverage" NAME="july_2015_growthgraph_figure2b Coverage Results" MODIFIED="1437375371645" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$july_2015_growthgraph_figure1.coverage" NAME="july_2015_growthgraph_figure1 Coverage Results" MODIFIED="1437436305070" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$likelihood_min_model_TMCMC_point_5graphmultiple.coverage" NAME="likelihood_min_model_TMCMC_point_5graphmultiple Coverage Results" MODIFIED="1430423537525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
@@ -40,7 +39,7 @@
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_reduced_minimize.coverage" NAME="tooth_to_blood_reduced_minimize Coverage Results" MODIFIED="1427403781115" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$test_resize.coverage" NAME="test_resize Coverage Results" MODIFIED="1426134745286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_2optimize.coverage" NAME="m1-2optimize Coverage Results" MODIFIED="1436903872478" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_special3paramMay2015.coverage" NAME="tooth_to_blood_minimize_special3paramMay2015 Coverage Results" MODIFIED="1438200197123" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_special3paramMay2015.coverage" NAME="tooth_to_blood_minimize_special3paramMay2015 Coverage Results" MODIFIED="1438283844634" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_gaussian.coverage" NAME="tooth_to_blood_minimize_gaussian Coverage Results" MODIFIED="1436472823265" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$create_sequential_model_data_comparisons_figure.coverage" NAME="create_sequential_model_data_comparisons_figure Coverage Results" MODIFIED="1426879017792" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
@@ -56,11 +55,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="tooth_to_blood_minimize_nlopt_3p.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="tooth_to_blood_minimize_nlopt_3p.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-7.851852" vertical-offset="13453" max-vertical-offset="13980">
-              <caret line="911" column="25" selection-start-line="911" selection-start-column="25" selection-end-line="911" selection-end-column="25" />
+            <state vertical-scroll-proportion="0.77395576" vertical-offset="11250" max-vertical-offset="14220">
+              <caret line="771" column="18" selection-start-line="771" selection-start-column="18" selection-end-line="771" selection-end-column="18" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
               </folding>
@@ -71,8 +70,8 @@
       <file leaf-file-name="blood_delta.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/blood_delta.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="2836" max-vertical-offset="5115">
-              <caret line="206" column="49" selection-start-line="206" selection-start-column="49" selection-end-line="206" selection-end-column="49" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="3481" max-vertical-offset="5235">
+              <caret line="236" column="36" selection-start-line="236" selection-start-column="36" selection-end-line="236" selection-end-column="36" />
               <folding />
             </state>
           </provider>
@@ -90,11 +89,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="tooth_to_blood_minimize_special3paramMay2015.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="tooth_to_blood_minimize_special3paramMay2015.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.8248848" vertical-offset="10142" max-vertical-offset="13755">
-              <caret line="700" column="14" selection-start-line="700" selection-start-column="14" selection-end-line="700" selection-end-column="14" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="10306" max-vertical-offset="13755">
+              <caret line="697" column="6" selection-start-line="697" selection-start-column="6" selection-end-line="697" selection-end-column="6" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
               </folding>
@@ -140,8 +139,8 @@
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize_diffusion.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py" />
-        <option value="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
         <option value="$PROJECT_DIR$/blood_delta.py" />
+        <option value="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
       </list>
     </option>
   </component>
@@ -149,9 +148,9 @@
     <detection-done>true</detection-done>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="8" />
+    <option name="x" value="10" />
     <option name="y" value="22" />
-    <option name="width" value="1410" />
+    <option name="width" value="878" />
     <option name="height" value="815" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -519,7 +518,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="8" y="22" width="1410" height="815" extended-state="0" />
+    <frame x="10" y="22" width="878" height="815" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32965517" sideWeight="0.4992908" order="7" side_tool="false" content_ui="tabs" />
@@ -956,28 +955,28 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/blood_delta.py">
+    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="2836" max-vertical-offset="5115">
-          <caret line="206" column="49" selection-start-line="206" selection-start-column="49" selection-end-line="206" selection-end-column="49" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-7.851852" vertical-offset="13453" max-vertical-offset="13980">
-          <caret line="911" column="25" selection-start-line="911" selection-start-column="25" selection-end-line="911" selection-end-column="25" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="10306" max-vertical-offset="13755">
+          <caret line="697" column="6" selection-start-line="697" selection-start-column="6" selection-end-line="697" selection-end-column="6" />
           <folding>
             <element signature="e#400#418#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py">
+    <entry file="file://$PROJECT_DIR$/blood_delta.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.8248848" vertical-offset="10142" max-vertical-offset="13755">
-          <caret line="700" column="14" selection-start-line="700" selection-start-column="14" selection-end-line="700" selection-end-column="14" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="3481" max-vertical-offset="5235">
+          <caret line="236" column="36" selection-start-line="236" selection-start-column="36" selection-end-line="236" selection-end-column="36" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.77395576" vertical-offset="11250" max-vertical-offset="14220">
+          <caret line="771" column="18" selection-start-line="771" selection-start-column="18" selection-end-line="771" selection-end-column="18" />
           <folding>
             <element signature="e#400#418#0" expanded="true" />
           </folding>
