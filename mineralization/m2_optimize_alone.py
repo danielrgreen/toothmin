@@ -39,7 +39,7 @@ def compare(M1_model_extension, M1_data_extension, M1_initiation):
 
 def prior(M1_initiation):
 
-    M1_initiation_expected = 114.
+    M1_initiation_expected = 84.
     sigma = 12.
 
     M1_initiation_score = ((M1_initiation - M1_initiation_expected)**2.) / sigma**2.
