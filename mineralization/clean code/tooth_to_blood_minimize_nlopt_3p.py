@@ -747,28 +747,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'half', 0k
     #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'histology', 0k
     #m2_m1_params = np.array([83.749, .003696, -33.418, 41., 21.820, .007889, 29.118, 35.]) # No limits, 'histology', 750k
-    m2_m1_params = np.array([53.806, .002938, -13.57, 41., 21.820, .007889, 29.118, 35.]) # 'Shallow', 1000k
-
-    # Model b M1 combined with different M2 possibilities
-    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 33.764, .005488, -37.961, 35.]) # No limits, 'a', 2000k
-    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 33.764, .005488, -37.961, 35.]) # With limits, 'b', 600k
-    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 33.764, .005488, -37.961, 35.]) # With limits, 'c', 600k
-    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 33.764, .005488, -37.961, 35.]) # Compromise, 'half', 0k
-    #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 33.764, .005488, -37.961, 35.]) # Compromise, 'histology', 0k
-
-    # Model c M1 combined with different M2 possibilities
-    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 29.764, .005890, -19.482, 35.]) # No limits, 'a', 2000k
-    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'b', 600k
-    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 29.764, .005890, -19.482, 35.]) # With limits, 'c', 600k
-    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 29.764, .005890, -19.482, 35.]) # Compromise, 'half', 0k
-    #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 29.764, .005890, -19.482, 35.]) # Compromise, 'histology', 0k
-
-    # Model dec2014 M1 combined with different M2 possibilities
-    #m2_m1_params = np.array([56.031, .003240, 1.1572, 41., 30.34, .0061, 11., 36.]) # No limits, 'dec2014', old method
-    #m2_m1_params = np.array([49.543, .003466, 33.098, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'b', 600k
-    #m2_m1_params = np.array([53.230, .003468, 20.429, 41., 21.820, .007889, 29.118, 35.]) # With limits, 'c', 600k
-    #m2_m1_params = np.array([52.787, .003353, 17.128, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'half', 0k
-    #m2_m1_params = np.array([57.369, .004103, 22.561, 41., 21.820, .007889, 29.118, 35.]) # Compromise, 'histology', 0k
+    #m2_m1_params = np.array([66.649, .004054, 8.399, 41., 21.820, .007889, 29.118, 35.]) # 'hist96', 100k
+    #m2_m1_params = np.array([74.492, .003575, -34.184, 41., 21.820, .007889, 29.118, 35.]) # 'hist84', 100k
+    #m2_m1_params = np.array([69.946, .003456, -37.478, 41., 21.820, .007889, 29.118, 35.]) # 'hist74', 100k
+    #m2_m1_params = np.array([52.183, .003622, 11.210, 41., 21.820, .007889, 29.118, 35.]) # 'hist64', 100k
+    #m2_m1_params = np.array([85.571, .003262, -58.095, 41., 21.820, .007889, 29.118, 35.]) # 'synch98', 100k
+    m2_m1_params = np.array([90.469, .004068, -16.811, 41., 21.820, .007889, 29.118, 35.]) # 'synch114', 100k
 
 
     converted_times = tooth_timing_convert(switch_history, *m2_m1_params)
@@ -823,28 +807,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 83.749, .003696, -33.418, 41.]) # No limits, 'histology', 750k
-    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 53.806, .002938, -13.57, 41.]) # 'Shallow', 1000k
-
-    # Model b M1 combined with different M2 possibilities
-    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
-    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
-    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
-    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
-    #m1_m2_params = np.array([33.764, .005488, -37.961, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
-
-    # Model c M1 combined with different M2 possibilities
-    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
-    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
-    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
-    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
-    #m1_m2_params = np.array([29.764, .005890, -19.482, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
-
-    # Model dec2014 M1 combined with different M2 possibilities
-    #m1_m2_params = np.array([30.34, .0061, 11., 36., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'dec2014', old method
-    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 49.543, .003466, 33.098, 41.]) # M2 With limits, 'b', 600k
-    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 53.230, .003468, 20.429, 41.]) # M2 With limits, 'c', 600k
-    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 52.787, .003353, 17.128, 41.]) # M2 Compromise, 'half', 0k
-    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 57.369, .004103, 22.561, 41.]) # M2 Compromise, 'histology', 0k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 66.649, .004054, 8.399, 41.]) # 'hist96', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 74.492, .003575, -34.184, 41.]) # 'hist84', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 69.946, .003456, -37.478, 41.]) # 'hist74', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 52.183, .003622, 11.210, 41.]) # 'hist64', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 85.571, .003262, -58.095, 41.]) # 'synch98', 100k
+    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 90.469, .004068, -16.811, 41.]) # 'synch114', 100k
 
 
     # Make trial forward data *******FORWARD BASED ON EXPECTATIONS PRIOR TO INVERSION*******
@@ -941,7 +909,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg5 = ax5.imshow(np.mean(trial_model, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    fig.savefig('a-sh_phosphate=17p0d_priora180s90_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('a-hist114_phosphate=17p0d_priora180s90_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
@@ -963,7 +931,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-30, 0)
     ax1.set_xlim(-100, 550)
 
-    fig.savefig('a-sh_phosphate=17p0d_priora180s90_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('a-hist114_phosphate=17p0d_priora180s90_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
 
