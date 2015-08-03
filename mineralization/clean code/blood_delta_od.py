@@ -277,9 +277,27 @@ def tooth_phosphate_reservoir_14(d_blood, **kwargs):
 
     return d_tooth_phosphate
 
+def tooth_phosphate_reservoir_15(d_blood, **kwargs):
+
+    t_half = kwargs.get('t_half', 15.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    alpha = np.log(2.) / t_half
+    beta = alpha * d_blood
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    return d_tooth_phosphate
+
 def tooth_phosphate_reservoir_16(d_blood, **kwargs):
 
     t_half = kwargs.get('t_half', 16.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    alpha = np.log(2.) / t_half
+    beta = alpha * d_blood
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    return d_tooth_phosphate
+
+def tooth_phosphate_reservoir_17(d_blood, **kwargs):
+
+    t_half = kwargs.get('t_half', 17.) #**********PHOSPHATE RESERVOIR TURNOVER*************
     alpha = np.log(2.) / t_half
     beta = alpha * d_blood
     d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)

@@ -204,7 +204,7 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     f_H2O_ef = kwargs.get('f_H2O_ef', 0.12) # was 0.14
     alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
     f_CO2 = kwargs.get('f_CO2', 0.24) # was 0.24
-    ev_enrichment = kwargs.get('ev_enrichment', 1.6) # Was 1.2
+    ev_enrichment = kwargs.get('ev_enrichment', 0.6) # Was 1.2
 
 
     # Calculate equilibrium on each day
@@ -234,7 +234,7 @@ def blood_delta(d_O2, d_water, d_feed, **kwargs):
 
 def tooth_phosphate_reservoir(d_blood, **kwargs):
 
-    t_half = kwargs.get('t_half', 15.) #**********PHOSPHATE RESERVOIR TURNOVER*************
+    t_half = kwargs.get('t_half', 17.) #**********PHOSPHATE RESERVOIR TURNOVER*************
     alpha = np.log(2.) / t_half
     beta = alpha * d_blood
     d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
@@ -291,16 +291,21 @@ def calc_blood_step(**kwargs):
     water_iso_day_measures = np.array([(198., -6.6), (199., -19.4), (219., -19.3), (261., -19.4)])
     water_iso_days = np.array([i[0] for i in water_iso_day_measures])
     water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
+
     '''
-    fig = plt.figure()
+    pre_water = np.ones(198.+60.) * water_step[0]
+    pre_blood = np.ones(198.+60.) * delta[0]
+
+    fig = plt.figure(figsize=(5,2.1), frameon=False)
     ax = fig.add_subplot(1,1,1)
     ax.plot(days, water_step, 'b', linewidth=3.0)
     ax.plot(days, delta, 'r', linewidth=3.0)
-    ax.plot(days, d_eq, 'k')
+    #ax.plot(days, d_eq, 'k')
     ax.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
 
     ax.set_ylim(-24., 6.)
+    ax.set_xlim(-60., 510.)
     plt.show()
     '''
     return water_step, delta

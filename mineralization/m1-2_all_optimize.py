@@ -33,14 +33,16 @@ def compare(M1_model_extension, M1_data_extension, M2_model_extension, M2_data_e
     sigma = 6. # in mm
 
     M1_score = (M1_model_extension - M1_data_extension)**2. / sigma**2
-    M1_score[~np.isfinite(M1_score)] = 10000000.
+    #M1_score[~np.isfinite(M1_score)] = 10000000.
     M1_score = (1. / (2. * np.pi * sigma**2)) * np.exp(-.5*(M1_score))
     M1_score = np.product(M1_score)
+    print 'M1 score = ', M1_score
 
     M2_score = (M2_model_extension - M2_data_extension)**2. / sigma**2.
-    M2_score[~np.isfinite(M2_score)] = 10000000.
+    #M2_score[~np.isfinite(M2_score)] = 10000000.
     M2_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(M2_score))
     M2_score = np.product(M2_score)
+    print 'M2 Score = ', M2_score
 
     data_score = M1_score * M2_score
     prior_score = prior(m2_m1_converted, M1_initiation, M2_initiation)
@@ -51,17 +53,17 @@ def compare(M1_model_extension, M1_data_extension, M2_model_extension, M2_data_e
 def prior(m2_m1_converted, M1_initiation, M2_initiation):
 
     M1_initiation_expected = -49.
-    M2_initiation_expected = 84.
-    sigma = 12.
+    M2_initiation_expected = 24.
+    sigma = 2.
 
     M1_initiation_score = ((M1_initiation - M1_initiation_expected)**2.) / sigma**2.
-    if np.isfinite(M1_initiation_score) != True:
-        M1_initiation_score = 1000.
+    #if np.isfinite(M1_initiation_score) != True:
+    #    M1_initiation_score = -1000.
     M1_initiation_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(M1_initiation_score))
 
     M2_initiation_score = ((M2_initiation - M2_initiation_expected)**2.) / sigma**2.
-    if np.isfinite(M2_initiation_score) != True:
-        M2_initiation_score = 1000.
+    #if np.isfinite(M2_initiation_score) != True:
+    #    M2_initiation_score = -1000.
     M2_initiation_score = (1. / (2. * np.pi * sigma**2.)) * np.exp(-.5*(M2_initiation_score))
     prior_score = M1_initiation_score * M2_initiation_score
 
@@ -108,14 +110,14 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
 
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 6)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([15., .0035, -50., 45., .003, 20.])
-    local_opt.set_upper_bounds([80., .0055, -10., 65., .0045, 40.])
+    local_opt.set_lower_bounds([15., .0035, -50., 25., .0022, -70.])
+    local_opt.set_upper_bounds([80., .0055, -10., 125., .0075, 110.])
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
-    global_opt.set_maxeval(180)
-    global_opt.set_lower_bounds([15., .0035, -50., 45., .003, 20.])
-    global_opt.set_upper_bounds([80., .0055, -10., 65., .0045, 40.])
+    global_opt.set_maxeval(80000)
+    global_opt.set_lower_bounds([15., .0035, -50., 25., .0022, -70.])
+    global_opt.set_upper_bounds([80., .0055, -10., 125., .0075, 110.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(6)
@@ -188,14 +190,14 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
 def main():
 
     # M2 extension data histology only
-    #M2_days = np.array([203., 223., 265., 285., 510.])
-    #M2_data_extension = np.array([24.59, 26.23, 30.60, 32.50, 41.79])
+    M2_days = np.array([103., 123., 165., 185., 310.]) # ************* Last is 510 ***********
+    M2_data_extension = np.array([24.59, 26.23, 30.60, 32.50, 41.79])
     # M2 extension data full set including synchrotron + histology
     #M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 203., 222., 223., 251., 265., 285., 510., 510., 510., 510.])
     #M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 24.59, 20.6, 26.23, 20.1, 30.60, 32.50, 41.79, 39.61, 39.39, 42.3])
     # M2 extension data partial set including synchrotron but not histology
-    M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 222., 251., 510., 510., 510., 510.])
-    M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 20.6, 20.1, 41.79, 39.61, 39.39, 42.3])
+    #M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 222., 251., 510., 510., 510., 510.])
+    #M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 20.6, 20.1, 41.79, 39.61, 39.39, 42.3])
     # M1 data, extension
     M1_days = np.array([1., 9., 11., 19., 21., 30., 31., 31., 38., 42., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
     M1_data_extension = np.array([9.38, 8.05, 11.32, 9.43, 13.34, 16.19, 13.85, 15.96, 15.32, 14.21, 17.99, 19.32, 19.32, 18.31, 17.53, 18.68, 18.49, 22.08, 23.14, 19.92, 27.97, 24.38, 25.53, 29.07, 27.65, 26.27, 27.55, 24.33, 29.03, 29.07, 30.36, 31.79, 31.37, 31.28, 35.79, 29.81, 31.79, 34.04, 33.21, 34.50, 33.76, 33.40, 36.34, 33.63])
