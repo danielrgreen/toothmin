@@ -184,6 +184,30 @@ def integrate_delta(delta_0, alpha, beta):
 
     return delta
 
+def integrate_delta_experimental(delta_0, alpha, beta, pause):
+    '''
+    Calculate delta on every day, given an initial value, a decay rate, and
+    a variable amount added on each day.
+
+    :param delta_0: The initial delta (a constant)
+    :param alpha:   The fraction that leaves the system each day (a constant)
+    :param beta:    The amount added to the system on each day (an array)
+    :return:        delta on each day. Has the same length as beta.
+    '''
+
+    n_days = beta.size
+
+    decay_factor = np.exp(-alpha * np.linspace(0.5, n_days-0.5, n_days))
+    delta = np.zeros(n_days, dtype='f8')
+
+    for k,b in enumerate(beta):
+        delta[k:] += decay_factor[:n_days-k] * b
+
+    d_0 = (delta_0 - delta[0]) / decay_factor[0]
+    delta += decay_factor * d_0
+
+    return delta
+
 def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     '''
 
@@ -234,9 +258,18 @@ def blood_delta(d_O2, d_water, d_feed, **kwargs):
 
 def PO4_dissoln_reprecip(reprecip_eq_t_half, pause, d_blood, **kwargs):
 
+    final_d_blood = np.ones(pause) * d_blood[-1]
+
+    print d_blood.shape
+    print final_d_blood.shape
+
+    new_d_blood = d_blood[pause:]
+    new_d_blood = np.concatenate((new_d_blood, final_d_blood))
+
+
     alpha = np.log(2.) / reprecip_eq_t_half
-    beta = alpha * d_blood[pause:]
-    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+    beta = alpha * new_d_blood
+    d_tooth_phosphate = integrate_delta_experimental(new_d_blood[0], alpha, beta, pause)
 
     return d_tooth_phosphate
 
@@ -301,14 +334,15 @@ def calc_blood_step(**kwargs):
     water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
 
     '''
-    pre_water = np.ones(198.+60.) * water_step[0]
-    pre_blood = np.ones(198.+60.) * delta[0]
+    d_tooth_phosphate = PO4_dissoln_reprecip(30., 30., delta, **kwargs)
+    print d_tooth_phosphate.shape
+    print days.shape
 
     fig = plt.figure(figsize=(5,2.1), frameon=False)
     ax = fig.add_subplot(1,1,1)
     ax.plot(days, water_step, 'b', linewidth=3.0)
     ax.plot(days, delta, 'r', linewidth=3.0)
-    #ax.plot(days, d_eq, 'k')
+    ax.plot(days, d_tooth_phosphate, 'g--')
     ax.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
 
@@ -316,6 +350,7 @@ def calc_blood_step(**kwargs):
     ax.set_xlim(-60., 510.)
     plt.show()
     '''
+
     return water_step, delta
 
 def calc_blood_gaussian(**kwargs):
