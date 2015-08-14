@@ -616,7 +616,7 @@ def prior_score(w_params):
 
     return -amplitude*np.exp(-((w_params[3]-mean)**2)/(2*stdev**2))
 
-def water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, **kwargs):
+def water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, PO4_flux, **kwargs):
     # Calculate water history on each day
     block_length = int(kwargs.get('block_length', 1))
     w_iso_hist = calc_water_step2(w_iso_hist, block_length)
@@ -626,7 +626,7 @@ def water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, **kwargs):
     d_feed = kwargs.get('d_feed', 25.3)
     metabolic_kw = kwargs.get('metabolic_kw', {})
     blood_hist = blood_delta(d_O2, w_iso_hist, d_feed, **metabolic_kw)
-    tooth_phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, blood_hist, **kwargs)
+    tooth_phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, blood_hist, **kwargs)
     # Access tooth model
     tooth_model = kwargs.get('tooth_model', None)
     assert(tooth_model != None)
@@ -650,9 +650,10 @@ def water_hist_prob_4param(w_params, **kwargs):
 
     PO4_t = w_params[4]
     PO4_pause = w_params[5]
+    PO4_flux = w_params[6]
     w_params = w_params[:4]
     w_iso_hist = water_4_param(*w_params)
-    p, model_isomap = water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, **kwargs)
+    p, model_isomap = water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, PO4_flux, **kwargs)
 
     prior = prior_score(w_params)
     #p += prior
@@ -765,31 +766,31 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 4000
-    keep_pct = 10. # Percent of trials to record
+    trials = 50000
+    keep_pct = 20. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/10.)
 
 
     local_method = 'LN_COBYLA'
-    local_opt = nlopt.opt(nlopt.LN_COBYLA, 6)
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, 7)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-6.5, -19.4, 53., 37., 3., 10.])
-    local_opt.set_upper_bounds([-6.4, -19.3, 54., 38., 40., 30.])
+    local_opt.set_lower_bounds([-6.5, -19.4, 53., 37., 2., 34.45, 0.05])
+    local_opt.set_upper_bounds([-6.4, -19.3, 54., 38., 45., 34.55, 0.95])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
-    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 7)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([-6.5, -19.4, 53., 37., 3., 10.])
-    global_opt.set_upper_bounds([-6.4, -19.3, 54., 38., 40., 30.])
+    global_opt.set_lower_bounds([-6.5, -19.4, 53., 37., 2., 34.45, 0.05])
+    global_opt.set_upper_bounds([-6.4, -19.3, 54., 38., 45., 34.55, 0.95])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
-    global_opt.set_population(6)
+    global_opt.set_population(7)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([-6.45, -19.35, 53.5, 37.6, 10., 20.])
+    x_opt = global_opt.optimize([-6.45, -19.35, 53.5, 37.6, 20., 34.5, 0.2])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -803,6 +804,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     print 'PO4 eq pause = ', x_opt[5]
     PO4_t = x_opt[4]
     PO4_pause = x_opt[5]
+    PO4_flux = x_opt[6]
 
     # Model a M1 combined with different M2 possibilities
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 56.031, .003240, 1.1572, 41.]) # M2 No limits, 'a', 2000k
@@ -828,7 +830,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     trial_water_hist = water_4_param(*trial_water_hist)
     trial_metabolic_kw = kwargs.get('metabolic_kw', {})
     trial_blood_hist = blood_delta(23.5, trial_water_hist, 25.3, **trial_metabolic_kw)
-    trial_phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, trial_blood_hist, **kwargs)
+    trial_phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, trial_blood_hist, **kwargs)
     trial_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, trial_phosphate_eq)
 
     # Optimize result from M1 to M2
@@ -868,12 +870,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         s_params = np.array([s_params[0], s_params[1], s_times[0], s_times[1]])
         list_water_results.append(water_4_param(*s_params))
 
-    textstr = 'x_opt = %.2f, %.2f, %.2f, %.2f\nPO4_turnover = %.2f, PO4_pause = %.2f\nm2_params = %.2f, %.2f, %.2f, %.2f \nmin = %.2f, time = %.1f \n trials = %.1f, trials/sec = %.2f \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], x_opt[0], x_opt[1], converted_times[0], optimized_length, minf, run_time, trials, eval_p_sec, local_method, global_method)
+    textstr = 'x_opt= %.2f, %.2f, %.2f, %.2f\nPO4_t= %.2f, PO4_p= %.2f, PO4_f= %.2f\nm2_params= %.2f, %.2f, %.2f, %.2f \nmin= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], x_opt[6], x_opt[0], x_opt[1], converted_times[0], optimized_length, minf, run_time, trials, eval_p_sec, local_method, global_method)
 
     fig = plt.figure()
     ax1 = fig.add_subplot(5,1,1)
     blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **kwargs)
-    phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, blood_hist, **kwargs)
+    phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, blood_hist, **kwargs)
     days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0)
@@ -921,7 +923,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **kwargs)
-    phosphate_eq = tooth_phosphate_reservoir(PO4_t, blood_hist, **kwargs)
+    phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, blood_hist, **kwargs)
     days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0)

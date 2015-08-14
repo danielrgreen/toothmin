@@ -175,12 +175,12 @@ def get_image_values_2(img, markerPos, DeltaMarker, fname, step=y_resampling, th
     # In this case, HAp density is calculated with mu values, keV(1)=119
     if scan == 'g':
         resampImg *= 2.**16
-        resampImg *= 0.0000689219599491
-        resampImg -= 1.54118269436172
+        resampImg *= 0.0000689219599491 # was 0.0000689219599491
+        resampImg -= 1.54118269436172 # was -1.54118269436172
     else:
         resampImg *= 2.**16
-        resampImg *= 0.00028045707501
-        resampImg -= 1.48671229207043
+        resampImg *= 0.00028045707501 # was 0.00028045707501
+        resampImg -= 1.48671229207043 # was -1.48671229207043
 
     resampImg /= 2.62
     idx = (resampImg < .1) | (resampImg > 1)
@@ -402,7 +402,7 @@ def main():
         #Nx_age += age_coeff[i] * Nx**(len(age_coeff)-i-1)
     Nx2 = Nx*46./1000.
     Nx2_max = np.max(Nx2) * 1.005
-    Nx_age = (spec.erfinv((30.34 + Nx2 - Nx2_max)/30.34) -(11*.0061))/.0061
+    Nx_age = (spec.erfinv((21.8 + Nx2 - Nx2_max)/21.8) + (29.12*.00789))/.00789
     
     Nx_age = np.around(Nx_age)
     Nx_age[Nx_age < 1.] = 1
@@ -448,7 +448,7 @@ def main():
     #ax.set_title('Cuspal, low')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_cusp_low.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_cusp_low.svg', dpi=300, figsize=4, edgecolor='none')
 
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -462,7 +462,7 @@ def main():
     #ax.set_title('Cuspal, high')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_cusp_high.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_cusp_high.svg', dpi=300, figsize=4, edgecolor='none')
 
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -476,7 +476,7 @@ def main():
     #ax.set_title('Midcrown, low')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_midcrown_low1.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_midcrown_low1.svg', dpi=300, figsize=4, edgecolor='none')
     
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -490,7 +490,7 @@ def main():
     #ax.set_title('Midcrown, high')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_midcrown_high1.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_midcrown_high1.svg', dpi=300, figsize=4, edgecolor='none')
     
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -504,7 +504,7 @@ def main():
     #ax.set_title('Midcrown, low')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_midcrown_low2.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_midcrown_low2.svg', dpi=300, figsize=4, edgecolor='none')
     
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -518,7 +518,7 @@ def main():
     #ax.set_title('Midcrown, high')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_midcrown_high2.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_midcrown_high2.svg', dpi=300, figsize=4, edgecolor='none')
     
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -532,7 +532,7 @@ def main():
     #ax.set_title('Micrown, low')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_midcrown_low3.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_midcrown_low3.svg', dpi=300, figsize=4, edgecolor='none')
     
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -546,7 +546,7 @@ def main():
     #ax.set_title('Midcrown, high')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_midcrown_high3.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_midcrown_high3.svg', dpi=300, figsize=4, edgecolor='none')
     
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -560,7 +560,7 @@ def main():
     #ax.set_title('Cervical, low')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_cervical_low.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_cervical_low.svg', dpi=300, figsize=4, edgecolor='none')
     
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -574,7 +574,7 @@ def main():
     #ax.set_title('Cervical, high')
     #ax.set_ylabel('Estimated mineralization percent')
     #ax.set_xlabel('Time in days')
-    fig.savefig('Dec_min_cervical_high.svg', dpi=300, figsize=4, edgecolor='none')
+    fig.savefig('aug_min_cervical_high.svg', dpi=300, figsize=4, edgecolor='none')
 
     #fig.savefig('Dec15_min_over_time.png', dpi=300, figsize=4, edgecolor='none')
 

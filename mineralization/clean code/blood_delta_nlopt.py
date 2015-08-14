@@ -24,6 +24,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import nlopt
+from time import time
+
 
 def calc_water_step2(w_blocks, block_length):
     '''
@@ -184,31 +187,7 @@ def integrate_delta(delta_0, alpha, beta):
 
     return delta
 
-def integrate_delta_experimental(delta_0, alpha, beta):
-    '''
-    Calculate delta on every day, given an initial value, a decay rate, and
-    a variable amount added on each day.
-
-    :param delta_0: The initial delta (a constant)
-    :param alpha:   The fraction that leaves the system each day (a constant)
-    :param beta:    The amount added to the system on each day (an array)
-    :return:        delta on each day. Has the same length as beta.
-    '''
-
-    n_days = beta.size
-
-    decay_factor = np.exp(-alpha * np.linspace(0.5, n_days-0.5, n_days))
-    delta = np.zeros(n_days, dtype='f8')
-
-    for k,b in enumerate(beta):
-        delta[k:] += decay_factor[:n_days-k] * b
-
-    d_0 = (delta_0 - delta[0]) / decay_factor[0]
-    delta += decay_factor * d_0
-
-    return delta
-
-def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
+def blood_d_equilibrium(blood_params, d_O2, d_water, d_feed, **kwargs):
     '''
 
     :param d_O2:
@@ -218,17 +197,20 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     :return:
     '''
     # Get defaults
-    f_H2O = kwargs.get('f_H20', 0.64) # was 0.62
-    f_O2 = kwargs.get('f_O2', 0.24) # was 0.24
-    alpha_O2 = kwargs.get('alpha_O2', 0.992) # Was 0.992
-    f_feed = kwargs.get('f_feed', 0.12) # was 0.14
+    airfrac = (1.-blood_params[0]) * (blood_params[1])
+    feed_frac = (1.-blood_params[0]) * (1. - blood_params[1])
 
-    f_H2O_en = kwargs.get('f_H2O_en', 0.64)  # Fraction effluent H2O unfractionated. Was 0.62
-    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', 0.992) # Was 0.992
-    f_H2O_ef = kwargs.get('f_H2O_ef', 0.12) # was 0.14
-    alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
-    f_CO2 = kwargs.get('f_CO2', 0.24) # was 0.24
-    ev_enrichment = kwargs.get('ev_enrichment', 0.6) # Was 1.2
+    f_H2O = kwargs.get('f_H20', blood_params[0]) # was 0.62
+    f_O2 = kwargs.get('f_O2', airfrac) # was 0.24
+    alpha_O2 = kwargs.get('alpha_O2', blood_params[2]) # Was 0.992
+    f_feed = kwargs.get('f_feed', feed_frac) # was 0.14
+
+    f_H2O_en = kwargs.get('f_H2O_en', blood_params[0])  # Fraction effluent H2O unfractionated. Was 0.62
+    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', blood_params[2]) # Was 0.992
+    f_H2O_ef = kwargs.get('f_H2O_ef', feed_frac) # was 0.14
+    alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', blood_params[3]) # Was 1.0383
+    f_CO2 = kwargs.get('f_CO2', airfrac) # was 0.24
+    #ev_enrichment = kwargs.get('ev_enrichment', 0.6) # Was 1.2
 
 
     # Calculate equilibrium on each day
@@ -244,39 +226,25 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
         + (alpha_CO2_H2O * f_CO2)
     )
 
-    return R2d(R_eq) + ev_enrichment
+    return R2d(R_eq) #+ ev_enrichment
 
-def blood_delta(d_O2, d_water, d_feed, **kwargs):
+def blood_delta(blood_params, d_O2, d_water, d_feed, **kwargs):
     # Calculate equilibrium on each day
-    d_eq = blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs)
+    d_eq = blood_d_equilibrium(blood_params, d_O2, d_water, d_feed, **kwargs)
     # Integrate differential equation to get
-    t_half = kwargs.get('t_half', 3.) #*********************************
+    t_half = kwargs.get('t_half', blood_params[4]) #*********************************
     alpha = np.log(2.) / t_half
     beta = alpha * d_eq
 
     return integrate_delta(d_eq[0], alpha, beta)
 
-def PO4_dissoln_reprecip(reprecip_eq_t_half, pause, pct_flux, d_blood, **kwargs):
-
-    final_d_blood = np.ones(pause) * d_blood[-1]
-
-    print d_blood.shape
-    print final_d_blood.shape
-
-    new_d_blood = d_blood[pause:]
-    new_d_blood = np.concatenate((new_d_blood, final_d_blood))
-
+def PO4_dissoln_reprecip(reprecip_eq_t_half, pause, d_blood, **kwargs):
 
     alpha = np.log(2.) / reprecip_eq_t_half
-    beta = alpha * new_d_blood
-    d_tooth_phosphate = integrate_delta_experimental(new_d_blood[0], alpha, beta)
-    #weighted_mu = np.ones(d_blood.size) * pct_flux
-    #weighted_mu_2 = np.ones(d_blood.size) * (1 -pct_flux)
+    beta = alpha * d_blood[pause:]
+    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
 
-    phosphate_eq = (d_tooth_phosphate * pct_flux) + (d_blood * (1 - pct_flux))
-    print phosphate_eq.shape
-
-    return phosphate_eq
+    return d_tooth_phosphate
 
 def tooth_phosphate_reservoir(PO4_t, d_blood, **kwargs):
 
@@ -309,7 +277,7 @@ def test_integration():
     #ax.set_ylim(1.2*np.min(beta/alpha), 1.2*np.max(beta/alpha))
     #plt.show()
 
-def calc_blood_step(**kwargs):
+def calc_blood_step(blood_params, **kwargs):
     '''
 
     :param water:       Takes an isotope water history 1D vector
@@ -326,9 +294,8 @@ def calc_blood_step(**kwargs):
 
     n_days = water_step.size
     days = np.arange(n_days)
-    d_eq = blood_d_equilibrium(air, water_step, feed)
-    delta = blood_delta(air, water_step, feed, t_half=3.)
-
+    #d_eq = blood_d_equilibrium(blood_params, air, water_step, feed)
+    delta = blood_delta(blood_params, air, water_step, feed, t_half=3.) #**********************
 
     # Blood and water isotope measurements from sheep 962
     blood_day_measures = np.array([(57., -5.71), (199., -4.96), (203., -10.34), (207., -12.21), (211., -13.14), (215., -13.49), (219., -13.16), (239., -13.46), (261., -13.29), (281., -4.87), (289., -4.97), (297., -4.60), (309., -4.94)])
@@ -339,24 +306,23 @@ def calc_blood_step(**kwargs):
     water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
 
     '''
-    d_tooth_phosphate = PO4_dissoln_reprecip(25., 15., .3, delta, **kwargs) #**********************
-    print d_tooth_phosphate.shape
-    print days.shape
+    pre_water = np.ones(198.+60.) * water_step[0]
+    pre_blood = np.ones(198.+60.) * delta[0]
 
     fig = plt.figure(figsize=(5,2.1), frameon=False)
     ax = fig.add_subplot(1,1,1)
     ax.plot(days, water_step, 'b', linewidth=3.0)
     ax.plot(days, delta, 'r', linewidth=3.0)
-    ax.plot(days, d_tooth_phosphate, 'g--')
+    #ax.plot(days, d_eq, 'k')
     ax.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
 
-    ax.set_ylim(-24., 6.)
-    ax.set_xlim(-60., 510.)
+    ax.set_ylim(-15., -12.)
+    ax.set_xlim(190., 270.)
     plt.show()
     '''
 
-    return water_step, delta
+    return water_step, delta, blood_days, blood_measures
 
 def calc_blood_gaussian(**kwargs):
     '''
@@ -375,7 +341,7 @@ def calc_blood_gaussian(**kwargs):
     n_days = water_gaussian.size
     days = np.arange(n_days)
     d_eq = blood_d_equilibrium(air, water_gaussian, feed)
-    delta = blood_delta(air, water_gaussian, feed, t_half=3.)
+    delta = blood_delta(air, water_gaussian, feed, t_half=3.) #********************
 
     #fig = plt.figure()
     #ax = fig.add_subplot(1,1,1)
@@ -390,8 +356,95 @@ def calc_blood_gaussian(**kwargs):
 
     return water_gaussian, delta
 
+def compare(blood_days, blood_measures, delta):
+
+    sigma = .5 # d18O
+    blood_days_new = np.ones(blood_days.size, dtype='int')
+    for n,b in enumerate(blood_days):
+        blood_days_new[n] = int(b)
+    delta_compare = delta[blood_days_new]
+
+    print "real = ", blood_measures
+    print "model = ", delta_compare
+
+    param_score = (blood_measures - delta_compare)**2. / sigma**2
+    #M1_score[~np.isfinite(M1_score)] = 10000000.
+    param_score = (1. / (2. * np.pi * sigma**2)) * np.exp(-.5*(param_score))
+    param_score = np.product(param_score)
+
+    return param_score * -1
+
+def est_blood_params(blood_params, **kwargs):
+
+    water_step, delta, blood_days, blood_measures = calc_blood_step(blood_params, **kwargs)
+    score = compare(blood_days, blood_measures, delta)
+
+    return score, delta, blood_days, blood_measures
+
+def optimize_blood_params(blood_days, blood_measures, **fit_kwargs):
+    fit_kwargs['blood_measures'] = blood_measures
+    fit_kwargs['blood_days'] = blood_days
+
+    t1 = time()
+
+    f_objective = lambda x, grad: est_blood_params(x, **fit_kwargs)[0]
+
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, 5)
+    local_opt.set_xtol_abs(.01)
+    local_opt.set_lower_bounds([.40, .52, .960, 1.0260, 2.5])
+    local_opt.set_upper_bounds([.80, .75, .998, 1.0420, 3.5])
+    local_opt.set_min_objective(f_objective)
+
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 5)
+    global_opt.set_maxeval(5000)
+    global_opt.set_lower_bounds([.40, .52, .960, 1.0260, 2.5])
+    global_opt.set_upper_bounds([.80, .75, .998, 1.0420, 3.5])
+    global_opt.set_min_objective(f_objective)
+    global_opt.set_local_optimizer(local_opt)
+    global_opt.set_population(5)
+
+    print 'Running global optimizer ...'
+    x_opt = global_opt.optimize([.60, .66, .992, 1.0383, 3.])
+
+    minf = global_opt.last_optimum_value()
+    print "minimum value = ", minf
+    print "result code = ", global_opt.last_optimize_result()
+    print "water input fraction = ", x_opt[0]
+    print "air input fraction = ", (1. - x_opt[0]) * (x_opt[1])
+    print "air input alpha = ", x_opt[2]
+    print "feed input fraction = ", (1. - x_opt[0]) * (1. - x_opt[1])
+    print "water efflux alpha = ", x_opt[2]
+    print "CO2 efflux alpha = ", x_opt[3]
+    print "half-life = ", x_opt[4]
+
+    t2 = time()
+    run_time = t2-t1
+
+    score, delta, blood_days, blood_measures = est_blood_params(x_opt, **fit_kwargs)
+    days = np.arange(delta.size)
+
+    textstr = '%.3f, %.3f, %.3f, %.3f, %.3f\nmin = %.3g, time = %.1f seconds' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], minf, run_time)
+
+    t_save = time()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
+    ax.plot(days, delta, 'r-.', linewidth=1.0)
+    ax.text(50, -10, textstr, fontsize=8)
+    fig.savefig('blood_delta_opt_{0}.svg'.format(t_save))
+    plt.show()
+
 def main():
-    water_step, step_delta = calc_blood_step()
+
+    # Blood and water isotope measurements from sheep 962
+    blood_day_measures = np.array([(57., -5.71), (199., -4.96), (203., -10.34), (207., -12.21), (211., -13.14), (215., -13.49), (219., -13.16), (239., -13.46), (261., -13.29), (281., -4.87), (289., -4.97), (297., -4.60), (309., -4.94)])
+    blood_days = np.array([i[0] for i in blood_day_measures])
+    blood_measures = np.array([i[1] for i in blood_day_measures])
+
+    optimize_blood_params(blood_days, blood_measures)
+
+    #water_step, step_delta = calc_blood_step()
 
 if __name__ == '__main__':
     main()

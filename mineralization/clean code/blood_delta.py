@@ -24,6 +24,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import nlopt
+from time import time
+
 
 def calc_water_step2(w_blocks, block_length):
     '''
@@ -200,7 +203,7 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     f_feed = kwargs.get('f_feed', 0.12) # was 0.14
 
     f_H2O_en = kwargs.get('f_H2O_en', 0.64)  # Fraction effluent H2O unfractionated. Was 0.62
-    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', 0.992) # Was 0.992
+    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', .992) # Was 0.992
     f_H2O_ef = kwargs.get('f_H2O_ef', 0.12) # was 0.14
     alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
     f_CO2 = kwargs.get('f_CO2', 0.24) # was 0.24
@@ -220,7 +223,7 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
         + (alpha_CO2_H2O * f_CO2)
     )
 
-    return R2d(R_eq) + ev_enrichment
+    return R2d(R_eq) #+ ev_enrichment
 
 def blood_delta(d_O2, d_water, d_feed, **kwargs):
     # Calculate equilibrium on each day
@@ -300,7 +303,7 @@ def calc_blood_step(**kwargs):
     water_iso_days = np.array([i[0] for i in water_iso_day_measures])
     water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
 
-    '''
+
     pre_water = np.ones(198.+60.) * water_step[0]
     pre_blood = np.ones(198.+60.) * delta[0]
 
@@ -312,10 +315,10 @@ def calc_blood_step(**kwargs):
     ax.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
 
-    ax.set_ylim(-24., 6.)
-    ax.set_xlim(-60., 510.)
+    ax.set_ylim(-15., -12.)
+    ax.set_xlim(190., 270.)
     plt.show()
-    '''
+
     return water_step, delta
 
 def calc_blood_gaussian(**kwargs):

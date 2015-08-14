@@ -748,8 +748,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m2_m1_params = np.array([69.946, .003456, -37.478, 41., 21.820, .007889, 29.118, 35.]) # 'hist74', 100k
     #m2_m1_params = np.array([74.492, .003575, -34.184, 41., 21.820, .007889, 29.118, 35.]) # 'hist84', 100k
     #m2_m1_params = np.array([66.649, .004054, 8.399, 41., 21.820, .007889, 29.118, 35.]) # 'hist96', 100k
-    #m2_m1_params = np.array([69.155, .003209, -33.912, 41., 21.820, .007889, 29.118, 35.]) # 'synch84', 100k
-    m2_m1_params = np.array([85.571, .003262, -58.095, 41., 21.820, .007889, 29.118, 35.]) # 'synch98', 100k
+    m2_m1_params = np.array([69.155, .003209, -33.912, 41., 21.820, .007889, 29.118, 35.]) # 'synch84', 100k
+    #m2_m1_params = np.array([85.571, .003262, -58.095, 41., 21.820, .007889, 29.118, 35.]) # 'synch98', 100k
     #m2_m1_params = np.array([90.469, .004068, -16.811, 41., 21.820, .007889, 29.118, 35.]) # 'synch114', 100k
 
 
@@ -763,7 +763,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 4000
+    trials = 1200
     keep_pct = 10. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -773,21 +773,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 5)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-13., -30., 15., 22., 3.])
-    local_opt.set_upper_bounds([-3., -9., 45., 70., 30.])
+    local_opt.set_lower_bounds([-6.6, -19.6, 37., 34.4, 3.])
+    local_opt.set_upper_bounds([-6.2, 19.2, 38., 34.6, 50.])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 5)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([-13., -30., 15., 22., 3.])
-    global_opt.set_upper_bounds([-3., -9., 45., 70., 30.])
+    global_opt.set_lower_bounds([-6.6, -19.6, 37., 34.4, 3.])
+    global_opt.set_upper_bounds([-6.2, -19.2, 38., 34.6, 50.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(5)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([-6., -19.5, 32., 35., 10.])
+    x_opt = global_opt.optimize([-6.5, -19.5, 37.5, 34.5, 10.])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -811,8 +811,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 69.946, .003456, -37.478, 41.]) # 'hist74', 100k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 74.492, .003575, -34.184, 41.]) # 'hist84', 100k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 66.649, .004054, 8.399, 41.]) # 'hist96', 100k
-    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 69.155, .003209, -33.912, 41.]) # 'synch84', 100k
-    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 85.571, .003262, -58.095, 41.]) # 'synch98', 100k
+    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 69.155, .003209, -33.912, 41.]) # 'synch84', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 85.571, .003262, -58.095, 41.]) # 'synch98', 100k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 90.469, .004068, -16.811, 41.]) # 'synch114', 100k
 
 
@@ -911,7 +911,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg5 = ax5.imshow(np.mean(trial_model, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    fig.savefig('a-synch98_PO4opt_priora180s90_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('a-synch84_PO4opt_t_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()

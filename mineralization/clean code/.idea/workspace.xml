@@ -2,8 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="147c6fc5-fdbe-4c43-8ea3-6e97dc03c34a" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/blood_delta_nlopt.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../m1-2_figure.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/2nd_PO4_pool_nlopt.py" afterPath="$PROJECT_DIR$/2nd_PO4_pool_nlopt.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/blood_delta.py" afterPath="$PROJECT_DIR$/blood_delta.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/blood_delta_experimentation.py" afterPath="$PROJECT_DIR$/blood_delta_experimentation.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dissoln_reprecip_nlopt.py" afterPath="$PROJECT_DIR$/dissoln_reprecip_nlopt.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" afterPath="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_5graphmultiple.py" afterPath="$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_5graphmultiple.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_6tanyagraph.py" afterPath="$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_6tanyagraph.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../m1-2_all_optimize.py" afterPath="$PROJECT_DIR$/../m1-2_all_optimize.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="clean code.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -22,11 +30,11 @@
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_diffusion.coverage" NAME="tooth_to_blood_minimize_diffusion Coverage Results" MODIFIED="1438196550744" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$june_2015_growthgraph_m2.coverage" NAME="june_2015_growthgraph_m2 Coverage Results" MODIFIED="1435709612433" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$blood_to_toothmap_diffusion.coverage" NAME="blood_to_toothmap_diffusion Coverage Results" MODIFIED="1438195593880" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$blood_delta.coverage" NAME="blood_delta Coverage Results" MODIFIED="1438547284795" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$blood_delta.coverage" NAME="blood_delta Coverage Results" MODIFIED="1439041454243" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m2_optimize_alone.coverage" NAME="m2_optimize_alone Coverage Results" MODIFIED="1438625078280" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood.coverage" NAME="tooth_to_blood Coverage Results" MODIFIED="1428349130818" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$blood_to_toothmap6.coverage" NAME="blood_to_toothmap6 Coverage Results" MODIFIED="1426112101193" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
-    <SUITE FILE_PATH="coverage/clean code$dissoln_reprecip_nlopt.coverage" NAME="dissoln_reprecip_nlopt Coverage Results" MODIFIED="1438646547504" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$dissoln_reprecip_nlopt.coverage" NAME="dissoln_reprecip_nlopt Coverage Results" MODIFIED="1439588123292" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$december_2014_growthgraph_figure1.coverage" NAME="december_2014_growthgraph_figure1 Coverage Results" MODIFIED="1435280561369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$rainpick2.coverage" NAME="rainpick2 Coverage Results" MODIFIED="1424476151407" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../../rainfall" />
     <SUITE FILE_PATH="coverage/clean code$blood_to_toothmap.coverage" NAME="blood_to_toothmap Coverage Results" MODIFIED="1438126998522" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -35,13 +43,14 @@
     <SUITE FILE_PATH="coverage/clean code$july_2015_growthgraph_figure1.coverage" NAME="july_2015_growthgraph_figure1 Coverage Results" MODIFIED="1437436305070" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$likelihood_min_model_TMCMC_point_5graphmultiple.coverage" NAME="likelihood_min_model_TMCMC_point_5graphmultiple Coverage Results" MODIFIED="1430423537525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$m1_optimize_alone.coverage" NAME="m1_optimize_alone Coverage Results" MODIFIED="1437606170167" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
+    <SUITE FILE_PATH="coverage/clean code$blood_delta_nlopt.coverage" NAME="blood_delta_nlopt Coverage Results" MODIFIED="1439265879559" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_2_all_optimize.coverage" NAME="m1-2_all_optimize Coverage Results" MODIFIED="1438572371367" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
-    <SUITE FILE_PATH="coverage/clean code$2nd_PO4_pool_nlopt.coverage" NAME="2nd_PO4_pool_nlopt Coverage Results" MODIFIED="1438636008741" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$2nd_PO4_pool_nlopt.coverage" NAME="2nd_PO4_pool_nlopt Coverage Results" MODIFIED="1439574945332" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize.coverage" NAME="tooth_to_blood_minimize Coverage Results" MODIFIED="1438199066323" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$test_tooth_to_blood_image.coverage" NAME="test_tooth_to_blood_image Coverage Results" MODIFIED="1426889307048" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_new_optimize.coverage" NAME="m1_new_optimize Coverage Results" MODIFIED="1436906173539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_reduced_minimize.coverage" NAME="tooth_to_blood_reduced_minimize Coverage Results" MODIFIED="1427403781115" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$blood_delta_experimentation.coverage" NAME="blood_delta_experimentation Coverage Results" MODIFIED="1438641846700" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$blood_delta_experimentation.coverage" NAME="blood_delta_experimentation Coverage Results" MODIFIED="1438797921448" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$test_resize.coverage" NAME="test_resize Coverage Results" MODIFIED="1426134745286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_2optimize.coverage" NAME="m1-2optimize Coverage Results" MODIFIED="1436903872478" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_special3paramMay2015.coverage" NAME="tooth_to_blood_minimize_special3paramMay2015 Coverage Results" MODIFIED="1438283844634" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -66,11 +75,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="tooth_to_blood_minimize_nlopt_3p.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="tooth_to_blood_minimize_nlopt_3p.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.3152174" vertical-offset="11165" max-vertical-offset="14385">
-              <caret line="754" column="4" selection-start-line="754" selection-start-column="4" selection-end-line="754" selection-end-column="4" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="3530" max-vertical-offset="14385">
+              <caret line="270" column="0" selection-start-line="245" selection-start-column="0" selection-end-line="270" selection-end-column="0" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
               </folding>
@@ -81,8 +90,8 @@
       <file leaf-file-name="2nd_PO4_pool_nlopt.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/2nd_PO4_pool_nlopt.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-14.259259" vertical-offset="13550" max-vertical-offset="14355">
-              <caret line="929" column="28" selection-start-line="929" selection-start-column="28" selection-end-line="929" selection-end-column="28" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="13475" max-vertical-offset="14355">
+              <caret line="919" column="7" selection-start-line="919" selection-start-column="7" selection-end-line="919" selection-end-column="7" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
               </folding>
@@ -93,19 +102,43 @@
       <file leaf-file-name="dissoln_reprecip_nlopt.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/dissoln_reprecip_nlopt.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-13.888889" vertical-offset="0" max-vertical-offset="14415">
-              <caret line="25" column="0" selection-start-line="24" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="11450" max-vertical-offset="14445">
+              <caret line="792" column="65" selection-start-line="792" selection-start-column="65" selection-end-line="792" selection-end-column="65" />
+              <folding>
+                <element signature="e#400#418#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="m1-2_all_optimize.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../m1-2_all_optimize.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0" vertical-offset="2498" max-vertical-offset="3375">
+              <caret line="125" column="74" selection-start-line="125" selection-start-column="74" selection-end-line="125" selection-end-column="74" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="m2_optimize_alone.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../m2_optimize_alone.py">
+      <file leaf-file-name="m1-2_figure.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/../m1-2_figure.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="1590" max-vertical-offset="2625">
-              <caret line="122" column="21" selection-start-line="122" selection-start-column="21" selection-end-line="122" selection-end-column="21" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="3375">
+              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="blood_delta_nlopt.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/blood_delta_nlopt.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0" vertical-offset="4778" max-vertical-offset="6825">
+              <caret line="234" column="49" selection-start-line="234" selection-start-column="49" selection-end-line="234" selection-end-column="49" />
+              <folding>
+                <element signature="e#833#851#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -113,29 +146,11 @@
       <file leaf-file-name="blood_delta.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/blood_delta.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="2453" max-vertical-offset="5415">
-              <caret line="174" column="0" selection-start-line="174" selection-start-column="0" selection-end-line="174" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="blood_delta_experimentation.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blood_delta_experimentation.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="3818" max-vertical-offset="5940">
-              <caret line="258" column="24" selection-start-line="258" selection-start-column="4" selection-end-line="258" selection-end-column="24" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="blood_to_toothmap.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blood_to_toothmap.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="12331" max-vertical-offset="13575">
-              <caret line="820" column="0" selection-start-line="819" selection-start-column="0" selection-end-line="820" selection-end-column="0" />
-              <folding />
+            <state vertical-scroll-proportion="0.0" vertical-offset="240" max-vertical-offset="5475">
+              <caret line="28" column="0" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
+              <folding>
+                <element signature="e#833#851#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -158,7 +173,6 @@
         <option value="$PROJECT_DIR$/tooth_to_blood_reduced_minimize.py" />
         <option value="$PROJECT_DIR$/test_tooth_to_blood_image.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood.py" />
-        <option value="$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_5graphmultiple.py" />
         <option value="$PROJECT_DIR$/../m1-2convert.py" />
         <option value="$PROJECT_DIR$/../june_2015_growthgraph_m2.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize_gaussian.py" />
@@ -179,13 +193,16 @@
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize_special3paramMay2015.py" />
         <option value="$PROJECT_DIR$/blood_delta_od.py" />
         <option value="$PROJECT_DIR$/t2b_nlo_od_test.py" />
-        <option value="$PROJECT_DIR$/../m1-2_all_optimize.py" />
         <option value="$PROJECT_DIR$/../m2_optimize_alone.py" />
-        <option value="$PROJECT_DIR$/2nd_PO4_pool_nlopt.py" />
-        <option value="$PROJECT_DIR$/blood_delta.py" />
-        <option value="$PROJECT_DIR$/blood_delta_experimentation.py" />
-        <option value="$PROJECT_DIR$/dissoln_reprecip_nlopt.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
+        <option value="$PROJECT_DIR$/blood_delta_experimentation.py" />
+        <option value="$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_5graphmultiple.py" />
+        <option value="$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_6tanyagraph.py" />
+        <option value="$PROJECT_DIR$/blood_delta.py" />
+        <option value="$PROJECT_DIR$/blood_delta_nlopt.py" />
+        <option value="$PROJECT_DIR$/2nd_PO4_pool_nlopt.py" />
+        <option value="$PROJECT_DIR$/dissoln_reprecip_nlopt.py" />
+        <option value="$PROJECT_DIR$/../m1-2_all_optimize.py" />
       </list>
     </option>
   </component>
@@ -193,9 +210,9 @@
     <detection-done>true</detection-done>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="353" />
-    <option name="y" value="22" />
-    <option name="width" value="981" />
+    <option name="x" value="709" />
+    <option name="y" value="33" />
+    <option name="width" value="701" />
     <option name="height" value="815" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -239,71 +256,11 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/.." />
+      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.tooth_to_blood_minimize_nlopt_3p">
-    <configuration default="false" name="tooth_to_blood_minimize_nlopt_3p" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="clean code" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <RunnerSettings RunnerId="PythonRunner" />
-      <ConfigurationWrapper RunnerId="PythonRunner" />
-      <method />
-    </configuration>
-    <configuration default="false" name="m2_optimize_alone" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/.." />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="clean code" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../m2_optimize_alone.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <RunnerSettings RunnerId="PythonRunner" />
-      <ConfigurationWrapper RunnerId="PythonRunner" />
-      <method />
-    </configuration>
-    <configuration default="false" name="2nd_PO4_pool_nlopt" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="clean code" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/2nd_PO4_pool_nlopt.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <RunnerSettings RunnerId="PythonRunner" />
-      <ConfigurationWrapper RunnerId="PythonRunner" />
-      <method />
-    </configuration>
+  <component name="RunManager" selected="Python.dissoln_reprecip_nlopt">
     <configuration default="false" name="blood_delta_experimentation" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -338,6 +295,66 @@
       <module name="clean code" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/dissoln_reprecip_nlopt.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="blood_delta" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="clean code" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/blood_delta.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="blood_delta_nlopt" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="clean code" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/blood_delta_nlopt.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="2nd_PO4_pool_nlopt" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="clean code" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/2nd_PO4_pool_nlopt.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <RunnerSettings RunnerId="PythonRunner" />
@@ -533,19 +550,19 @@
       <method />
     </configuration>
     <list size="5">
-      <item index="0" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_nlopt_3p" />
-      <item index="1" class="java.lang.String" itemvalue="Python.m2_optimize_alone" />
-      <item index="2" class="java.lang.String" itemvalue="Python.2nd_PO4_pool_nlopt" />
-      <item index="3" class="java.lang.String" itemvalue="Python.blood_delta_experimentation" />
-      <item index="4" class="java.lang.String" itemvalue="Python.dissoln_reprecip_nlopt" />
+      <item index="0" class="java.lang.String" itemvalue="Python.blood_delta_experimentation" />
+      <item index="1" class="java.lang.String" itemvalue="Python.dissoln_reprecip_nlopt" />
+      <item index="2" class="java.lang.String" itemvalue="Python.blood_delta" />
+      <item index="3" class="java.lang.String" itemvalue="Python.blood_delta_nlopt" />
+      <item index="4" class="java.lang.String" itemvalue="Python.2nd_PO4_pool_nlopt" />
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.tooth_to_blood_minimize_nlopt_3p" />
-        <item index="1" class="java.lang.String" itemvalue="Python.dissoln_reprecip_nlopt" />
-        <item index="2" class="java.lang.String" itemvalue="Python.blood_delta_experimentation" />
-        <item index="3" class="java.lang.String" itemvalue="Python.2nd_PO4_pool_nlopt" />
-        <item index="4" class="java.lang.String" itemvalue="Python.m2_optimize_alone" />
+        <item index="0" class="java.lang.String" itemvalue="Python.dissoln_reprecip_nlopt" />
+        <item index="1" class="java.lang.String" itemvalue="Python.2nd_PO4_pool_nlopt" />
+        <item index="2" class="java.lang.String" itemvalue="Python.blood_delta_nlopt" />
+        <item index="3" class="java.lang.String" itemvalue="Python.blood_delta" />
+        <item index="4" class="java.lang.String" itemvalue="Python.blood_delta_experimentation" />
       </list>
     </recent_temporary>
   </component>
@@ -583,12 +600,12 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="353" y="22" width="981" height="815" extended-state="0" />
+    <frame x="709" y="33" width="701" height="815" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32965517" sideWeight="0.49918434" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32689655" sideWeight="0.49755302" order="12" side_tool="false" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.0" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3290735" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3986207" sideWeight="0.83878" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32689655" sideWeight="0.502447" order="8" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -598,7 +615,7 @@
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.1383812" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32827586" sideWeight="0.49755302" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.28965518" sideWeight="0.7585644" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.28965518" sideWeight="0.7585644" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3297587" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -656,7 +673,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/blood_delta.py</url>
-          <line>125</line>
+          <line>128</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
       </breakpoints>
@@ -672,27 +689,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../../rainfall/rainpick2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4365">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../daily_bloodhist.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="840">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../bloodhist.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="443" max-vertical-offset="5220">
-          <caret line="37" column="19" selection-start-line="37" selection-start-column="19" selection-end-line="37" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../daily_bloodhist.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="840">
@@ -781,20 +777,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="2.5730593" vertical-offset="8803" max-vertical-offset="11175">
           <caret line="672" column="9" selection-start-line="672" selection-start-column="9" selection-end-line="672" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_5graphmultiple.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.543379" vertical-offset="8177" max-vertical-offset="8895">
-          <caret line="562" column="34" selection-start-line="562" selection-start-column="34" selection-end-line="562" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_6tanyagraph.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-14.958904" vertical-offset="6552" max-vertical-offset="7845">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
         </state>
       </provider>
     </entry>
@@ -950,7 +932,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="3916" max-vertical-offset="6300">
           <caret line="299" column="36" selection-start-line="299" selection-start-column="36" selection-end-line="299" selection-end-column="36" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -958,9 +939,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="135" max-vertical-offset="14670">
           <caret line="24" column="26" selection-start-line="24" selection-start-column="26" selection-end-line="24" selection-end-column="26" />
-          <folding>
-            <element signature="e#400#418#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -968,15 +946,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="9660" max-vertical-offset="13575">
           <caret line="697" column="6" selection-start-line="697" selection-start-column="6" selection-end-line="697" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../m1-2_all_optimize.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="2758" max-vertical-offset="3285">
-          <caret line="200" column="0" selection-start-line="191" selection-start-column="0" selection-end-line="200" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -984,7 +953,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="75" max-vertical-offset="2625">
           <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -992,38 +960,85 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="12001" max-vertical-offset="13575">
           <caret line="820" column="0" selection-start-line="819" selection-start-column="0" selection-end-line="820" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../m2_optimize_alone.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1590" max-vertical-offset="2625">
-          <caret line="122" column="21" selection-start-line="122" selection-start-column="21" selection-end-line="122" selection-end-column="21" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/blood_delta.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="2453" max-vertical-offset="5415">
-          <caret line="174" column="0" selection-start-line="174" selection-start-column="0" selection-end-line="174" selection-end-column="0" />
-          <folding />
+        <state vertical-scroll-proportion="0.0" vertical-offset="180" max-vertical-offset="5475">
+          <caret line="28" column="0" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
+          <folding>
+            <element signature="e#833#851#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/blood_delta_experimentation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="3818" max-vertical-offset="5940">
-          <caret line="258" column="24" selection-start-line="258" selection-start-column="4" selection-end-line="258" selection-end-column="24" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="3743" max-vertical-offset="6015">
+          <caret line="273" column="43" selection-start-line="273" selection-start-column="43" selection-end-line="273" selection-end-column="43" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/blood_delta_nlopt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="4778" max-vertical-offset="6825">
+          <caret line="234" column="49" selection-start-line="234" selection-start-column="49" selection-end-line="234" selection-end-column="49" />
+          <folding>
+            <element signature="e#833#851#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../m2_optimize_alone.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.20373027" vertical-offset="1988" max-vertical-offset="2685">
+          <caret line="142" column="0" selection-start-line="141" selection-start-column="0" selection-end-line="142" selection-end-column="0" />
+          <folding>
+            <element signature="e#24#42#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_6tanyagraph.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.52080345" vertical-offset="2397" max-vertical-offset="7845">
+          <caret line="185" column="0" selection-start-line="185" selection-start-column="0" selection-end-line="185" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_5graphmultiple.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.39741752" vertical-offset="2483" max-vertical-offset="8895">
+          <caret line="185" column="0" selection-start-line="175" selection-start-column="0" selection-end-line="185" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC_equalsize.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-3.48637" vertical-offset="2430" max-vertical-offset="9225">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="3530" max-vertical-offset="14385">
+          <caret line="270" column="0" selection-start-line="245" selection-start-column="0" selection-end-line="270" selection-end-column="0" />
+          <folding>
+            <element signature="e#400#418#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/2nd_PO4_pool_nlopt.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-14.259259" vertical-offset="13550" max-vertical-offset="14355">
-          <caret line="929" column="28" selection-start-line="929" selection-start-column="28" selection-end-line="929" selection-end-column="28" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="13475" max-vertical-offset="14355">
+          <caret line="919" column="7" selection-start-line="919" selection-start-column="7" selection-end-line="919" selection-end-column="7" />
           <folding>
             <element signature="e#400#418#0" expanded="true" />
           </folding>
@@ -1032,19 +1047,27 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dissoln_reprecip_nlopt.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-13.888889" vertical-offset="0" max-vertical-offset="14415">
-          <caret line="25" column="0" selection-start-line="24" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="11450" max-vertical-offset="14445">
+          <caret line="792" column="65" selection-start-line="792" selection-start-column="65" selection-end-line="792" selection-end-column="65" />
+          <folding>
+            <element signature="e#400#418#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../m1-2_all_optimize.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="2498" max-vertical-offset="3375">
+          <caret line="125" column="74" selection-start-line="125" selection-start-column="74" selection-end-line="125" selection-end-column="74" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_nlopt_3p.py">
+    <entry file="file://$PROJECT_DIR$/../m1-2_figure.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3152174" vertical-offset="11165" max-vertical-offset="14385">
-          <caret line="754" column="4" selection-start-line="754" selection-start-column="4" selection-end-line="754" selection-end-column="4" />
-          <folding>
-            <element signature="e#400#418#0" expanded="true" />
-          </folding>
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="3375">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
