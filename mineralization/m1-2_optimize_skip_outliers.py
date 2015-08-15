@@ -104,32 +104,26 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
     fit_kwargs['M2_data_extension'] = M2_data_extension
     fit_kwargs['M2_days'] = M2_days
 
-    # M2 results
-    # init84 all old style 69.2, .00321, -33.91,
-    # init86 outlier 100k 67.974, 0.003352, -25.414,
-    # init86 outliers 100k 78.940, 0.003379, -49.708,
-
-
     t1 = time()
 
     f_objective = lambda x, grad: est_tooth_extension(x, **fit_kwargs)[0]
 
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 6)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([21.7, .00788, 29.11, 67.974, 0.003352, -25.414])
-    local_opt.set_upper_bounds([21.9, .00790, 29.13, 67.974, 0.003352, -25.414])
+    local_opt.set_lower_bounds([21.7, .00788, 29.11, 69.1, .00320, -33.92])
+    local_opt.set_upper_bounds([21.9, .00790, 29.13, 69.3, .00322, -33.90])
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
     global_opt.set_maxeval(200)
-    global_opt.set_lower_bounds([21.7, .00788, 29.11, 67.974, 0.003352, -25.414])
-    global_opt.set_upper_bounds([21.9, .00790, 29.13, 67.974, 0.003352, -25.414])
+    global_opt.set_lower_bounds([21.7, .00788, 29.11, 69.1, .00320, -33.92])
+    global_opt.set_upper_bounds([21.9, .00790, 29.13, 69.3, .00322, -33.90])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(6)
 
     print 'Running global optimizer ...'
-    x_opt = global_opt.optimize([21.8, .00789, 29.12, 67.974, 0.003352, -25.414])
+    x_opt = global_opt.optimize([21.8, .00789, 29.12, 69.2, .00321, -33.91])
 
     minf = global_opt.last_optimum_value()
     print "minimum value = ", minf
@@ -146,7 +140,7 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
 
     days = np.linspace(-100, 550, 651)
     # Plot test result
-    testp = np.array([21.8, .00789, 29.12, 67.974, 0.003352, -25.414])
+    testp = np.array([27.792, 0.0066885, -4.4215, 52.787, 0.003353, 17.1276])
     M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation = extension(testp[0], testp[1], testp[2], testp[3], testp[4], testp[5], days, M1_data_extension, days, M2_data_extension, m2_m1_conversion)
     # Plot optimized result
     #M1_model_extension, M1_data_extension, M2_model_extension, M2_data_extension, m2_m1_converted, M1_initiation, M2_initiation = extension(x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], days, M1_data_extension, days, M2_data_extension, m2_m1_conversion)
@@ -168,10 +162,8 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
     hist_extension = np.array([24.59, 26.23, 30.60, 32.50, 41.79])
 
     # M2 synchrotron outliers
-    outlier_days = np.array([251.])
-    outlier_extension = np.array([20.1])
-
-    t_save = time()
+    outlier_days = np.array([222., 251.])
+    outlier_extension = np.array([20.6, 20.1])
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
@@ -198,7 +190,6 @@ def optimize_curve(M1_days, M1_data_extension, M2_days, M2_data_extension, **fit
     h2, l2 = ax2.get_legend_handles_labels()
     ax1.legend(h1+h2, l1+l2, loc='center right', fontsize=10)
     #ax1.text(180, 5, textstr, fontsize=8)
-    fig.savefig('m2_opt_86_outlier_100k_{0}.svg'.format(t_save))
 
     plt.show()
 
@@ -214,12 +205,9 @@ def main():
     # M2 extension data full set including synchrotron + histology
     #M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 203., 222., 223., 251., 265., 285., 510., 510., 510., 510.])
     #M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 24.59, 20.6, 26.23, 20.1, 30.60, 32.50, 41.79, 39.61, 39.39, 42.3])
-    # M2 extension data partial set including synchrotron but not histology
-    #M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 222., 251., 510., 510., 510., 510.])
-    #M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 20.6, 20.1, 41.79, 39.61, 39.39, 42.3])
     # M2 extension data partial set including synchrotron but not histology or outliers
-    M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 222., 510., 510., 510., 510.]) # 251.,
-    M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 20.1, 41.79, 39.61, 39.39, 42.3]) # 20.6,
+    M2_days = np.array([88., 92., 97., 100., 101., 101., 105., 124., 127., 140., 140., 159., 167., 174., 179., 202., 510., 510., 510., 510.]) # 222., 251.,
+    M2_data_extension = np.array([2.22, 4.43, 6.23, 3.14, 7.16, 3.19, 6.74, 6.23, 9.61, 11.8, 12.3, 18.4, 16.9, 17.9, 18.9, 21, 41.79, 39.61, 39.39, 42.3]) #  20.6, 20.1,
     # M1 data, extension
     M1_days = np.array([1., 9., 11., 19., 21., 30., 31., 31., 38., 42., 54., 56., 56., 58., 61., 66., 68., 73., 78., 84., 88., 92., 97., 100., 101., 101., 104., 105., 124., 127., 140., 140., 157., 167., 173., 174., 179., 202., 222., 235., 238., 251., 259., 274.])
     M1_data_extension = np.array([9.38, 8.05, 11.32, 9.43, 13.34, 16.19, 13.85, 15.96, 15.32, 14.21, 17.99, 19.32, 19.32, 18.31, 17.53, 18.68, 18.49, 22.08, 23.14, 19.92, 27.97, 24.38, 25.53, 29.07, 27.65, 26.27, 27.55, 24.33, 29.03, 29.07, 30.36, 31.79, 31.37, 31.28, 35.79, 29.81, 31.79, 34.04, 33.21, 34.50, 33.76, 33.40, 36.34, 33.63])

@@ -626,7 +626,7 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     d_feed = kwargs.get('d_feed', 25.3)
     metabolic_kw = kwargs.get('metabolic_kw', {})
     blood_hist = blood_delta(d_O2, w_iso_hist, d_feed, **metabolic_kw)
-    tooth_phosphate_eq = PO4_dissoln_reprecip(11.35, 17.87, blood_hist, **kwargs) #***** 11.35, 17.87 *****
+    #tooth_phosphate_eq = PO4_dissoln_reprecip(11.35, 17.87, blood_hist, **kwargs) #***** 11.35, 17.87 *****
     # Access tooth model
     tooth_model = kwargs.get('tooth_model', None)
     assert(tooth_model != None)
@@ -640,7 +640,7 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     assert(isomap_data_x_ct != None)
 
     # Calculate model tooth isomap
-    model_isomap = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, tooth_phosphate_eq)
+    model_isomap = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, blood_hist)
     score = compare(model_isomap, data_isomap)
 
     return score, model_isomap
@@ -752,7 +752,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m2_m1_params = np.array([69.946, .003456, -37.478, 41., 21.820, .007889, 29.118, 35.]) # 'hist74', 100k
     #m2_m1_params = np.array([74.492, .003575, -34.184, 41., 21.820, .007889, 29.118, 35.]) # 'hist84', 100k
     #m2_m1_params = np.array([66.649, .004054, 8.399, 41., 21.820, .007889, 29.118, 35.]) # 'hist96', 100k
-    m2_m1_params = np.array([69.155, .003209, -33.912, 41., 21.820, .007889, 29.118, 35.]) # 'synch84', 100k
+    #m2_m1_params = np.array([69.155, .003209, -33.912, 41., 21.820, .007889, 29.118, 35.]) # 'synch84', 100k
+    m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 78.940, 0.003379, -49.708, 41.]) # 'synch86', outliers, 100k
     #m2_m1_params = np.array([85.571, .003262, -58.095, 41., 21.820, .007889, 29.118, 35.]) # 'synch98', 100k
     #m2_m1_params = np.array([90.469, .004068, -16.811, 41., 21.820, .007889, 29.118, 35.]) # 'synch114', 100k
 
@@ -777,15 +779,15 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 4)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-13., -30., 15., 22.])
-    local_opt.set_upper_bounds([-3., -9., 45., 70.])
+    local_opt.set_lower_bounds([-13., -30., 5., 12.])
+    local_opt.set_upper_bounds([-3., -9., 65., 90.])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 4)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([-13., -30., 15., 22.])
-    global_opt.set_upper_bounds([-3., -9., 45., 70.])
+    global_opt.set_lower_bounds([-13., -30., 5., 12.])
+    global_opt.set_upper_bounds([-3., -9., 65., 90.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(4)
@@ -813,7 +815,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 69.946, .003456, -37.478, 41.]) # 'hist74', 100k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 74.492, .003575, -34.184, 41.]) # 'hist84', 100k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 66.649, .004054, 8.399, 41.]) # 'hist96', 100k
-    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 69.155, .003209, -33.912, 41.]) # 'synch84', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 69.155, .003209, -33.912, 41.]) # 'synch84', 100k
+    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 78.940, 0.003379, -49.708, 41.]) # 'synch86', outliers, 100k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 85.571, .003262, -58.095, 41.]) # 'synch98', 100k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 90.469, .004068, -16.811, 41.]) # 'synch114', 100k
 
@@ -826,8 +830,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     trial_water_hist = water_4_param(*trial_water_hist)
     trial_metabolic_kw = kwargs.get('metabolic_kw', {})
     trial_blood_hist = blood_delta(23.5, trial_water_hist, 25.3, **trial_metabolic_kw)
-    trial_phosphate_eq = PO4_dissoln_reprecip(11.35, 17.87, trial_blood_hist, **kwargs) #***** 11.35, 17.87 *****
-    trial_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, trial_phosphate_eq)
+    #trial_phosphate_eq = PO4_dissoln_reprecip(11.35, 17.87, trial_blood_hist, **kwargs) #***** 11.35, 17.87 *****
+    trial_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, trial_blood_hist)
 
     # Optimize result from M1 to M2
     switch_end = x_opt[2]+x_opt[3]
@@ -871,12 +875,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig = plt.figure()
     ax1 = fig.add_subplot(5,1,1)
     blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **kwargs)
-    phosphate_eq = PO4_dissoln_reprecip(11.35, 17.87, blood_hist, **kwargs) #***** 11.35, 17.87 *****
+    #phosphate_eq = PO4_dissoln_reprecip(11.35, 17.87, blood_hist, **kwargs) #***** 11.35, 17.87 *****
     days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0)
     ax1.plot(days, blood_hist, 'r-', linewidth=2.0)
-    ax1.plot(days, phosphate_eq, 'y-.', linewidth=1.0)
+    #ax1.plot(days, phosphate_eq, 'y-.', linewidth=1.0)
     ax1.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax1.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
     for s in list_water_results:
@@ -913,18 +917,18 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg5 = ax5.imshow(np.mean(trial_model, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    fig.savefig('a-synch84_11_18_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('a-synch86o_newdelta_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **kwargs)
-    phosphate_eq = PO4_dissoln_reprecip(11.35, 17.87, blood_hist, **kwargs) #***** 11.35, 17.87 *****
+    #phosphate_eq = PO4_dissoln_reprecip(11.35, 17.87, blood_hist, **kwargs) #***** 11.35, 17.87 *****
     days = np.arange(blood_hist.size)
     ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0)
     ax1.plot(days, blood_hist, 'r-', linewidth=2.0)
-    ax1.plot(days, phosphate_eq, 'y-.', linewidth=1.0)
+    #ax1.plot(days, phosphate_eq, 'y-.', linewidth=1.0)
     ax1.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax1.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
     for s in list_water_results:
@@ -935,7 +939,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-30, 0)
     ax1.set_xlim(-100, 550)
 
-    fig.savefig('a-synch84_11_18_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('a-synch86o_newdelta_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
 

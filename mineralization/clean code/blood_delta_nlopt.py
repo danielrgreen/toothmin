@@ -427,6 +427,14 @@ def optimize_blood_params(blood_days, blood_measures, **fit_kwargs):
 
     t_save = time()
 
+    # M2 extension data histology only
+    hist_days = np.array([203., 223., 265., 285., 510.]) # ************* Last is 510 ***********
+    hist_extension = np.array([24.59, 26.23, 30.60, 32.50, 41.79])
+
+    # M2 synchrotron outliers
+    outlier_days = np.array([222., 251.])
+    outlier_extension = np.array([20.6, 20.1])
+
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     ax.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
