@@ -218,16 +218,16 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
     :return:
     '''
     # Get defaults
-    f_H2O = kwargs.get('f_H20', 0.64) # was 0.62
-    f_O2 = kwargs.get('f_O2', 0.24) # was 0.24
-    alpha_O2 = kwargs.get('alpha_O2', 0.992) # Was 0.992
-    f_feed = kwargs.get('f_feed', 0.12) # was 0.14
+    f_H2O = kwargs.get('f_H20', 0.69) # was 0.62
+    f_O2 = kwargs.get('f_O2', 0.181) # was 0.24
+    alpha_O2 = kwargs.get('alpha_O2', 0.990) # Was 0.992
+    f_feed = kwargs.get('f_feed', 0.129) # was 0.14
 
-    f_H2O_en = kwargs.get('f_H2O_en', 0.64)  # Fraction effluent H2O unfractionated. Was 0.62
-    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', 0.992) # Was 0.992
-    f_H2O_ef = kwargs.get('f_H2O_ef', 0.12) # was 0.14
-    alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
-    f_CO2 = kwargs.get('f_CO2', 0.24) # was 0.24
+    f_H2O_en = kwargs.get('f_H2O_en', 0.69)  # Fraction effluent H2O unfractionated. Was 0.62
+    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', .990) # Was 0.992
+    f_H2O_ef = kwargs.get('f_H2O_ef', 0.129) # was 0.14
+    alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.040) # Was 1.0383
+    f_CO2 = kwargs.get('f_CO2', 0.181) # was 0.24
     ev_enrichment = kwargs.get('ev_enrichment', 0.6) # Was 1.2
 
 
@@ -244,13 +244,13 @@ def blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs):
         + (alpha_CO2_H2O * f_CO2)
     )
 
-    return R2d(R_eq) + ev_enrichment
+    return R2d(R_eq) #+ ev_enrichment
 
 def blood_delta(d_O2, d_water, d_feed, **kwargs):
     # Calculate equilibrium on each day
     d_eq = blood_d_equilibrium(d_O2, d_water, d_feed, **kwargs)
     # Integrate differential equation to get
-    t_half = kwargs.get('t_half', 3.) #*********************************
+    t_half = kwargs.get('t_half', 2.63) #*********************************
     alpha = np.log(2.) / t_half
     beta = alpha * d_eq
 
@@ -327,7 +327,7 @@ def calc_blood_step(**kwargs):
     n_days = water_step.size
     days = np.arange(n_days)
     d_eq = blood_d_equilibrium(air, water_step, feed)
-    delta = blood_delta(air, water_step, feed, t_half=3.)
+    delta = blood_delta(air, water_step, feed, t_half=2.63)
 
 
     # Blood and water isotope measurements from sheep 962

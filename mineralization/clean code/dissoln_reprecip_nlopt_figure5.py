@@ -672,7 +672,7 @@ def score_v_score(w_iso_hist, fit_kwargs, step_size=0.1):
     return w_iso_hist, iso2, score1, score2
 
 def water_4_param(mu, switch_mu, switch_start, switch_length):
-    length_overall = np.ones(350.)
+    length_overall = np.ones(450.)
     w_iso_hist = length_overall * mu
     switch_start = int(switch_start)
     switch_length = int(switch_length)
@@ -681,7 +681,7 @@ def water_4_param(mu, switch_mu, switch_start, switch_length):
     return w_iso_hist
 
 def figureplot_PO4_line(mu, switch_mu, switch_start, switch_length, d_O2, d_feed, PO4_t, PO4_pause, PO4_flux):
-    length_overall = np.ones(350.)
+    length_overall = np.ones(450.)
     w_iso_hist = length_overall * mu
     switch_start = int(switch_start)
     switch_length = int(switch_length)
@@ -781,8 +781,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 100
-    keep_pct = 20. # Percent of trials to record
+    trials = 12000
+    keep_pct = 10. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/10.)
@@ -881,9 +881,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     for s in save_list:
         s_params = s[1]
         s_times = s_params[2:4]
-        print s_times.size
         s_PO4 = s_params[4:7]
-        print s_PO4.size
         s_times[1] = s_times[0] + s_times[1]
         s_times = tooth_timing_convert(s_times, *m1_m2_params)
         s_times[1] = s_times[1] - s_times[0]
@@ -953,16 +951,16 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     for s in list_water_results[:-1]:
         ax1.plot(days, s, 'g-', alpha=0.1)
     ax1.plot(days, list_water_results[-1], 'g-', label=r'$ \mathrm{PO}_4^{eq} \ \delta^{18}\!\mathrm{O} \ \mathrm{(trials)}$', alpha=.1)
-    h1, l1 = ax1.get_legend_handles_labels()
     ax1.plot(days, phosphate_eq, 'g-.', linewidth=2.0, label=r'$ \mathrm{PO}_4^{eq} \ \delta^{18}\!\mathrm{O} \ \mathrm{(optimum)}$', alpha=1)
+    h1, l1 = ax1.get_legend_handles_labels()
     ax1.legend(h1, l1, loc='bottom left', fontsize=10)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     #ax1.text(350, -15, textstr, fontsize=8)
-    ax1.set_ylim(-30, 0)
-    ax1.set_xlim(50, 350)
+    ax1.set_ylim(-22, -2)
+    ax1.set_xlim(100, 400)
 
-    #fig.savefig('a-synch86o_forward_PO4p35_newdelta_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('fig5_a-synch86o_forward_PO4p35_newdelta_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
 
