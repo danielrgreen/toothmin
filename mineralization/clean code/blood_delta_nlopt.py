@@ -397,8 +397,8 @@ def optimize_blood_params(blood_days, blood_measures, **fit_kwargs):
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 5)
     global_opt.set_maxeval(5000)
-    global_opt.set_lower_bounds([.40, .52, .960, 1.0260, 2.5])
-    global_opt.set_upper_bounds([.80, .75, .998, 1.0420, 3.5])
+    global_opt.set_lower_bounds([.60, .66, .992, 1.0383, 2.5])
+    global_opt.set_upper_bounds([.60, .66, .992, 1.0383, 3.5])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(5)
