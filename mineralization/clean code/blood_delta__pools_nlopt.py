@@ -130,21 +130,20 @@ def blood_d_equilibrium(blood_params, d_O2, d_water, d_feed, **kwargs):
     :param kwargs:
     :return:
     '''
-    # Get defaults
-    airfrac = (1.-.60) * (.66)
-    feed_frac = (1.-.60) * (1. - .66)
+     # Get defaults
+    airfrac = (1.-blood_params[0]) * (blood_params[1])
+    feed_frac = (1.-blood_params[0]) * (1. - blood_params[1])
 
-    f_H2O = kwargs.get('f_H20', .60) # was 0.62
+    f_H2O = kwargs.get('f_H20', blood_params[0]) # was 0.62
     f_O2 = kwargs.get('f_O2', airfrac) # was 0.24
-    alpha_O2 = kwargs.get('alpha_O2', .992) # Was 0.992
+    alpha_O2 = kwargs.get('alpha_O2', blood_params[2]) # Was 0.992
     f_feed = kwargs.get('f_feed', feed_frac) # was 0.14
 
-    f_H2O_en = kwargs.get('f_H2O_en', .60)  # Fraction effluent H2O unfractionated. Was 0.62
-    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', .992) # Was 0.992
+    f_H2O_en = kwargs.get('f_H2O_en', blood_params[0])  # Fraction effluent H2O unfractionated. Was 0.62
+    alpha_H2O_ef = kwargs.get('alpha_H2O_ef', blood_params[2]) # Was 0.992
     f_H2O_ef = kwargs.get('f_H2O_ef', feed_frac) # was 0.14
-    alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', 1.0383) # Was 1.0383
+    alpha_CO2_H2O = kwargs.get('alpha_CO2_H2O', blood_params[3]) # Was 1.0383
     f_CO2 = kwargs.get('f_CO2', airfrac) # was 0.24
-    #ev_enrichment = kwargs.get('ev_enrichment', 0.6) # Was 1.2
 
 
     # Calculate equilibrium on each day
@@ -167,11 +166,11 @@ def cerling_delta(blood_params, **kwargs):
     d_feed = kwargs.get('feed', 25.5)
     d_O2 = kwargs.get('air', 23.5)
 
-    l1 = blood_params[0]
-    l2 = blood_params[1]
+    l1 = blood_params[4]
+    l2 = blood_params[5]
 
-    f1 = blood_params[2]
-    f2 = 1 - blood_params[2]
+    f1 = blood_params[6]
+    f2 = 1 - blood_params[6]
 
     d_water = calc_water_step(400., **kwargs)
     days = np.arange(d_water.size)
@@ -222,33 +221,42 @@ def optimize_blood_params(blood_days, blood_measures, **fit_kwargs):
 
     f_objective = lambda x, grad: est_blood_params(x, **fit_kwargs)[0]
 
-    local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, 7)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([.01, .0001, .5])
-    local_opt.set_upper_bounds([3., 1., .999])
+    local_opt.set_lower_bounds([.40, .52, .960, 1.0160, .01, .001, .05])
+    local_opt.set_upper_bounds([.85, .85, .999, 1.0520, 2., 2., .99])
     local_opt.set_min_objective(f_objective)
 
-    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 3)
-    global_opt.set_maxeval(5000)
-    global_opt.set_lower_bounds([.01, .0001, .5])
-    global_opt.set_upper_bounds([3., 1., .999])
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 7)
+    global_opt.set_maxeval(25000)
+    global_opt.set_lower_bounds([.40, .52, .960, 1.0160, .01, .001, .05])
+    global_opt.set_upper_bounds([.85, .85, .999, 1.0520, 2., 2., .99])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
-    global_opt.set_population(3)
+    global_opt.set_population(7)
 
     print 'Running global optimizer ...'
-    x_opt = global_opt.optimize([.5, .01, .85])
+    x_opt = global_opt.optimize([.60, .66, .992, 1.0383, .5, .01, .85])
 
     minf = global_opt.last_optimum_value()
     print "minimum value = ", minf
     print "result code = ", global_opt.last_optimize_result()
-    print "first lambda = ", x_opt[0]
-    print "second lambda = ", x_opt[1]
-    print "first lambda fraction = ", x_opt[2]
-    print "second lambda fraction = ", 1 - x_opt[2]
 
-    first_thalf = np.log(2)/x_opt[0]
-    second_thalf = np.log(2)/x_opt[1]
+    print "water input fraction = ", x_opt[0]
+    print "air input fraction = ", (1. - x_opt[0]) * (x_opt[1])
+    print "air input alpha = ", x_opt[2]
+    print "feed input fraction = ", (1. - x_opt[0]) * (1. - x_opt[1])
+    print "water efflux alpha = ", x_opt[2]
+    print "CO2 efflux alpha = ", x_opt[3]
+
+
+    print "first lambda = ", x_opt[4]
+    print "second lambda = ", x_opt[5]
+    print "first lambda fraction = ", x_opt[6]
+    print "second lambda fraction = ", 1 - x_opt[6]
+
+    first_thalf = np.log(2)/x_opt[4]
+    second_thalf = np.log(2)/x_opt[5]
 
     t2 = time()
     run_time = t2-t1
@@ -256,7 +264,7 @@ def optimize_blood_params(blood_days, blood_measures, **fit_kwargs):
     score, delta, blood_days, blood_measures, water_step = est_blood_params(x_opt, **fit_kwargs)
     days = np.arange(delta.size)
 
-    textstr = '%.5f, %.5f, %.5f \n1st_halflife = %.3f, 2nd_halflife = %.3f \nmin = %.3g, time = %.1f seconds' % (x_opt[0], x_opt[1], x_opt[2], first_thalf, second_thalf, minf, run_time)
+    textstr = '%.3f, %.3f, %.3f, %.3f \n %.3f, %.3f, %.3f \n1st_halflife = %.3f, 2nd_halflife = %.3f \nmin = %.3g, time = %.1f seconds' % (x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], x_opt[6], first_thalf, second_thalf, minf, run_time)
 
     t_save = time()
 
