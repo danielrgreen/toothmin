@@ -575,9 +575,9 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 19.
+        model_isomap[k] = model_isomap[k][:,1:,day] + 19. #*** No. in middle denotes deletion from bottom***
         for c in xrange(model_isomap[k].shape[0]):
-            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2)
+            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2) # ***No. at end denotes deletion from top***
 
     re_shape = (iso_shape[0], iso_shape[1], len(model_isomap))
     remodeled = np.empty(re_shape, dtype='f8')
@@ -733,7 +733,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     print 'loading tooth model ...'
     tooth_model_lg = ToothModel(model_fname)
-    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
+    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1) # Addition typically 5
 
     # Set keyword arguments to be used in fitting procedure
     fit_kwargs = kwargs.copy()
@@ -791,21 +791,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 7)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-6.5, -19.4, 55.9, 38.730, 17.61, 34.45, 0.549])
-    local_opt.set_upper_bounds([-6.4, -19.3, 56.0, 38.740, 17.61, 34.55, 0.549])
+    local_opt.set_lower_bounds([-6.5, -19.4, 55.9, 38.730, 17.61, 34.45, 0.001])
+    local_opt.set_upper_bounds([-6.4, -19.3, 56.0, 38.740, 17.61, 34.55, 0.001])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 7)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([-6.5, -19.4, 55.9, 38.730, 17.61, 34.45, 0.549])
-    global_opt.set_upper_bounds([-6.4, -19.3, 56.0, 38.740, 17.61, 34.55, 0.549])
+    global_opt.set_lower_bounds([-6.5, -19.4, 55.9, 38.730, 17.61, 34.45, 0.001])
+    global_opt.set_upper_bounds([-6.4, -19.3, 56.0, 38.740, 17.61, 34.55, 0.001])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(7)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([-6.45, -19.35, 55.95, 38.735, 17.61, 34.5, 0.549])
+    x_opt = global_opt.optimize([-6.45, -19.35, 55.95, 38.735, 17.61, 34.5, 0.001])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -935,7 +935,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg5 = ax5.imshow(np.mean(trial_model, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    fig.savefig('a-synch86o_forward_newdelta_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('a-synch86o_forward_plain_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
@@ -957,7 +957,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-30, 0)
     ax1.set_xlim(-100, 550)
 
-    #fig.savefig('a-synch86o_forward_newdelta_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('a-synch86o_forward_plain_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
 

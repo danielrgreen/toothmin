@@ -177,7 +177,7 @@ def cerling_delta(blood_params, **kwargs):
     d_eq = blood_d_equilibrium(blood_params, d_O2, d_water, d_feed, **kwargs)
     dt = np.ones(days.size) * d_eq[0]
     for d,i in enumerate(dt):
-        dt[d] = (dt[d-1] - d_eq[d]) * ((f1*np.exp(-l1)) + (f2*np.exp(-l2))) + d_eq[d]
+        dt[d] = (dt[d-1] - d_eq[d]) * ((f1*np.exp(-l1)) + (f2*np.exp(-l2))) + d_eq[d] # ****WRONG****
 
     #for j,k in enumerate(dt):
     #    print j,k
@@ -223,20 +223,20 @@ def optimize_blood_params(blood_days, blood_measures, **fit_kwargs):
 
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 7)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([.40, .52, .960, 1.0160, .01, .001, .05])
-    local_opt.set_upper_bounds([.85, .85, .999, 1.0520, 2., 2., .99])
+    local_opt.set_lower_bounds([.40, .52, .960, 1.0160, 2.8095, .001, .99])
+    local_opt.set_upper_bounds([.85, .85, .999, 1.0520, 2.8095, 2., .99])
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 7)
-    global_opt.set_maxeval(25000)
-    global_opt.set_lower_bounds([.40, .52, .960, 1.0160, .01, .001, .05])
-    global_opt.set_upper_bounds([.85, .85, .999, 1.0520, 2., 2., .99])
+    global_opt.set_maxeval(5000)
+    global_opt.set_lower_bounds([.40, .52, .960, 1.0160, 2.8095, .001, .99])
+    global_opt.set_upper_bounds([.85, .85, .999, 1.0520, 2.8095, 2., .99])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(7)
 
     print 'Running global optimizer ...'
-    x_opt = global_opt.optimize([.60, .66, .992, 1.0383, .5, .01, .85])
+    x_opt = global_opt.optimize([.60, .66, .992, 1.0383, 2.8095, .01, .99])
 
     minf = global_opt.last_optimum_value()
     print "minimum value = ", minf
