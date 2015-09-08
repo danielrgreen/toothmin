@@ -242,7 +242,10 @@ def PO4_dissoln_reprecip(reprecip_eq_t_half, pause, d_blood, **kwargs):
 
     alpha = np.log(2.) / reprecip_eq_t_half
     beta = alpha * d_blood[pause:]
-    d_tooth_phosphate = integrate_delta(d_blood[0], alpha, beta)
+
+    d_tooth_phosphate = np.empty(d_blood.size, dtype='f8')
+    d_tooth_phosphate[:-pause] = integrate_delta(d_blood[0], alpha, beta)
+    d_tooth_phosphate[-pause:] = d_blood[-pause:]
 
     return d_tooth_phosphate
 

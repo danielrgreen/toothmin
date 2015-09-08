@@ -362,7 +362,7 @@ def gen_mnzt_movie(tooth_model, outfname):
 
 def gen_isomap_movie(tooth_model, blood_step):
 
-    print 'generating movie...'
+    print 'generating movie...' #
     img = tooth_model.gen_isotope_image(blood_step, mode='sample')
     
     sigma_t = 0

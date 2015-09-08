@@ -257,23 +257,24 @@ def blood_delta(d_O2, d_water, d_feed, **kwargs):
     return integrate_delta(d_eq[0], alpha, beta)
 
 def PO4_dissoln_reprecip(reprecip_eq_t_half, pause, pct_flux, d_blood, **kwargs):
+    pause = int(pause)
+    #final_d_blood = np.ones(pause) * d_blood[-1]
 
-    final_d_blood = np.ones(pause) * d_blood[-1]
-
-    print d_blood.shape
-    print final_d_blood.shape
+    #print d_blood.shape
+    #print final_d_blood.shape
 
     new_d_blood = d_blood[pause:]
-    new_d_blood = np.concatenate((new_d_blood, final_d_blood))
+    #new_d_blood = np.concatenate((new_d_blood, final_d_blood))
 
 
     alpha = np.log(2.) / reprecip_eq_t_half
     beta = alpha * new_d_blood
-    d_tooth_phosphate = integrate_delta_experimental(new_d_blood[0], alpha, beta)
-    #weighted_mu = np.ones(d_blood.size) * pct_flux
-    #weighted_mu_2 = np.ones(d_blood.size) * (1 -pct_flux)
+    d_tooth_phosphate = np.empty(d_blood.size, dtype='f8')
+    d_tooth_phosphate[:-pause] = integrate_delta(d_blood[0], alpha, beta)
+    d_tooth_phosphate[-pause:] = d_blood[-pause:]
 
     phosphate_eq = (d_tooth_phosphate * pct_flux) + (d_blood * (1 - pct_flux))
+
     print phosphate_eq.shape
 
     return phosphate_eq
@@ -319,7 +320,7 @@ def calc_blood_step(**kwargs):
     :return:            Stepped blood delta values in SMOW
     '''
 
-    water_step = calc_water_step(400)
+    water_step = calc_water_step(400.)
 
     feed = kwargs.get('feed', 25.5)
     air = kwargs.get('air', 23.5)
@@ -338,8 +339,8 @@ def calc_blood_step(**kwargs):
     water_iso_days = np.array([i[0] for i in water_iso_day_measures])
     water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
 
-    '''
-    d_tooth_phosphate = PO4_dissoln_reprecip(25., 15., .3, delta, **kwargs) #**********************
+
+    d_tooth_phosphate = PO4_dissoln_reprecip(17., 35., .55, delta, **kwargs) #**********************
     print d_tooth_phosphate.shape
     print days.shape
 
@@ -354,7 +355,6 @@ def calc_blood_step(**kwargs):
     ax.set_ylim(-24., 6.)
     ax.set_xlim(-60., 510.)
     plt.show()
-    '''
 
     return water_step, delta
 
