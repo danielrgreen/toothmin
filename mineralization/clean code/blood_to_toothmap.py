@@ -322,8 +322,8 @@ def gen_mnzt_movie(tooth_model, outfname):
         img[k] = img_interp(t)
 
     img = np.diff(img, axis=0)
-    sigma_t = 4
-    sigma_x, sigma_y = 0, 0
+    sigma_t = 8
+    sigma_x, sigma_y = 1, 1
     img = gaussian_filter(img, (sigma_t,sigma_x,sigma_y), mode='nearest')
     
     idx = np.isfinite(img)
@@ -333,8 +333,8 @@ def gen_mnzt_movie(tooth_model, outfname):
     fig = plt.figure(figsize=(6,3), dpi=100)
     ax = fig.add_subplot(1,1,1)
     plt.tick_params(
-        axis='x',
-        which='both',
+        axis='none',
+        which='none',
         bottom='off',
         top='off',
         labelbottom='off'
@@ -345,7 +345,8 @@ def gen_mnzt_movie(tooth_model, outfname):
         origin='lower',
         interpolation='nearest',
         vmin=0.,
-        vmax=vmax
+        vmax=vmax,
+        aspect=5
     )
     
     for k,t in enumerate(ages[:-1]):
@@ -356,9 +357,9 @@ def gen_mnzt_movie(tooth_model, outfname):
         #img = img_interp(t)
         im.set_data(img[k].T) #was(img[k].T)
 
-        ax.set_title(r'$t = %d \ \mathrm{days}$' % t, fontsize=14)
-        
-        fig.savefig(fn, dpi=100)
+        ax.set_title(r'$\mathrm{Sheep} \ \mathrm{molar} \ \mathrm{mineralization,} \ t = %03d \ \mathrm{days}$' % t, fontsize=12)
+        plt.axis('off')
+        fig.savefig(fn, dpi=300)
 
 def gen_isomap_movie(tooth_model, blood_step):
 
@@ -825,21 +826,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     '''
 
 def main():
-    fit_tooth_data('/Users/darouet/Desktop/tooth_example.csv')
+    #fit_tooth_data('/Users/darouet/Desktop/tooth_example.csv')
 
-    '''
-    print 'importing isotope data...'
-    iso_shape, iso_data, iso_data_x_ct = import_iso_data()
+
+    #print 'importing isotope data...'
+    #iso_shape, iso_data, iso_data_x_ct = import_iso_data()
 
     print 'loading tooth model ...'
-    tooth_model = ToothModel('final_equalsize_jan2015.h5')
+    tooth_model = ToothModel('equalsize_jul2015a.h5')
 
-    tooth_model_sm = tooth_model.downsample_model((iso_shape[0]+5, iso_shape[1]+5), 1)
+    #tooth_model_sm = tooth_model.downsample_model((iso_shape[0]+5, iso_shape[1]+5), 1)
 
-    #print 'Generating movies...'
-    #gen_mnzt_movie(tooth_model, 'frames/fullres')
+    print 'Generating movies...'
+    gen_mnzt_movie(tooth_model, 'frames/fullres')
     #gen_mnzt_movie(tooth_model_sm, 'frames/50x30')
-
+    '''
     print 'importing blood isotope history...'
     water_step, blood_step = calc_blood_step()
 
@@ -861,10 +862,10 @@ def main():
     cimg3 = ax3.imshow(remodeled[:,:,1].T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
     cax2 = fig.colorbar(cimg2)
     plt.show()
-
+    '''
     #gen_min_movie(tooth_model)
     #gen_isomap_movie(tooth_model_sm, blood_step)
-    '''
+
 
     return 0
 
