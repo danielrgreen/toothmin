@@ -575,7 +575,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 18.8 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET***
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
             model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2) # ***No. at end denotes deletion from top***
 
@@ -797,8 +797,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 100
-    keep_pct = 20. # Percent of trials to record
+    trials = 50000
+    keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/10.)
@@ -807,15 +807,15 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 7)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-6.45, -19.35, 55.95, 38.735, 3., 34.5, 0.3])
-    local_opt.set_upper_bounds([-6.45, -19.35, 55.95, 38.735, 3., 34.5, 0.3])
+    local_opt.set_lower_bounds([-6.45, -19.35, 55.95, 38.735, 0.5, 1.0, 0.05])
+    local_opt.set_upper_bounds([-6.45, -19.35, 55.95, 38.735, 40., 50., 0.85])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 7)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([-6.45, -19.35, 55.95, 38.735, 3., 34.5, 0.3])
-    global_opt.set_upper_bounds([-6.45, -19.35, 55.95, 38.735, 3., 34.5, 0.3])
+    global_opt.set_lower_bounds([-6.45, -19.35, 55.95, 38.735, 0.5, 1.0, 0.05])
+    global_opt.set_upper_bounds([-6.45, -19.35, 55.95, 38.735, 40., 50., 0.85])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(7)
@@ -908,7 +908,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     print textstr
 
     fig = plt.figure()
-    ax1 = fig.add_subplot(5,1,1)
+    ax1 = fig.add_subplot(7,1,1)
     blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **kwargs)
     phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, blood_hist, **kwargs)
     days = np.arange(blood_hist.size)
@@ -917,7 +917,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.plot(days, phosphate_eq, 'g-.', linewidth=1.0)
     ax1.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax1.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
-    for s in list_water_results:
+    for s in list_water_results[:-1]:
         ax1.plot(days, s, 'g-', alpha=0.05)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
@@ -926,32 +926,49 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_xlim(-100, 550)
 
     temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
-    ax2 = fig.add_subplot(5,1,2)
+    opt_params = np.array([x_opt[0], x_opt[1], x_opt[2], x_opt[3], 3., 34.5, .3])
+    temp_opt, model_isomap_opt = water_hist_prob_4param(opt_params, **fit_kwargs)
+
+    ax2 = fig.add_subplot(7,1,2)
     #ax2text = 'Inverse model result'
     #ax2.text(21, 3, ax2text, fontsize=8)
     cimg2 = ax2.imshow(np.mean(model_isomap, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax2 = fig.colorbar(cimg2)
 
-    ax3 = fig.add_subplot(5,1,3)
+    ax3 = fig.add_subplot(7,1,3)
     #ax3text = '962 data'
     #ax3.text(21, 3, ax3text, fontsize=8)
     cimg3 = ax3.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax3 = fig.colorbar(cimg3)
 
     residuals = np.mean(model_isomap, axis=2) - data_isomap
-    ax4 = fig.add_subplot(5,1,4)
+    ax4 = fig.add_subplot(7,1,4)
     #ax4text = 'model - data residuals'
     #ax4.text(21, 3, ax4text, fontsize=8)
-    cimg4 = ax4.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    cimg4 = ax4.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
     cax4 = fig.colorbar(cimg4)
 
-    ax5 = fig.add_subplot(5,1,5)
+    ax5 = fig.add_subplot(7,1,5)
     #ax5text = 'forward model expectation'
     #ax5.text(21, 3, ax5text, fontsize=8)
     cimg5 = ax5.imshow(np.mean(trial_model, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    fig.savefig('figure_4_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    trial_residuals = np.mean(trial_model, axis=2) - data_isomap
+    ax6 = fig.add_subplot(7,1,6)
+    #ax5text = 'forward model expectation'
+    #ax5.text(21, 3, ax5text, fontsize=8)
+    cimg6 = ax6.imshow(trial_residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
+    cax6 = fig.colorbar(cimg6)
+
+    opt_residuals = np.mean(model_isomap_opt, axis=2) - data_isomap
+    ax7 = fig.add_subplot(7,1,7)
+    #ax5text = 'forward model expectation'
+    #ax5.text(21, 3, ax5text, fontsize=8)
+    cimg7 = ax7.imshow(opt_residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
+    cax7 = fig.colorbar(cimg7)
+
+    fig.savefig('PO4_eq_18p6_50k_all_vary_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
@@ -964,17 +981,51 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.plot(days, phosphate_eq, 'g-.', linewidth=1.0)
     ax1.plot(blood_days, blood_measures, 'r*', linewidth=1.0)
     ax1.plot(water_iso_days, water_iso_measures, 'b*', linewidth=1.0)
-    for s in list_water_results:
+    for s in list_water_results[:-1]:
         ax1.plot(days, s, 'g-', alpha=0.05)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -15, textstr, fontsize=8)
-    ax1.set_ylim(-30, 0)
-    ax1.set_xlim(-100, 550)
+    ax1.set_ylim(-20, -4.5)
+    ax1.set_xlim(100, 400)
 
-    fig.savefig('figure_4_19p5_plain_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('PO4_eq_18p6_50k_all_vary_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
+    residuals_real = np.isfinite(residuals)
+    trial_real = np.isfinite(trial_residuals)
+    opt_real = np.isfinite(opt_residuals)
+    data_real = np.isfinite(data_isomap)
+
+    min_max = (
+                np.min(
+                [np.min(residuals[residuals_real]),
+                np.min(trial_residuals[trial_real]),
+                np.min(opt_residuals[opt_real]),
+                np.min(data_isomap[data_real])]),
+                np.max(
+                [np.max(residuals[residuals_real]),
+                np.max(trial_residuals[trial_real]),
+                np.max(opt_residuals[opt_real]),
+                np.max(data_isomap[data_real])]) )
+
+    trial_hist, bins = np.histogram(trial_residuals[trial_real], bins=15, range=min_max)
+    residuals_hist, bins = np.histogram(residuals[residuals_real], bins=15, range=min_max)
+    opt_hist, bins = np.histogram(opt_residuals[opt_real], bins=15, range=min_max)
+    center = (bins[:-1] + bins[1:]) / 2
+    print center
+    fig = plt.figure()
+    ax1 = fig.add_subplot(3,1,1)
+    ax1.hist(trial_residuals[trial_real], bins=(np.linspace(-3., 3., 24)), histtype='stepfilled', normed=True, color='#0040FF', alpha=.8, label='Low')
+    ax1.set_ylim(0, 1)
+    ax2 = fig.add_subplot(3,1,2)
+    ax2.hist(residuals[residuals_real], bins=(np.linspace(-3., 3., 24)), histtype='stepfilled', normed=True, color='#0040FF', alpha=.8, label='Low')
+    ax2.set_ylim(0, 1)
+    ax3 = fig.add_subplot(3,1,3)
+    ax3.hist(opt_residuals[opt_real], bins=(np.linspace(-3., 3., 24)), histtype='stepfilled', normed=True, color='#0040FF', alpha=.8, label='Low')
+    ax3.set_ylim(0, 1)
+    fig.savefig('PO4_eq_18p6_50k_all_vary_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    plt.show()
 
 def main():
 
