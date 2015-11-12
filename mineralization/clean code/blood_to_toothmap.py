@@ -640,7 +640,7 @@ def water_hist_likelihood(w_iso_hist, **kwargs):
     d_feed = kwargs.get('d_feed', 25.3)
     metabolic_kw = kwargs.get('metabolic_kw', {})
     blood_hist = blood_delta(d_O2, w_iso_hist, d_feed, **metabolic_kw)
-    phosphate_eq = PO4_dissoln_reprecip(17.609, 34.515, .54922, blood_hist, **kwargs) #***** 17.609, 34.515, 54.922 *****
+    phosphate_eq = PO4_dissoln_reprecip(3., 34.5, .3, blood_hist, **kwargs) #***** 17.609, 34.515, 54.922 *****
 
     # Access tooth model
     tooth_model = kwargs.get('tooth_model', None)
@@ -724,16 +724,18 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Real climate data
     #month_d180 = np.array([-1.95, -1.92, -2.94, -3.44, -2.22, -1.10, -0.67, -1.71, -0.81, -1.47, -2.31, -3.19]) # Dar Es Salaam
-    month_d180 = np.array([-0.21, 0.30, -0.04, 0.25, -0.75, -0.19, -3.16, -4.53, -0.95, 0.29, -1.26, -1.73]) # Addis Ababa
-    #month_d180 = np.array([-1.39, -0.35, -2.42, -3.25, -3.08, -1.44, -0.98, -1.88, -1.33, -3.10, -3.80, -1.63]) # Entebbe
-    #month_d180 = np.array([-6.31, -7.09, -4.87, -3.33, -1.83, -1.22, -1.08, -0.47, -0.17, -0.48, -2.92, -5.90]) # Harrare
-    #month_d180 = np.array([-2.98, -2.20, -4.74, -5.94, -2.64, -3.80, -0.25, -1.80, -1.25, -4.15, -5.80, -5.42]) # Kinshasa
+    #month_d180 = np.array([-0.21, 0.30, -0.04, 0.25, -0.75, -0.19, -3.16, -4.53, -0.95, 0.29, -1.26, -1.73]) # Addis Ababa
+    #month_d180 = np.array([-1.39, -0.35, -2.42, -3.25, -3.08, -1.44, -0.98, -1.88, -1.33, -3.10, -3.80, -1.63]) # Entebbe, Uganda
+    #month_d180 = np.array([-6.31, -7.09, -4.87, -3.33, -1.83, -1.22, -1.08, -0.47, -0.17, -0.48, -2.92, -5.90]) # Harare, Zimbabwe
+    #month_d180 = np.array([-2.98, -2.20, -4.74, -5.94, -2.64, -3.80, -0.25, -1.80, -1.25, -4.15, -5.80, -5.42]) # Kinshasa, DRC
     #month_d180 = np.array([-1.58, -1.54, -1.81, -3.08, -3.40, -3.69, -3.38, -3.78, -2.46, -2.19, -2.12, -1.79]) # Cape Town
     #month_d180 = np.array([-4.31, -3.50, -4.14, -4.68, -4.87, -5.11, -4.77, -4.80, -4.71, -4.50, -4.53, -4.77]) # Marion Island
     #month_d180 = np.array([0.00, -2.40, -1.75, -3.70, -3.90, -6.20, -7.75, -8.10, -6.25, -3.30, -4.75, -8.95, -2.10, -0.40, -4.55, -3.25, -5.75, -3.70, -8.60, -7.10, -8.50, -5.30, -4.55, -3.10, -2.75	-4.60, -2.00, -3.10, -5.25, -6.10]) # Hong Kong
     #month_d180 = np.array([-2.75, -5.35, -2.70, -1.60, -6.30, -7.25, -9.00, -8.10, -9.50, -5.30, -5.75, -4.00]) # Liuzhou
     #month_d180 = np.array([-5.30, -4.73, -7.44, -4.38, -4.39, -7.07, -9.76, -3.99, -3.95, -5.81, -8.98, -9.89, -8.62, -8.88, -8.25, -8.21, -9.74, -6.83, -6.69, -6.38, -10.33, -7.95, -5.72, -10.52, -10.74, -7.48, -9.30, -8.50, -12.66, -10.52, -10.82, -6.01, -8.34, -5.51, -7.03, -5.75, -8.14, -6.85, -4.82, -7.31, -8.79, -4.77, -6.14, -2.96, -2.31, -5.13, -9.31, -8.88, -9.22, -9.08, -7.51, -7.72, -10.29, -10.38, -9.69, -8.64, -10.66, -7.85, -6.94]) # Mulu, Borneo
     #week_d180 = np.array([-19.40, -19.4, -19.4, -19.4, -15.9, -15.9, -15.9, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -16.5, -16.5, -8.8, -8.8, -10.6, -10.6, -2.5, -9.3, -6.7, -8.2, -1.6, -6, -7, -4.4, -8.8, -6.5, -6.1, -6.1, -6.1, -0.6, 1.7, -4.5, -4.5, -4.5, -12.4, -12.4, -9.7, -12.2, -12.2, -12.2, -15.1, -15.1, -11, -11, -11, -30.5, -30.5, -30.5])  # North Platte Nebraska
+    month_d180 = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
+    
     # Conversion monthly precipitation isotope record into daily record
     year_iso_days = np.arange((24))*(730./(24.)) + 100.
     m1_iso_days = tooth_timing_convert(year_iso_days, *m2_m1_params)
@@ -792,18 +794,18 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #cimg1 = ax1.imshow(mu_fl.T, aspect='auto', interpolation='nearest', origin='lower', vmin=16., vmax=17., cmap='bwr')
     #cax1 = fig.colorbar(cimg1)
     ax2 = fig.add_subplot(2,1,1)
-    cimg2 = ax2.imshow(mu_sm.T, aspect='equal', interpolation='nearest', vmin=16., vmax=18., origin='lower', cmap='bwr')
+    cimg2 = ax2.imshow(mu_sm.T, aspect='equal', interpolation='nearest', vmin=3., vmax=12., origin='lower', cmap='bwr')
     cax2 = fig.colorbar(cimg2)
     #ax2 = fig.add_subplot(2,1,1)
     #cimg2 = ax2.imshow(data_isomap.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
     #cax2 = fig.colorbar(cimg2)
     #ax2.text(21, 4, textstr, fontsize=8)
     ax3 = fig.add_subplot(2,1,2)
-    cimg3 = ax3.imshow(mu_sm_r.T, aspect='equal', interpolation='nearest', vmin=16., vmax=18., origin='lower', cmap='bwr')
+    cimg3 = ax3.imshow(mu_sm_r.T, aspect='equal', interpolation='nearest', vmin=3., vmax=12., origin='lower', cmap='bwr')
     cax3 = fig.colorbar(cimg3)
 
     t_save = time()
-    fig.savefig('20150818_Addis_{0}.svg'.format(t_save), dpi=300)
+    fig.savefig('20150918_NPlatte_{0}.svg'.format(t_save), dpi=300)
     plt.show()
     '''
     r_mu_sm = np.ravel(mu_sm)
@@ -826,9 +828,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     '''
 
 def main():
-    #fit_tooth_data('/Users/darouet/Desktop/tooth_example.csv')
+    fit_tooth_data('/Users/darouet/Desktop/tooth_example.csv')
 
-
+    '''
     #print 'importing isotope data...'
     #iso_shape, iso_data, iso_data_x_ct = import_iso_data()
 
@@ -840,7 +842,7 @@ def main():
     print 'Generating movies...'
     gen_mnzt_movie(tooth_model, 'frames/fullres')
     #gen_mnzt_movie(tooth_model_sm, 'frames/50x30')
-    '''
+
     print 'importing blood isotope history...'
     water_step, blood_step = calc_blood_step()
 

@@ -124,7 +124,7 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 6)
-    global_opt.set_maxeval(300000)
+    global_opt.set_maxeval(300)
     global_opt.set_lower_bounds([20., .004, 30., 18., .0035, 50.])
     global_opt.set_upper_bounds([50., .0075, 60., 60., .008, 90.])
     global_opt.set_min_objective(f_objective)
@@ -143,10 +143,11 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     run_time = t2-t1
 
     M1_params = np.array([21.820, .007889, 29.118])
+    opt_M1_ec = np.array([25.076, .006445, 56.198, 26.770, .005236, 75.982]) #### NOTE THAT THIS OVERRIDES OPTIMIZATION !!!!!!!
     M1_height_max = 35.
 
     days = np.linspace(-100, 350, 451)
-    p35_model_extension, tooth_35p, p70_model_extension, tooth_70p = extension(x_opt[0], x_opt[1], x_opt[2], x_opt[3], x_opt[4], x_opt[5], days, tooth_35p, tooth_70p, days)
+    p35_model_extension, tooth_35p, p70_model_extension, tooth_70p = extension(opt_M1_ec[0], opt_M1_ec[1], opt_M1_ec[2], opt_M1_ec[3], opt_M1_ec[4], opt_M1_ec[5], days, tooth_35p, tooth_70p, days)
     M1_model_extension = (M1_params[0] * spec.erf(M1_params[1] * (days - M1_params[2]))) + (M1_height_max - M1_params[0])
     p35_diff_extension = np.diff(p35_model_extension) * 1000.
     p70_diff_extension = np.diff(p70_model_extension) * 1000.
@@ -166,8 +167,8 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     ax2.plot(days[1::4], p70_diff_extension[::4], 'r.', label=r'$ \mathrm{completion} \ \mathrm{rate} $', alpha=.5)
     #ax2.plot(days[1::4], kext_model_rate[::4], 'g.', label=r' \mathrm{histology} \ \Delta $', alpha=.5)
     ax2.plot(kday, kext, marker='D', fillstyle='none', linestyle='none', color='g', label=r'$ \mathrm{Kierdorf} \ \mathrm{rate} $')
-    ax2.set_ylim([0,250])
-    ax2.set_xlim([-50,350])
+    ax2.set_ylim([0,230])
+    ax2.set_xlim([0,350])
     ax1.plot(M1_days, M1_data_extension, marker='o', linestyle='none', color='b', label=r'$ \mathrm{extension} \ \mathrm{(observed)} $')
     ax1.plot(days, M1_model_extension, linestyle='-', color='b', label=b'$ \mathrm{extension} \ \mathrm{(fitted)} $')
     ax1.plot(M1_days, tooth_35p, marker='o', linestyle='none', color='m', label=r'$ \mathrm{maturation} \ \mathrm{(observed)} $')
@@ -175,7 +176,7 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     ax1.plot(tooth_70p_days, tooth_70p, marker='o', linestyle='none', color='r', label=r'$ \mathrm{completion} \ \mathrm{(observed)} $')
     ax1.plot(days, p70_model_extension, linestyle='-', color='r', label=r'$ \mathrm{completion} \ \mathrm{(fitted)} $')
     ax1.set_ylim([0,40])
-    ax1.set_xlim([-50,350])
+    ax1.set_xlim([0,350])
     #plt.title('M1 extension, maturation onset and completion over time', fontsize=6)
     #ax1.set_xlabel('Days after birth', fontsize=6)
     #ax1.set_ylabel('Progress from cusp tip in mm', fontsize=6)
@@ -183,9 +184,9 @@ def optimize_curve(M1_days, M1_data_extension, tooth_35p, tooth_70p, tooth_70p_d
     #ax2.set_ylabel('Extension, maturation and completion, ' + '$ \mu $' + 'm/day', fontsize=6)
     #ax2.legend(loc='lower right', fancybox=True, framealpha=0.8)
     #ax.legend(loc='upper right', fancybox=True, framealpha=0.8)
-    h1, l1 = ax1.get_legend_handles_labels()
-    h2, l2 = ax2.get_legend_handles_labels()
-    ax1.legend(h1+h2, l1+l2, loc='center right', fontsize=6)
+    #h1, l1 = ax1.get_legend_handles_labels()
+    #h2, l2 = ax2.get_legend_handles_labels()
+    #ax1.legend(h1+h2, l1+l2, loc='center right', fontsize=6)
     ax1.text(100, 2, textstr, fontsize=6)
 
     plt.show()

@@ -791,21 +791,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 7)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([-6.5, -19.4, 55.9, 38.730, 2., 34.45, 0.05])
-    local_opt.set_upper_bounds([-6.4, -19.3, 56.0, 38.740, 20., 34.55, 0.95])
+    local_opt.set_lower_bounds([-6.5, -19.4, 55.9, 38.730, 15.8, 34.45, 0.62])
+    local_opt.set_upper_bounds([-6.4, -19.3, 56.0, 38.740, 20., 34.55, 0.62])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 7)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([-6.5, -19.4, 55.9, 38.730, 2., 34.45, 0.05])
-    global_opt.set_upper_bounds([-6.4, -19.3, 56.0, 38.740, 20., 34.55, 0.95])
+    global_opt.set_lower_bounds([-6.5, -19.4, 55.9, 38.730, 2., 34.45, 0.62])
+    global_opt.set_upper_bounds([-6.4, -19.3, 56.0, 38.740, 20., 34.55, 0.62])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(7)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([-6.45, -19.35, 55.95, 38.735, 3., 34.5, 0.3])
+    x_opt = global_opt.optimize([-6.45, -19.35, 55.95, 38.735, 3., 34.5, 0.62])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
