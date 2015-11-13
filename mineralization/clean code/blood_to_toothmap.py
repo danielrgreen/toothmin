@@ -23,6 +23,8 @@ from time import time
 
 
 from scipy.interpolate import interp1d
+from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.interpolate import UnivariateSpline
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
 from blood_delta import calc_blood_step, calc_water_step2, calc_water_gaussian, calc_blood_gaussian, blood_delta, tooth_phosphate_reservoir
@@ -706,7 +708,55 @@ def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
 
     return converted_times
 
+
+#def generate_input_signal(fname, time_unit=1., signal_type=water, smoothing=0.):
+#    '''
+#    This function is not written yet.
+#    Inputs
+#    fname       filename where blood or water data will be retrieved.
+#    time_unit   the number of days requested per data point.
+#    signal_type specify whether mineralization model will take blood data directly
+#                or water data and convert to blood.
+#    smoothing   request if input data should be smoothed on scale of 0-10.
+#    PO4_reset   specify if PO4 resetting should occur.
+#
+#    Outputs
+#    blood_hist  outputs daily blood isotope history
+#    '''
+#    blood_hist = np.arange(10)
+#
+#    return blood_hist
+
+
+def spline_input_signal(smoothness):
+    '''
+    Has blood and water data from sheep 962 arranged from birth and outputs a
+    day-by-day spline-smoothed version.
+    '''
+
+    days_data = np.array([1.0, 31.0, 46.0, 58.0, 74.0, 102.0, 131.0, 162.0, 170.0, 198.0, 199.0, 200.0, 201.0, 202.0, 204.0, 204.0, 206.0, 208.0, 212.0, 212.0, 216.0, 219.0, 220.0, 221.0, 222.0, 232.0, 240.0, 261.0, 262.0, 272.0, 281.0, 282.0, 283.0, 284.0, 286.0, 290.0, 292.0, 298.0, 298.0, 310.0, 322.0, 358.0, 383.0, 411.0, 423.0, 453.0, 469.0, 483.0, 496.0])
+    blood_days = np.array([58.0, 74.0, 102.0, 131.0, 162.0, 199.0, 201.0, 202.0, 204.0, 208.0, 212.0, 219.0, 222.0, 232.0, 261.0, 262.0, 281.0, 283.0, 284.0, 290.0, 298.0, 310.0, 322.0, 358.0, 383.0, 423.0, 453.0, 483.0])
+    water_days = np.array([1.0, 31.0, 46.0, 74.0, 131.0, 170.0, 198.0, 199.0, 200.0, 201.0, 216.0, 219.0, 220.0, 221.0, 222.0, 261.0, 262.0, 272.0, 322.0, 358.0, 383.0, 411.0, 423.0, 469.0, 483.0, 496.0])
+    blood_data = np.array([-5.71, -5.01, -4.07, -3.96, -4.53, -3.95, -4.96, -8.56, -10.34, -12.21, -13.09, -13.49, -13.16, -12.93, -13.46, -13.29, -5.68, -4.87, -4.76, -4.97, -4.60, -4.94, -5.45, -9.34, -5.56, -6.55, -4.25, -4.31])
+    water_data = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -17.63, -5.93, -13.66, -13.67, -6.83, -6.65, -6.98])
+    days = np.arange(1., np.max(days_data), 1.)
+
+    water_spl = InterpolatedUnivariateSpline(water_days, water_data, k=smoothness)
+    blood_spl = InterpolatedUnivariateSpline(blood_days, blood_data, k=smoothness)
+    plt.plot(water_days, water_data, 'bo', ms=5)
+    plt.plot(blood_days, blood_data, 'ro', ms=5)
+    plt.plot(days, water_spl(days), 'b', lw=2, alpha=0.6)
+    plt.plot(days, blood_spl(days), 'r', lw=2, alpha=0.6)
+    plt.show()
+    days_spl = days
+    water_spl = np.array(water_spl(days))
+    blood_spl = np.array(blood_spl(days))
+
+    return water_spl, blood_spl, days_spl
+
 def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
+
+
     print 'importing isotope data...'
 
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
@@ -735,7 +785,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #month_d180 = np.array([-5.30, -4.73, -7.44, -4.38, -4.39, -7.07, -9.76, -3.99, -3.95, -5.81, -8.98, -9.89, -8.62, -8.88, -8.25, -8.21, -9.74, -6.83, -6.69, -6.38, -10.33, -7.95, -5.72, -10.52, -10.74, -7.48, -9.30, -8.50, -12.66, -10.52, -10.82, -6.01, -8.34, -5.51, -7.03, -5.75, -8.14, -6.85, -4.82, -7.31, -8.79, -4.77, -6.14, -2.96, -2.31, -5.13, -9.31, -8.88, -9.22, -9.08, -7.51, -7.72, -10.29, -10.38, -9.69, -8.64, -10.66, -7.85, -6.94]) # Mulu, Borneo
     #week_d180 = np.array([-19.40, -19.4, -19.4, -19.4, -15.9, -15.9, -15.9, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -16.5, -16.5, -8.8, -8.8, -10.6, -10.6, -2.5, -9.3, -6.7, -8.2, -1.6, -6, -7, -4.4, -8.8, -6.5, -6.1, -6.1, -6.1, -0.6, 1.7, -4.5, -4.5, -4.5, -12.4, -12.4, -9.7, -12.2, -12.2, -12.2, -15.1, -15.1, -11, -11, -11, -30.5, -30.5, -30.5])  # North Platte Nebraska
     month_d180 = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
-    
+
     # Conversion monthly precipitation isotope record into daily record
     year_iso_days = np.arange((24))*(730./(24.)) + 100.
     m1_iso_days = tooth_timing_convert(year_iso_days, *m2_m1_params)
@@ -746,6 +796,25 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     for k,d in enumerate(m1_iso_days):
         d = int(d)
         w_iso_hist[d:] = month_d180[k+11]
+
+    water_spl, blood_spl, days_spl = spline_input_signal(1)
+    water_spl = water_spl[50:]
+    blood_spl = blood_spl[50:]
+    days_spl = days_spl[50:]
+
+    print water_spl, blood_spl, days_spl
+
+
+    m1_days_spl = tooth_timing_convert(days_spl, *m2_m1_params)
+
+    print m1_days_spl
+
+    water_spl_tmp = np.ones(days_spl.size)
+    for k,d in enumerate(m1_days_spl):
+        d = int(d)
+        water_spl_tmp[d:] = water_spl[k]
+
+    water_spl = water_spl_tmp
 
     # Full model loading and isomap
     #fit_kwargs['tooth_model'] = tooth_model
@@ -764,7 +833,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
     # Generate blood d18O and tooth d18O isomap from drinking water history, with score compared to measured data
-    score_sm, model_isomap_sm = water_hist_likelihood(w_iso_hist, **fit_kwargs)
+    score_sm, model_isomap_sm = water_hist_likelihood(water_spl, **fit_kwargs)
     mu_sm = np.median(model_isomap_sm, axis=2)
     sigma_sm = np.std(model_isomap_sm, axis=2)
     sigma_sm = np.sqrt(sigma_sm**2. + 0.15**2 + 0.05**2)
@@ -793,19 +862,19 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #ax1 = fig.add_subplot(3,1,1)
     #cimg1 = ax1.imshow(mu_fl.T, aspect='auto', interpolation='nearest', origin='lower', vmin=16., vmax=17., cmap='bwr')
     #cax1 = fig.colorbar(cimg1)
-    ax2 = fig.add_subplot(2,1,1)
-    cimg2 = ax2.imshow(mu_sm.T, aspect='equal', interpolation='nearest', vmin=3., vmax=12., origin='lower', cmap='bwr')
+    ax1 = fig.add_subplot(3,1,1)
+    cimg1 = ax1.imshow(mu_sm.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+    cax1 = fig.colorbar(cimg1)
+    ax2 = fig.add_subplot(3,1,2)
+    cimg2 = ax2.imshow(data_isomap.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
     cax2 = fig.colorbar(cimg2)
-    #ax2 = fig.add_subplot(2,1,1)
-    #cimg2 = ax2.imshow(data_isomap.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
-    #cax2 = fig.colorbar(cimg2)
-    #ax2.text(21, 4, textstr, fontsize=8)
-    ax3 = fig.add_subplot(2,1,2)
-    cimg3 = ax3.imshow(mu_sm_r.T, aspect='equal', interpolation='nearest', vmin=3., vmax=12., origin='lower', cmap='bwr')
+    ax2.text(21, 4, textstr, fontsize=8)
+    ax3 = fig.add_subplot(3,1,3)
+    cimg3 = ax3.imshow(mu_sm_r.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
     cax3 = fig.colorbar(cimg3)
 
     t_save = time()
-    fig.savefig('20150918_NPlatte_{0}.svg'.format(t_save), dpi=300)
+    fig.savefig('spline_water_snow_2015_11_13.svg'.format(t_save), dpi=300)
     plt.show()
     '''
     r_mu_sm = np.ravel(mu_sm)
@@ -826,6 +895,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     plt.savefig('hist_13pm_60d@80d_april_2015_%.2f.pdf' % small_large_diff_pct, dpi=300)
     plt.show()
     '''
+
 
 def main():
     fit_tooth_data('/Users/darouet/Desktop/tooth_example.csv')
