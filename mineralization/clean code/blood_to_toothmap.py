@@ -598,7 +598,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 18.
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6
         for c in xrange(model_isomap[k].shape[0]):
             model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2)
 
