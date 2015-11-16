@@ -575,7 +575,7 @@ def gen_isomaps_fullsize(tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 18.
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6
         for c in xrange(model_isomap[k].shape[0]):
             model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2)
 
@@ -739,20 +739,32 @@ def spline_input_signal(smoothness):
     water_days = np.array([1.0, 31.0, 46.0, 74.0, 131.0, 170.0, 198.0, 199.0, 200.0, 201.0, 216.0, 219.0, 220.0, 221.0, 222.0, 261.0, 262.0, 272.0, 322.0, 358.0, 383.0, 411.0, 423.0, 469.0, 483.0, 496.0])
     blood_data = np.array([-5.71, -5.01, -4.07, -3.96, -4.53, -3.95, -4.96, -8.56, -10.34, -12.21, -13.09, -13.49, -13.16, -12.93, -13.46, -13.29, -5.68, -4.87, -4.76, -4.97, -4.60, -4.94, -5.45, -9.34, -5.56, -6.55, -4.25, -4.31])
     water_data = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -17.63, -5.93, -13.66, -13.67, -6.83, -6.65, -6.98])
+    ice_33 = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -9.87, -5.93, -8.89, -9.36, -6.83, -6.65, -6.98])
+    ice_50 = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -11.89, -5.93, -10.15, -10.51, -6.83, -6.65, -6.98])
+    ice_66 = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -13.67, -5.93, -11.21, -11.45, -6.83, -6.65, -6.98])
+
     days = np.arange(1., np.max(days_data), 1.)
 
     water_spl = InterpolatedUnivariateSpline(water_days, water_data, k=smoothness)
     blood_spl = InterpolatedUnivariateSpline(blood_days, blood_data, k=smoothness)
+    i33_spl = InterpolatedUnivariateSpline(water_days, ice_33, k=smoothness)
+    i50_spl = InterpolatedUnivariateSpline(water_days, ice_50, k=smoothness)
+    i66_spl = InterpolatedUnivariateSpline(water_days, ice_66, k=smoothness)
     plt.plot(water_days, water_data, 'bo', ms=5)
     plt.plot(blood_days, blood_data, 'ro', ms=5)
     plt.plot(days, water_spl(days), 'b', lw=2, alpha=0.6)
     plt.plot(days, blood_spl(days), 'r', lw=2, alpha=0.6)
-    plt.show()
+    #plt.show()
     days_spl = days
     water_spl = np.array(water_spl(days))
     blood_spl = np.array(blood_spl(days))
+    i33_spl = np.array(i33_spl(days))
+    i50_spl = np.array(i50_spl(days))
+    i66_spl = np.array(i66_spl(days))
 
-    return water_spl, blood_spl, days_spl
+    print np.size(days_spl), np.size(water_spl), np.size(blood_spl), np.size(i33_spl), np.size(i50_spl), np.size(i66_spl)
+
+    return water_spl, blood_spl, days_spl, i33_spl, i50_spl, i66_spl
 
 def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
@@ -797,24 +809,38 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         d = int(d)
         w_iso_hist[d:] = month_d180[k+11]
 
-    water_spl, blood_spl, days_spl = spline_input_signal(1)
+    water_spl, blood_spl, days_spl, i33_spl, i50_spl, i66_spl = spline_input_signal(1)
     water_spl = water_spl[50:]
     blood_spl = blood_spl[50:]
     days_spl = days_spl[50:]
-
-    print water_spl, blood_spl, days_spl
-
+    i33_spl = i33_spl[50:]
+    i50_spl = i50_spl[50:]
+    i66_spl = i66_spl[50:]
 
     m1_days_spl = tooth_timing_convert(days_spl, *m2_m1_params)
 
-    print m1_days_spl
-
     water_spl_tmp = np.ones(days_spl.size)
+    blood_spl_tmp = np.ones(days_spl.size)
+    i33_spl_tmp = np.ones(days_spl.size)
+    i50_spl_tmp = np.ones(days_spl.size)
+    i66_spl_tmp = np.ones(days_spl.size)
+
+    print i33_spl.size, i33_spl_tmp.size, water_spl_tmp.size, m1_days_spl.size
+
+
     for k,d in enumerate(m1_days_spl):
         d = int(d)
         water_spl_tmp[d:] = water_spl[k]
+        blood_spl_tmp[d:] = blood_spl[k]
+        i33_spl_tmp[d:] = i33_spl[k]
+        i50_spl_tmp[d:] = i50_spl[k]
+        i66_spl_tmp[d:] = i66_spl[k]
 
     water_spl = water_spl_tmp
+    blood_spl = blood_spl_tmp
+    i33_spl = i33_spl_tmp
+    i50_spl = i50_spl_tmp
+    i66_spl = i66_spl_tmp
 
     # Full model loading and isomap
     #fit_kwargs['tooth_model'] = tooth_model
@@ -833,13 +859,26 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
     # Generate blood d18O and tooth d18O isomap from drinking water history, with score compared to measured data
-    score_sm, model_isomap_sm = water_hist_likelihood(water_spl, **fit_kwargs)
-    mu_sm = np.median(model_isomap_sm, axis=2)
-    sigma_sm = np.std(model_isomap_sm, axis=2)
-    sigma_sm = np.sqrt(sigma_sm**2. + 0.15**2 + 0.05**2)
+    score_sm_w, model_isomap_sm_w = water_hist_likelihood(water_spl, **fit_kwargs)
+    score_i33, model_isomap_i33 = water_hist_likelihood(i33_spl, **fit_kwargs)
+    score_i50, model_isomap_i50 = water_hist_likelihood(i50_spl, **fit_kwargs)
+    score_i66, model_isomap_i66 = water_hist_likelihood(i66_spl, **fit_kwargs)
+    mu_sm_w = np.median(model_isomap_sm_w, axis=2)
+    sigma_sm_w = np.std(model_isomap_sm_w, axis=2)
+    sigma_sm_w = np.sqrt(sigma_sm_w**2. + 0.15**2 + 0.05**2)
     #resid_img = (mu - data_isomap) / sigma
 
-    m_mu_sm = np.ma.masked_array(mu_sm, np.isnan(mu_sm))
+    # Generate tooth isomap from blood measurements
+    forward_metabolic_kw = kwargs.get('metabolic_kw', {})
+    forward_phosphate_eq_b_PO4 = PO4_dissoln_reprecip(3., 34.5, .3, blood_spl, **kwargs)
+    forward_blood_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, forward_phosphate_eq_b_PO4) # This takes the blood history from 962 scaled to the M1 without also downscaling the blood turnover
+
+    plt.plot(m1_days_spl, water_spl, 'b', lw=2)
+    plt.plot(m1_days_spl, blood_spl, 'r', lw=2)
+    plt.plot(m1_days_spl, forward_phosphate_eq_b_PO4, 'g', lw=2)
+    plt.show()
+
+    m_mu_sm = np.ma.masked_array(mu_sm_w, np.isnan(mu_sm_w))
     mu_sm_r = np.mean(m_mu_sm, axis=1)
     small_sample = np.ones(int(mu_sm_r.size/2))
     for k,d in enumerate(small_sample):
@@ -853,28 +892,54 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #save_tooth[np.isnan(save_tooth)] = 0.
     #np.savetxt('m2_predicted_a_hist_half=3.csv', np.flipud(save_tooth), delimiter=',', fmt='%.2f')
 
-    mu_sm[mu_sm==0.] = np.nan
+    mu_sm_w[mu_sm_w==0.] = np.nan
 
-    print score_sm
-    textstr = '%.1f' % score_sm
+    print score_sm_w
+    textstr = '%.1f' % score_sm_w
 
     fig = plt.figure(figsize=(10,4), dpi=100)
     #ax1 = fig.add_subplot(3,1,1)
     #cimg1 = ax1.imshow(mu_fl.T, aspect='auto', interpolation='nearest', origin='lower', vmin=16., vmax=17., cmap='bwr')
     #cax1 = fig.colorbar(cimg1)
-    ax1 = fig.add_subplot(3,1,1)
-    cimg1 = ax1.imshow(mu_sm.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+
+    ax1 = fig.add_subplot(6,1,1)
+    ax1text = 'forward model from water data 100% ice'
+    ax1.text(19, 3, ax1text, fontsize=8)
+    cimg1 = ax1.imshow(mu_sm_w.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
     cax1 = fig.colorbar(cimg1)
-    ax2 = fig.add_subplot(3,1,2)
+
+    ax2 = fig.add_subplot(6,1,2)
+    ax2text = 'data'
+    ax2.text(19, 3, ax2text, fontsize=8)
     cimg2 = ax2.imshow(data_isomap.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
     cax2 = fig.colorbar(cimg2)
-    ax2.text(21, 4, textstr, fontsize=8)
-    ax3 = fig.add_subplot(3,1,3)
-    cimg3 = ax3.imshow(mu_sm_r.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+
+    ax3 = fig.add_subplot(6,1,3)
+    ax3text = 'forward model from blood data'
+    ax3.text(19, 3, ax3text, fontsize=8)
+    cimg3 = ax3.imshow(np.mean(forward_blood_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
     cax3 = fig.colorbar(cimg3)
 
+    ax4 = fig.add_subplot(6,1,4)
+    ax4text = 'forward model 33% ice'
+    ax4.text(19, 3, ax4text, fontsize=8)
+    cimg4 = ax4.imshow(np.mean(model_isomap_i33, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
+    cax4 = fig.colorbar(cimg4)
+
+    ax5 = fig.add_subplot(6,1,5)
+    ax5text = 'forward model 50% ice'
+    ax5.text(19, 3, ax5text, fontsize=8)
+    cimg5 = ax5.imshow(np.mean(model_isomap_i50, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
+    cax5 = fig.colorbar(cimg5)
+
+    ax6 = fig.add_subplot(6,1,6)
+    ax6text = 'forward model 66% ice'
+    ax6.text(19, 3, ax6text, fontsize=8)
+    cimg6 = ax6.imshow(np.mean(model_isomap_i66, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
+    cax6 = fig.colorbar(cimg6)
+
     t_save = time()
-    fig.savefig('spline_water_snow_2015_11_13.svg'.format(t_save), dpi=300)
+    fig.savefig('spline_water_snow_2015_11_14_18p6_w_ice_blood_w_PO4.svg'.format(t_save), dpi=300)
     plt.show()
     '''
     r_mu_sm = np.ravel(mu_sm)

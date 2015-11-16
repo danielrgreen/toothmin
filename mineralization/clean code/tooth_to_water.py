@@ -575,7 +575,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.8 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
             model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2) # ***No. at end denotes deletion from top***
 
@@ -607,11 +607,11 @@ def compare(model_isomap, data_isomap, score_max=100., data_sigma=0.25, sigma_fl
     score[score > score_max] = score_max
     score = np.sum(score**2)
 
-    prior_score = prior(mu, data_isomap)
+    prior_score = prior_histogram(mu, data_isomap)
 
     return score#+prior_score
 
-def prior(model_isomap, data_isomap):
+def prior_histogram(model_isomap, data_isomap):
 
     model_real = np.isfinite(model_isomap)
     data_real = np.isfinite(data_isomap)
@@ -624,6 +624,8 @@ def prior(model_isomap, data_isomap):
     prior_score = (np.sum(prior_score**2) * 100.) + np.sum(prior_score[0] * 200)
 
     return prior_score
+
+def prior_rate_change(w_iso_hist, rate)
 
 def water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, PO4_flux, **kwargs):
     # Calculate water history on each day
@@ -675,11 +677,16 @@ def water_hist_prob_4param(w_params, **kwargs):
 
 def water_hist_prob(w_params, **kwargs):
 
-    iso_hist = np.array(*w_params)
-    w_iso_hist = spline_input_signal(iso_hist, 7, 1)
+    iso_hist = np.ones(np.size(w_params))
+    for i,j in enumerate(w_params):
+        iso_hist[i] = j
+
+    w_iso_hist = spline_input_signal(iso_hist, 16, 1)
 
     w_iso_hist = w_iso_hist[50:]
-    days_spl = np.arange(50, np.size(w_iso_hist)*7)
+
+    days_spl = np.arange(50, np.size(w_iso_hist))
+
     m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
     m1_days_spl = tooth_timing_convert(days_spl, *m2_m1_params)
 
@@ -786,8 +793,10 @@ def spline_input_signal(iso_values, value_days, smoothness):
     #water_spl = np.array(water_spl(days))
     #blood_spl = np.array(blood_spl(days))
 
-    spline_output = InterpolatedUnivariateSpline(np.arange(np.size(iso_values))*value_days, iso_values, k=smoothness)
-    water_spl = spline_output(np.arange(value_days*iso_values))
+    spline_data_days = np.arange(np.size(iso_values))*value_days
+    spline_output = InterpolatedUnivariateSpline(spline_data_days, iso_values, k=smoothness)
+    days = np.arange(value_days*np.size(iso_values))
+    water_spl = spline_output(days)
 
     return water_spl
 
@@ -862,13 +871,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 100
+    trials = 2000
     keep_pct = 20. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/10.)
 
-    p_number = 75
+    p_number = 30
     upper_bound,lower_bound,guess = 8.,-28.,-8.
     up_bounds,low_bounds,first_guess = [],[],[]
     for i in xrange(p_number):
@@ -915,14 +924,18 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 90.469, .004068, -16.811, 41.]) # 'synch114', 100k
 
     # Make trial forward data *******FORWARD BASED ON EXPECTATIONS PRIOR TO INVERSION*******
-    forward_962_water_hist,forward_962_blood_hist,days_spl = spline_962_input(1)
+    forward_962_water_hist,forward_962_blood_hist,days_spl_962 = spline_962_input(1)
     forward_962_water_hist = forward_962_water_hist[50:]
-    forward_962_blood_hist = forward_962_water_hist[50:]
-    days_spl = days_spl[50:]
-    m1_days_spl = tooth_timing_convert(days_spl, *m2_m1_params)
-    water_spl_tmp = np.ones(days_spl.size)
-    blood_spl_tmp = np.ones(days_spl.size)
-    for k,d in enumerate(m1_days_spl):
+    forward_962_blood_hist = forward_962_blood_hist[50:]
+    days_spl_962 = days_spl_962[50:]
+    m1_days_spl_962 = tooth_timing_convert(days_spl_962, *m2_m1_params)
+    water_spl_tmp = np.ones(days_spl_962.size)
+    blood_spl_tmp = np.ones(days_spl_962.size)
+
+    print m1_days_spl_962.size
+    print forward_962_blood_hist.size
+
+    for k,d in enumerate(m1_days_spl_962):
         d = int(d)
         water_spl_tmp[d:] = forward_962_water_hist[k]
         blood_spl_tmp[d:] = forward_962_blood_hist[k]
@@ -933,27 +946,28 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     forward_phosphate_eq_w = PO4_dissoln_reprecip(3., 34.5, .3, forward_blood_hist, **kwargs)
     forward_phosphate_eq_b = PO4_dissoln_reprecip(3., 34.5, .3, forward_962_blood_hist, **kwargs)
     forward_water_model_no_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_blood_hist)
-    forward_water_model_w_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_phosphate_eq_w)
+    forward_water_model_w_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_phosphate_eq_w) # This takes the blood history from 962 scaled to the M1 without also downscaling the blood turnover
     forward_blood_model_no_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_blood_hist)
     forward_blood_model_w_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_phosphate_eq_b)
 
-    # Show inverse trial results
-    inverse_water_spl = spline_input_signal(x_opt, 7., 1)
-    inverse_water_spl = inverse_water_spl[50:]
-    inverse_days_spl = np.arange(np.size(inverse_water_spl))+50
-    m1_days_spl = tooth_timing_convert(inverse_days_spl, *m2_m1_params)
+    # Show inverse trial results - M2
+    inverse_water_spl = spline_input_signal(x_opt, 16., 1)
+    inverse_days_spl = np.arange(np.size(inverse_water_spl))
+    inverse_blood_hist = blood_delta(23.5, inverse_water_spl, 25.3, **forward_metabolic_kw)
+    inverse_phosphate_eq = PO4_dissoln_reprecip(3., 34.5, .3, inverse_blood_hist, **kwargs)
+    # Convert inverse trial results to M1 for model plotting
+    inverse_water_spl_m1 = inverse_water_spl[50:]
+    inverse_days_spl_m1 = inverse_days_spl[50:]
+    m1_days_spl = tooth_timing_convert(inverse_days_spl_m1, *m2_m1_params)
     water_spl_tmp = np.ones(m1_days_spl.size)
     for k,d in enumerate(m1_days_spl):
         d = int(d)
-        water_spl_tmp[d:] = inverse_water_spl[k]
+        water_spl_tmp[d:] = inverse_water_spl_m1[k]
     inverse_water_spl_m1 = water_spl_tmp
     inverse_metabolic_kw = kwargs.get('metabolic_kw', {})
-    inverse_blood_hist = blood_delta(23.5, inverse_water_spl, 25.3, **forward_metabolic_kw)
     inverse_blood_hist_m1 = blood_delta(23.5, inverse_water_spl_m1, 25.3, **forward_metabolic_kw)
-    inverse_phosphate_eq = PO4_dissoln_reprecip(3., 34.5, .3, inverse_blood_hist, **kwargs)
     inverse_phosphate_eq_m1 = PO4_dissoln_reprecip(3., 34.5, .3, inverse_blood_hist_m1, **kwargs)
     inverse_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, inverse_phosphate_eq_m1)
-    inverse_model_blood_direct = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, inverse_blood_hist_m1)
 
     #Save my result trials
     #my_list.sort(key=getkey)
@@ -976,6 +990,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'nmin= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
+
     fig = plt.figure()
     ax1 = fig.add_subplot(7,1,1)
     days = np.arange(inverse_water_spl.size)
@@ -989,8 +1004,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -20, textstr, fontsize=8)
-    ax1.set_ylim(-40, 0)
-    ax1.set_xlim(-100, 550)
+    ax1.set_ylim(-30, 5)
+    ax1.set_xlim(-50, 500)
 
     #temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
     #opt_params = np.array([x_opt[0], x_opt[1], x_opt[2], x_opt[3], 3., 34.5, .3])
@@ -1021,17 +1036,17 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg5 = ax5.imshow(np.mean(forward_water_model_w_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    inverse_residuals = np.mean(forward_water_model_w_PO4, axis=2) - data_isomap
     ax6 = fig.add_subplot(7,1,6)
-    ax6text = 'inverse model residuals'
+    ax6text = 'forward model from blood data'
     ax6.text(21, 3, ax6text, fontsize=8)
-    cimg6 = ax6.imshow(inverse_residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
+    cimg6 = ax6.imshow(np.mean(forward_blood_model_w_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax6 = fig.colorbar(cimg6)
 
+    inverse_residuals = np.mean(forward_water_model_w_PO4, axis=2) - data_isomap
     ax7 = fig.add_subplot(7,1,7)
-    ax7text = 'forward model from blood data'
+    ax7text = 'inverse model residuals'
     ax7.text(21, 3, ax7text, fontsize=8)
-    cimg7 = ax7.imshow(inverse_model_blood_direct.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
+    cimg7 = ax7.imshow(inverse_residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
     cax7 = fig.colorbar(cimg7)
 
     fig.savefig('inverse_trials_weekly_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
@@ -1050,8 +1065,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-30, 0)
     ax1.set_xlim(50, 450)
 
-    #fig.savefig('PO4eq18p6_50k_new5_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    #plt.show()
+    fig.savefig('inverse_trials_weekly_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    plt.show()
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)
