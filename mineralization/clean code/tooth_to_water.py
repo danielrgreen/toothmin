@@ -503,6 +503,9 @@ def load_iso_data(fname):
       iso_shape      Shape of the tooth image
       iso_data_x_ct  Number of nans in each column
     '''
+
+    'data.csv'
+
     iso_data = np.loadtxt(fname, delimiter=',').T
     iso_data[iso_data==0.] = np.nan
     iso_data = iso_data[:,::-1]
@@ -575,7 +578,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 18.8 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
+        model_isomap[k] = model_isomap[k][:,1:,day] + 19. #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
             model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2) # ***No. at end denotes deletion from top***
 
@@ -588,7 +591,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     return remodeled
 
-def compare(model_isomap, data_isomap, score_max=100., data_sigma=0.25, sigma_floor=0.05):
+def compare(model_isomap, data_isomap, w_iso_hist, m1_switch_days, score_max=100., data_sigma=0.25, sigma_floor=0.05):
     '''
 
     :param model_isomap:        modeled tooth isotope data
@@ -607,9 +610,10 @@ def compare(model_isomap, data_isomap, score_max=100., data_sigma=0.25, sigma_fl
     score[score > score_max] = score_max
     score = np.sum(score**2)
 
-    prior_score = prior_histogram(mu, data_isomap)
+    #prior_score = prior_histogram(mu, data_isomap)
+    prior_score = prior_rate_change(w_iso_hist, m1_switch_days, 2./3.)
 
-    return score#+prior_score
+    return score+prior_score
 
 def prior_histogram(model_isomap, data_isomap):
 
@@ -625,9 +629,16 @@ def prior_histogram(model_isomap, data_isomap):
 
     return prior_score
 
-def prior_rate_change(w_iso_hist, rate)
+def prior_rate_change(w_iso_hist, m1_switch_days, rate):
 
-def water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, PO4_flux, **kwargs):
+    diff_water = np.diff(w_iso_hist)
+    diff_water[int(m1_switch_days[0])-1:int(m1_switch_days[0])+1] = 0.
+    diff_water[int(m1_switch_days[1])-1:int(m1_switch_days[1])+1] = 0.
+    prior_score = np.sum((diff_water/rate)**2.)
+
+    return prior_score
+
+def water_hist_likelihood(w_iso_hist, m1_switch_days, PO4_t, PO4_pause, PO4_flux, **kwargs):
     # Calculate water history on each day
     block_length = int(kwargs.get('block_length', 1))
     w_iso_hist = calc_water_step2(w_iso_hist, block_length)
@@ -653,7 +664,7 @@ def water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, PO4_flux, **kwargs):
 
     # Calculate model tooth isomap
     model_isomap = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, tooth_phosphate_eq)
-    score = compare(model_isomap, data_isomap)
+    score = compare(model_isomap, data_isomap, w_iso_hist, m1_switch_days)
 
     return score, model_isomap
 
@@ -681,14 +692,22 @@ def water_hist_prob(w_params, **kwargs):
     for i,j in enumerate(w_params):
         iso_hist[i] = j
 
-    w_iso_hist = spline_input_signal(iso_hist, 16, 1)
+    # Turning w parameters into daily d18O history, excluding switch params
+    w_iso_hist = spline_input_signal(iso_hist[:32], 14, 1)
 
+    # Adding switch history onto w_iso_hist
+    switch_params = iso_hist[32:]
+    w_iso_hist[switch_params[2]:switch_params[2]+switch_params[3]] += switch_params[1]
+    w_iso_hist += switch_params[0]
+
+    # Ignoring first 50 days after birth that will f*ck with m1-m2 conversion
     w_iso_hist = w_iso_hist[50:]
 
     days_spl = np.arange(50, np.size(w_iso_hist))
 
     m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
     m1_days_spl = tooth_timing_convert(days_spl, *m2_m1_params)
+    m1_switch_days = tooth_timing_convert(np.array([switch_params[2], switch_params[2]+switch_params[3]]), *m2_m1_params)
 
     water_spl_tmp = np.ones(days_spl.size)
     for k,d in enumerate(m1_days_spl):
@@ -697,7 +716,7 @@ def water_hist_prob(w_params, **kwargs):
 
     w_iso_hist = water_spl_tmp
 
-    p, model_isomap = water_hist_likelihood(w_iso_hist, 3., 34.5, 0.3, **kwargs)
+    p, model_isomap = water_hist_likelihood(w_iso_hist, m1_switch_days, 3., 34.5, 0.3, **kwargs)
 
     #prior_score = prior(w_params)
     #p += prior
@@ -877,7 +896,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/10.)
 
-    p_number = 30
+    # Parameters for time series only
+    p_number = 32
+    fit_kwargs['time_interval'] = 14.
     upper_bound,lower_bound,guess = 8.,-28.,-8.
     up_bounds,low_bounds,first_guess = [],[],[]
     for i in xrange(p_number):
@@ -885,21 +906,28 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         low_bounds.append(lower_bound)
         first_guess.append(guess)
 
+    # Addition of artificial switch
+    switch_high, switch_low,switch_guess = [8., 8., 400., 120.], [-28., -28., 50., 5.], [0., 0., 200., 80.]
+    for j,k in enumerate(switch_high):
+        up_bounds.append(switch_high[j])
+        low_bounds.append(switch_low[j])
+        first_guess.append(switch_guess[j])
+
     local_method = 'LN_COBYLA'
-    local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number)
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number+np.size(switch_guess))
     local_opt.set_xtol_abs(.01)
     local_opt.set_lower_bounds(low_bounds)
     local_opt.set_upper_bounds(up_bounds)
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
-    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number)
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number+np.size(switch_guess))
     global_opt.set_maxeval(trials)
     global_opt.set_lower_bounds(low_bounds)
     global_opt.set_upper_bounds(up_bounds)
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
-    global_opt.set_population(p_number)
+    global_opt.set_population(p_number+np.size(switch_guess))
     print 'Running global optimizer ...'
     t1 = time()
     x_opt = global_opt.optimize(first_guess)
@@ -951,7 +979,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     forward_blood_model_w_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_phosphate_eq_b)
 
     # Show inverse trial results - M2
-    inverse_water_spl = spline_input_signal(x_opt, 16., 1)
+    inverse_water_spl = spline_input_signal(x_opt[:32], 14., 1)
+    # Adding switch history onto w_iso_hist
+    switch_params = x_opt[32:]
+    inverse_water_spl[switch_params[2]:switch_params[2]+switch_params[3]] += switch_params[1]
+    inverse_water_spl += switch_params[0]
     inverse_days_spl = np.arange(np.size(inverse_water_spl))
     inverse_blood_hist = blood_delta(23.5, inverse_water_spl, 25.3, **forward_metabolic_kw)
     inverse_phosphate_eq = PO4_dissoln_reprecip(3., 34.5, .3, inverse_blood_hist, **kwargs)
@@ -970,24 +1002,24 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     inverse_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, inverse_phosphate_eq_m1)
 
     #Save my result trials
-    #my_list.sort(key=getkey)
-    #save_list = my_list[:keep_pct:keep_pct_jump]
-    #print 'saved list'
-    #print save_list
-    #list_water_results = []
-    #for s in save_list:
-    #    s_params = s[1]
-    #    s_times = s_params[2:4]
-    #    s_PO4 = s_params[4:7]
-    #    s_times[1] = s_times[0] + s_times[1]
-    #    s_times = tooth_timing_convert(s_times, *m1_m2_params)
-    #    s_times[1] = s_times[1] - s_times[0]
-    #    s_params = np.array([s_params[0], s_params[1], s_times[0], s_times[1], 23.5, 25.3, s_PO4[0], s_PO4[1], s_PO4[2]])
-    #    list_water_results.append(figureplot_PO4_line(*s_params))
+    my_list.sort(key=getkey)
+    save_list = my_list[:keep_pct:keep_pct_jump]
+    print 'saved list'
+    print save_list
+    list_water_results = []
+    for s in save_list:
+        s_params = s[1]
+        s_times = s_params[2:4]
+        s_PO4 = s_params[4:7]
+        s_times[1] = s_times[0] + s_times[1]
+        s_times = tooth_timing_convert(s_times, *m1_m2_params)
+        s_times[1] = s_times[1] - s_times[0]
+        s_params = np.array([s_params[0], s_params[1], s_times[0], s_times[1], 23.5, 25.3, s_PO4[0], s_PO4[1], s_PO4[2]])
+        list_water_results.append(figureplot_PO4_line(*s_params))
 
     t_save = time()
 
-    textstr = 'nmin= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
+    textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s, \nswitch_params= %.1f, %.1f, %.1f, %.1f' % (minf, run_time, trials, eval_p_sec, local_method, global_method, switch_params[0], switch_params[1], switch_params[2], switch_params[3])
     print textstr
 
 
@@ -1049,7 +1081,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg7 = ax7.imshow(inverse_residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
     cax7 = fig.colorbar(cimg7)
 
-    fig.savefig('inverse_trials_weekly_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('inverse_trials_14d_rate3o3_19_delay35_switch_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
@@ -1065,7 +1097,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-30, 0)
     ax1.set_xlim(50, 450)
 
-    fig.savefig('inverse_trials_weekly_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('inverse_trials_14d_rate3o3_19_delay35_switch_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     #residuals_real = np.isfinite(residuals)
