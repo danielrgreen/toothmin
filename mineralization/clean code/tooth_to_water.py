@@ -611,7 +611,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score = np.sum(score**2)
 
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score = prior_rate_change(w_iso_hist, M2_switch_days, 1./3.)
+    prior_score = prior_rate_change(w_iso_hist, M2_switch_days, 3./4.)
 
     return score+prior_score
 
@@ -993,7 +993,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     M2_switch_params = x_opt[40:]
     M2_inverse_water_hist[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
     M2_inverse_days = np.arange(np.size(M2_inverse_water_hist))
-    M2_inverse_blood_hist = blood_delta(23.5, M2_inverse_water_hist, 45.3, **forward_metabolic_kw)
+    M2_inverse_blood_hist = blood_delta(23.5, M2_inverse_water_hist, 25.3, **forward_metabolic_kw)
     M2_inverse_PO4_eq = PO4_dissoln_reprecip(3., 45., .3, M2_inverse_blood_hist, **kwargs)
     # Truncate M2 inverse trial results before conversion to M1 timing
     M2_inverse_days_truncated = M2_inverse_days[50:]
@@ -1099,7 +1099,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg7 = ax7.imshow(np.mean(forward_model_calculated_M1_PO4_hist_from_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax7 = fig.colorbar(cimg7)
 
-    fig.savefig('fixed_inverse_trials_14d_rate1o3_19_delay45_switch_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('fixed_inverse_trials_14d_rate3o4_19_delay45_switch_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
@@ -1120,13 +1120,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-26, 4)
     ax1.set_xlim(-50, 550)
 
-    fig.savefig('fixed_inverse_trials_14d_rate1o3_19_delay45_switch_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('fixed_inverse_trials_14d_rate3o4_19_delay45_switch_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(2.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('fixed_inverse_trials_14d_rate1o3_19_delay45_switch_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('fixed_inverse_trials_14d_rate3o4_19_delay45_switch_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     #residuals_real = np.isfinite(residuals)
