@@ -613,6 +613,8 @@ def compare(model_isomap, data_isomap, score_max=100., data_sigma=0.25, sigma_fl
     prior_score = prior_histogram(mu, data_isomap)
     #prior_score = prior_rate_change(w_iso_hist, M2_switch_days, 1./2.)
 
+    print 'prior score percent = ', (prior_score / (prior_score+score))*100.
+
     return score+prior_score
 
 def prior_histogram(model_isomap, data_isomap):
@@ -623,7 +625,7 @@ def prior_histogram(model_isomap, data_isomap):
     model_hist = np.histogram(model_isomap[model_real], bins=10, range=min_max)
     data_hist = np.histogram(data_isomap[data_real], bins=10, range=min_max)
 
-    hist_sigma = 2.
+    hist_sigma = 0.3
     prior_score = (model_hist[0] - data_hist[0]) / hist_sigma
     prior_score = (np.sum(prior_score**2)) + np.sum(prior_score[0])
 
@@ -865,7 +867,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 2000
+    trials = 5000
     keep_pct = 60. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -892,20 +894,20 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
     local_opt.set_xtol_abs(.01)
     local_opt.set_lower_bounds([1.0, 1.0, 0.1])
-    local_opt.set_upper_bounds([30., 100., 0.8])
+    local_opt.set_upper_bounds([30., 40., 0.8])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 3)
     global_opt.set_maxeval(trials)
     global_opt.set_lower_bounds([1.0, 1.0, 0.1])
-    global_opt.set_upper_bounds([30., 100., 0.8])
+    global_opt.set_upper_bounds([30., 40., 0.8])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(3)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([3., 30., 0.3])
+    x_opt = global_opt.optimize([3., 15., 0.3])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -984,7 +986,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     t_save = time()
 
-    textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s, \nPO4_params = %.1f, %.1f, %.1f' % (minf, run_time, trials, eval_p_sec, local_method, global_method, PO4_half, PO4_pause, PO4_frac)
+    textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s, \nPO4_params = %.1f, %.1f, %.2f' % (minf, run_time, trials, eval_p_sec, local_method, global_method, PO4_half, PO4_pause, PO4_frac)
     print textstr
 
     fig = plt.figure()
@@ -995,11 +997,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.plot(days, M2_inverse_PO4_eq_truncated, 'g-.', linewidth=2.0)
     ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0)
     ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0)
-    #for s in list_water_results[:-1]:
-    #    print s
-    #    print s.size
-    #    s = PO4_dissoln_reprecip(int(list_water_results[0]), int(list_water_results[1]), list_water_results[2], forward_962_blood_hist, **kwargs)
-    #    ax1.plot(days, s[50:], 'g-', alpha=0.03)
+    for s in list_water_results[:-1]:
+        s = PO4_dissoln_reprecip(s[0], s[1], s[2], forward_962_blood_hist, **kwargs)
+        ax1.plot(days, s[50:], 'g-', alpha=0.03)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -20, textstr, fontsize=8)
@@ -1043,7 +1043,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg7 = ax7.imshow(np.mean(forward_model_calculated_M1_PO4_hist_from_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax7 = fig.colorbar(cimg7)
 
-    fig.savefig('fixed_inverse_trials_14d_rate1o2_19_p35t3f4_switch_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('PO4opt_hista0p3_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
@@ -1053,22 +1053,22 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.plot(days, M2_inverse_PO4_eq_truncated, 'g-.', linewidth=2.0)
     ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0)
     ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0)
-    #for s in list_water_results[:-1]:
-    #    s = PO4_dissoln_reprecip(int(list_water_results[0]), int(list_water_results[1]), list_water_results[2], forward_962_blood_hist, **kwargs)
-    #    ax1.plot(days, s[50:], 'g-', alpha=0.03)
+    for s in list_water_results[:-1]:
+        s = PO4_dissoln_reprecip(s[0], s[1], s[2], forward_962_blood_hist, **kwargs)
+        ax1.plot(days, s[50:], 'g-', alpha=0.03)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -20, textstr, fontsize=8)
     ax1.set_ylim(-26, 4)
     ax1.set_xlim(-50, 550)
 
-    fig.savefig('fixed_inverse_trials_14d_rate1o2_19_p35t3f4_switch_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('PO4opt_hista0p3_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(2.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('fixed_inverse_trials_14d_rate1o2_19_p35t3f4_switch_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('PO4opt_hista0p3_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     #residuals_real = np.isfinite(residuals)
