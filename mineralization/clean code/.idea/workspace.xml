@@ -38,7 +38,7 @@
     <SUITE FILE_PATH="coverage/clean code$likelihood_min_model_TMCMC_point_5graphmultiple.coverage" NAME="likelihood_min_model_TMCMC_point_5graphmultiple Coverage Results" MODIFIED="1430423537525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$m1_optimize_alone.coverage" NAME="m1_optimize_alone Coverage Results" MODIFIED="1437606170167" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$blood_delta_nlopt.coverage" NAME="blood_delta_nlopt Coverage Results" MODIFIED="1439265879559" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_water.coverage" NAME="tooth_to_water Coverage Results" MODIFIED="1449606345125" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_water.coverage" NAME="tooth_to_water Coverage Results" MODIFIED="1449803850100" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$imshow_tooth.coverage" NAME="imshow_tooth Coverage Results" MODIFIED="1440778338618" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$m1_2_all_optimize.coverage" NAME="m1-2_all_optimize Coverage Results" MODIFIED="1438572371367" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$2nd_PO4_pool_nlopt.coverage" NAME="2nd_PO4_pool_nlopt Coverage Results" MODIFIED="1439574945332" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -90,11 +90,11 @@
       <file leaf-file-name="tooth_to_water.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tooth_to_water.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-2.0333989" vertical-offset="9135" max-vertical-offset="17775">
-              <caret line="540" column="35" selection-start-line="540" selection-start-column="35" selection-end-line="540" selection-end-column="35" />
+            <state vertical-scroll-proportion="0.5874263" vertical-offset="10636" max-vertical-offset="17790">
+              <caret line="729" column="83" selection-start-line="729" selection-start-column="83" selection-end-line="729" selection-end-column="83" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
-                <element signature="e#31322#31702#0" expanded="false" />
+                <element signature="e#31374#31754#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -113,8 +113,8 @@
       <file leaf-file-name="PO4_optimization.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/PO4_optimization.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-17.851852" vertical-offset="15313" max-vertical-offset="16800">
-              <caret line="1070" column="32" selection-start-line="1070" selection-start-column="32" selection-end-line="1070" selection-end-column="32" />
+            <state vertical-scroll-proportion="-11.185185" vertical-offset="12973" max-vertical-offset="16800">
+              <caret line="902" column="47" selection-start-line="902" selection-start-column="47" selection-end-line="902" selection-end-column="47" />
               <folding />
             </state>
           </provider>
@@ -177,8 +177,8 @@
         <option value="$PROJECT_DIR$/tooth_to_water_forPO4_20151117.py" />
         <option value="$PROJECT_DIR$/dissoln_reprecip_nlopt.py" />
         <option value="$PROJECT_DIR$/blood_plotting.py" />
-        <option value="$PROJECT_DIR$/tooth_to_water.py" />
         <option value="$PROJECT_DIR$/PO4_optimization.py" />
+        <option value="$PROJECT_DIR$/tooth_to_water.py" />
       </list>
     </option>
   </component>
@@ -186,8 +186,9 @@
     <detection-done>true</detection-done>
   </component>
   <component name="ProjectFrameBounds">
+    <option name="x" value="259" />
     <option name="y" value="22" />
-    <option name="width" value="1166" />
+    <option name="width" value="1186" />
     <option name="height" value="815" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -235,7 +236,7 @@
       <recent name="$PROJECT_DIR$/.." />
     </key>
   </component>
-  <component name="RunManager" selected="Python.PO4_optimization">
+  <component name="RunManager" selected="Python.tooth_to_water">
     <configuration default="false" name="blood_to_toothmap" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -535,8 +536,8 @@
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.PO4_optimization" />
-        <item index="1" class="java.lang.String" itemvalue="Python.tooth_to_water" />
+        <item index="0" class="java.lang.String" itemvalue="Python.tooth_to_water" />
+        <item index="1" class="java.lang.String" itemvalue="Python.PO4_optimization" />
         <item index="2" class="java.lang.String" itemvalue="Python.blood_plotting" />
         <item index="3" class="java.lang.String" itemvalue="Python.tooth_to_water_forPO4_20151117" />
         <item index="4" class="java.lang.String" itemvalue="Python.blood_to_toothmap" />
@@ -577,8 +578,8 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="22" width="1166" height="815" extended-state="0" />
-    <editor active="true" />
+    <frame x="259" y="22" width="1186" height="815" extended-state="0" />
+    <editor active="false" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32965517" sideWeight="0.49918434" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32689655" sideWeight="0.49755302" order="12" side_tool="false" content_ui="tabs" />
@@ -592,7 +593,7 @@
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.1383812" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32827586" sideWeight="0.49755302" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25726143" sideWeight="0.8405172" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25726143" sideWeight="0.8405172" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -994,19 +995,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/PO4_optimization.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-17.851852" vertical-offset="15313" max-vertical-offset="16800">
-          <caret line="1070" column="32" selection-start-line="1070" selection-start-column="32" selection-end-line="1070" selection-end-column="32" />
+        <state vertical-scroll-proportion="-11.185185" vertical-offset="12973" max-vertical-offset="16800">
+          <caret line="902" column="47" selection-start-line="902" selection-start-column="47" selection-end-line="902" selection-end-column="47" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tooth_to_water.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-2.0333989" vertical-offset="9135" max-vertical-offset="17775">
-          <caret line="540" column="35" selection-start-line="540" selection-start-column="35" selection-end-line="540" selection-end-column="35" />
+        <state vertical-scroll-proportion="0.5874263" vertical-offset="10636" max-vertical-offset="17790">
+          <caret line="729" column="83" selection-start-line="729" selection-start-column="83" selection-end-line="729" selection-end-column="83" />
           <folding>
             <element signature="e#400#418#0" expanded="true" />
-            <element signature="e#31322#31702#0" expanded="false" />
+            <element signature="e#31374#31754#0" expanded="false" />
           </folding>
         </state>
       </provider>

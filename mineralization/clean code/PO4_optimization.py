@@ -893,14 +893,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([1.0, 1.0, 0.1])
+    local_opt.set_lower_bounds([1.0, 1.0, 0.01])
     local_opt.set_upper_bounds([30., 40., 0.8])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 3)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([1.0, 1.0, 0.1])
+    global_opt.set_lower_bounds([1.0, 1.0, 0.01])
     global_opt.set_upper_bounds([30., 40., 0.8])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
