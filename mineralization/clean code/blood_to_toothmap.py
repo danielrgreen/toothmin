@@ -798,6 +798,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #week_d180 = np.array([-19.40, -19.4, -19.4, -19.4, -15.9, -15.9, -15.9, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -16.5, -16.5, -8.8, -8.8, -10.6, -10.6, -2.5, -9.3, -6.7, -8.2, -1.6, -6, -7, -4.4, -8.8, -6.5, -6.1, -6.1, -6.1, -0.6, 1.7, -4.5, -4.5, -4.5, -12.4, -12.4, -9.7, -12.2, -12.2, -12.2, -15.1, -15.1, -11, -11, -11, -30.5, -30.5, -30.5])  # North Platte Nebraska
     month_d180 = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
 
+    # Synthetic data testing
+    daily_d18O_180 = 10.*np.sin((2*np.pi()/180.)*(np.arange(550.)))-11.
+    daily_d18O_090 = 10.*np.sin((2*np.pi()/90.)*(np.arange(550.)))-11.
+    daily_d18O_045 = 10.*np.sin((2*np.pi()/45.)*(np.arange(550.)))-11.
+
     # Conversion monthly precipitation isotope record into daily record
     year_iso_days = np.arange((24))*(730./(24.)) + 100.
     m1_iso_days = tooth_timing_convert(year_iso_days, *m2_m1_params)
