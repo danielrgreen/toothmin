@@ -798,17 +798,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #week_d180 = np.array([-19.40, -19.4, -19.4, -19.4, -15.9, -15.9, -15.9, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -16.5, -16.5, -8.8, -8.8, -10.6, -10.6, -2.5, -9.3, -6.7, -8.2, -1.6, -6, -7, -4.4, -8.8, -6.5, -6.1, -6.1, -6.1, -0.6, 1.7, -4.5, -4.5, -4.5, -12.4, -12.4, -9.7, -12.2, -12.2, -12.2, -15.1, -15.1, -11, -11, -11, -30.5, -30.5, -30.5])  # North Platte Nebraska
     month_d180 = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
 
-    '''
+    # Synthetic data testing
+    daily_d18O_180 = 10.*np.sin((2*np.pi()/180.)*(np.arange(550.)))-11.
+    daily_d18O_090 = 10.*np.sin((2*np.pi()/90.)*(np.arange(550.)))-11.
+    daily_d18O_045 = 10.*np.sin((2*np.pi()/45.)*(np.arange(550.)))-11.
+
     # Conversion monthly precipitation isotope record into daily record
     year_iso_days = np.arange((24))*(730./(24.)) + 100.
-    m1_iso_days = tooth_timing_convert(np.arange(400.), *m2_m1_params)
+    m1_iso_days = tooth_timing_convert(year_iso_days, *m2_m1_params)
     m1_iso_days -= (0. + m1_iso_days[0])
-    w_iso_hist = np.ones(400.)
+    w_iso_hist = np.ones(400)
     month_d180 = np.concatenate((month_d180, month_d180))
     month_d180 = np.concatenate((month_d180, month_d180))
     for k,d in enumerate(m1_iso_days):
         d = int(d)
-        w_iso_hist[d:] = month_d180[k[0]+0]
+        w_iso_hist[d:] = month_d180[k+11]
 
     water_spl, blood_spl, days_spl, i33_spl, i50_spl, i66_spl = spline_input_signal(1)
     water_spl = water_spl[50:]
@@ -848,7 +852,6 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #model_isomap_full = water_hist_likelihood_fl(w_iso_hist, **fit_kwargs)
     #model_isomap_full = np.array(model_isomap_full)
     #mu_fl = np.median(model_isomap_full, axis=0)
-    '''
 
     # Small tooth model generation
     tooth_model_sm = tooth_model.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
@@ -860,39 +863,6 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fit_kwargs['isomap_shape'] = isomap_shape
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
-    # Synthetic signal production
-
-    daily_d18O_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(550.)))-11.
-    daily_d18O_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(550.)))-11.
-    daily_d18O_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(550.)))-11.
-    daily_d18O_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(550.)))-11.
-
-    combo_d18O_360_180 = (5.*np.cos((2*np.pi/180.)*(np.arange(550.)))) + daily_d18O_360
-    combo_d18O_360_90 = (5.*np.cos((2*np.pi/90.)*(np.arange(550.)))) + daily_d18O_360
-    combo_d18O_180_90 = (5.*np.cos((2*np.pi/90.)*(np.arange(550.)))) + daily_d18O_180
-    combo_d18O_090_45 = (5.*np.cos((2*np.pi/45.)*(np.arange(550.)))) + daily_d18O_090
-
-    # Make water, blood and PO4 history from synthetic water input
-    forward_metabolic_kw = kwargs.get('metabolic_kw', {})
-    days = np.arange(550.)
-    water_hist = combo_d18O_090_45 # <----- ******** WATER HISTORY HERE *********
-    blood_hist = blood_delta(23.5, water_hist, 25.3, **forward_metabolic_kw)
-    PO4_hist = PO4_dissoln_reprecip(3., 45., .3, blood_hist, **kwargs)
-
-    # Convert to M1 timing and space
-    m2days, m2water_hist, m2blood_hist, m2PO4_hist = days[50:], water_hist[50:], blood_hist[50:], PO4_hist[50:]
-    days_tmp, water_tmp, blood_tmp, PO4_tmp = np.ones(days.size), np.ones(days.size), np.ones(days.size), np.ones(days.size)
-    m1_days = tooth_timing_convert(m2days, *m2_m1_params)
-    for k,d in enumerate(m1_days):
-        print k,d
-        d = int(d)
-        water_tmp[d:],blood_tmp[d:],PO4_tmp[d:] = water_hist[k], blood_hist[k], PO4_hist[k]
-    m1water_hist, m1blood_hist, m1PO4_hist = water_tmp, blood_tmp, PO4_tmp
-
-    # Create M1 isomaps
-    PO4_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1PO4_hist)
-
-    '''
     # Generate blood d18O and tooth d18O isomap from drinking water history, with score compared to measured data
     score_sm_w, model_isomap_sm_w = water_hist_likelihood(water_spl, **fit_kwargs)
     score_i33, model_isomap_i33 = water_hist_likelihood(i33_spl, **fit_kwargs)
@@ -931,37 +901,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     print score_sm_w
     textstr = '%.1f' % score_sm_w
-    '''
 
-    t_save = time()
+    fig = plt.figure(figsize=(10,4), dpi=100)
+    #ax1 = fig.add_subplot(3,1,1)
+    #cimg1 = ax1.imshow(mu_fl.T, aspect='auto', interpolation='nearest', origin='lower', vmin=16., vmax=17., cmap='bwr')
+    #cax1 = fig.colorbar(cimg1)
 
-    save_array = np.flipud(np.mean(PO4_model, axis=2).T)
-    save_array[np.isnan(save_array)] = 0.00
-    np.savetxt('90_45sin_{0}.csv'.format(t_save), save_array, delimiter=',', fmt='%.2f')
-
-    fig = plt.figure(figsize=(3,3), dpi=300)
-    ax1 = fig.add_subplot(1,1,1)
-    ax1text = 'combo_d18O_90_45'
-    ax1.text(19, 3, ax1text, fontsize=8)
-    cimg1 = ax1.imshow(np.mean(PO4_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
-    cax1 = fig.colorbar(cimg1)
-    fig.savefig('synthetic_sin90_45_{0}a.svg'.format(t_save), dpi=300)
-    plt.show()
-
-    fig = plt.figure(figsize=(3,3), dpi=300)
-    ax1 = fig.add_subplot(1,1,1)
-    ax1text = 'combo_d18O_90_45'
-    ax1.text(19, 3, ax1text, fontsize=8)
-    ax1.plot(m2days, m2water_hist, 'b-', linewidth=2.0)
-    ax1.plot(m2days, m2blood_hist, 'r-', linewidth=2.0)
-    ax1.plot(m2days, m2PO4_hist, 'g-.', linewidth=1.0)
-    cax1 = fig.colorbar(cimg1)
-    fig.savefig('synthetic_sin90_45_{0}b.svg'.format(t_save), dpi=300)
-    plt.show()
-
-
-
-    '''
     ax1 = fig.add_subplot(6,1,1)
     ax1text = 'forward model from water data 100% ice'
     ax1.text(19, 3, ax1text, fontsize=8)
@@ -1001,7 +946,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     t_save = time()
     fig.savefig('spline_water_snow_2015_11_14_18p6_w_ice_blood_w_PO4.svg'.format(t_save), dpi=300)
     plt.show()
-
+    '''
     r_mu_sm = np.ravel(mu_sm)
     r_mu_sm = r_mu_sm[~np.isnan(r_mu_sm)]
 
