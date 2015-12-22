@@ -602,8 +602,24 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     :return:
     '''
 
+
+
     mu = np.median(model_isomap, axis=2)
+    print mu.shape
+    print data_isomap.shape
+    m_mu = np.ma.masked_array(mu, np.isnan(mu))
+    m_data = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
+    mu = np.mean(m_mu, axis=1)
+    print mu.shape
+    data_isomap = np.mean(m_data, axis=1)
+    print data_isomap.shape
+
     sigma = np.std(model_isomap, axis=2)
+    print sigma.shape
+    m_sigma = np.ma.masked_array(sigma, np.isnan(sigma))
+    sigma = np.mean(m_sigma, axis=1)
+    print sigma.shape
+
     sigma = np.sqrt(sigma**2. + data_sigma**2. + sigma_floor**2.)
     score = (mu - data_isomap) / sigma
     score[~np.isfinite(score)] = 0.
@@ -897,7 +913,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 2000
+    trials = 200
     keep_pct = 40. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -1046,7 +1062,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 
     fig = plt.figure()
-    ax1 = fig.add_subplot(4,1,1)
+    ax1 = fig.add_subplot(3,1,1)
     days = M2_inverse_days_truncated
     print 'days size = ', days.size
     print 'forward size = ', daily_d18O_180.size
@@ -1071,25 +1087,22 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #temp_opt, model_isomap_opt = water_hist_prob_4param(opt_params, **fit_kwargs)
 
 
-    ax2 = fig.add_subplot(4,1,2)
+    ax2 = fig.add_subplot(3,1,2)
     ax2text = 'Synthetic data'
     ax2.text(21, 3, ax2text, fontsize=8)
     cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
     cax2 = fig.colorbar(cimg2)
 
+    print inverse_model_PO4.shape
+    m_PO4 = np.ma.masked_array(np.mean(inverse_model_PO4, axis=2), np.isnan(np.mean(inverse_model_PO4, axis=2)))
+    inverse_model_PO4 = np.mean(m_PO4, axis=1)
+    inverse_model_PO4.shape = (27,1)
 
-    ax3 = fig.add_subplot(4,1,3)
+    ax3 = fig.add_subplot(3,1,3)
     ax3text = 'Inverse model result - PO4'
     ax3.text(21, 3, ax3text, fontsize=8)
-    cimg3 = ax3.imshow(np.mean(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    cimg3 = ax3.imshow(inverse_model_PO4.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
     cax3 = fig.colorbar(cimg3)
-
-    residuals = np.mean(inverse_model_PO4, axis=2).T - data_isomap.T
-    ax4 = fig.add_subplot(4,1,4)
-    ax4text = 'residuals'
-    ax4.text(21, 3, ax4text, fontsize=8)
-    cimg4 = ax4.imshow(residuals, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
-    cax4 = fig.colorbar(cimg4)
 
     #residuals = np.mean(inverse_model_PO4, axis=2) - data_isomap
     #ax4 = fig.add_subplot(7,1,4)
@@ -1120,7 +1133,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     '''
 
-    fig.savefig('daily84_d18O_180_r1o4_offset_testing_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('daily84_1D_180_r1o4_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
@@ -1140,13 +1153,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-30, 10)
     ax1.set_xlim(50, 550)
 
-    fig.savefig('daily84_d18O_180_r1o4_offset_testing_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('daily84_1D_180_r1o4_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(2.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('daily84_d18O_180_r1o4_offset_testing_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('daily84_1D_180_r1o4_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     #residuals_real = np.isfinite(residuals)
