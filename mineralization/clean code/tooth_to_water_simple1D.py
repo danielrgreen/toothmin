@@ -602,23 +602,15 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     :return:
     '''
 
-
-
     mu = np.median(model_isomap, axis=2)
-    print mu.shape
-    print data_isomap.shape
     m_mu = np.ma.masked_array(mu, np.isnan(mu))
     m_data = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
     mu = np.mean(m_mu, axis=1)
-    print mu.shape
     data_isomap = np.mean(m_data, axis=1)
-    print data_isomap.shape
 
     sigma = np.std(model_isomap, axis=2)
-    print sigma.shape
     m_sigma = np.ma.masked_array(sigma, np.isnan(sigma))
     sigma = np.mean(m_sigma, axis=1)
-    print sigma.shape
 
     sigma = np.sqrt(sigma**2. + data_sigma**2. + sigma_floor**2.)
     score = (mu - data_isomap) / sigma
@@ -627,7 +619,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score = np.sum(score**2)
 
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 1./4.)
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 2./1.)
     #prior_score_hist = prior_histogram(mu, data_isomap)
 
     return score+prior_score_rate
@@ -913,7 +905,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 200
+    trials = 20000
     keep_pct = 40. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -1047,15 +1039,16 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
-    daily_d18O_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(584.)))-11.
-    daily_d18O_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(584.)))-11.
-    daily_d18O_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(584.)))-11.
-    daily_d18O_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(584.)))-11.
+    sin_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sin_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sin_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
 
-    combo_d18O_360_180 = (5.*np.cos((2*np.pi/180.)*(np.arange(584.)))) + daily_d18O_360
-    combo_d18O_360_90 = (5.*np.cos((2*np.pi/90.)*(np.arange(584.)))) + daily_d18O_360
-    combo_d18O_180_90 = (5.*np.cos((2*np.pi/90.)*(np.arange(584.)))) + daily_d18O_180
-    combo_d18O_090_45 = (5.*np.cos((2*np.pi/45.)*(np.arange(584.)))) + daily_d18O_090
+    sin_360_180 = (5.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sin_360
+    sin_360_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_360
+    sin_360_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_360
+    sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
+    sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s, \nswitch_params= %.1f, %.1f, %.1f, %.1f' % (minf, run_time, trials, eval_p_sec, local_method, global_method, M2_switch_params[0], M2_switch_params[1], M2_switch_params[2], M2_switch_params[3])
     print textstr
@@ -1064,10 +1057,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig = plt.figure()
     ax1 = fig.add_subplot(3,1,1)
     days = M2_inverse_days_truncated
-    print 'days size = ', days.size
-    print 'forward size = ', daily_d18O_180.size
-    print 'forward mod size = ', daily_d18O_180[84:(days.size+84)].size
-    ax1.plot(days, daily_d18O_180[:days.size], 'k--', linewidth=1.0)
+    ax1.plot(days, combo_d18O_360_45[:days.size], 'k--', linewidth=1.0)
     ax1.plot(days, M2_inverse_water_hist_truncated, 'b-', linewidth=2.0)
     ax1.plot(days, M2_inverse_blood_hist_truncated, 'r-', linewidth=2.0)
     ax1.plot(days, M2_inverse_PO4_eq_truncated, 'g-.', linewidth=1.0)
@@ -1079,28 +1069,30 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -20, textstr, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(50, 550)
+    ax1.set_ylim(-35, 15)
+    ax1.set_xlim(85, 550)
 
     #temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
     #opt_params = np.array([x_opt[0], x_opt[1], x_opt[2], x_opt[3], 3., 34.5, .3])
     #temp_opt, model_isomap_opt = water_hist_prob_4param(opt_params, **fit_kwargs)
 
+    m_data = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
+    data_isomap = np.mean(m_data, axis=1)
+    data_isomap.shape = (27,1)
 
     ax2 = fig.add_subplot(3,1,2)
     ax2text = 'Synthetic data'
-    ax2.text(21, 3, ax2text, fontsize=8)
-    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    ax2.text(15, 1, ax2text, fontsize=8)
+    cimg2 = ax2.imshow(data_isomap.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
     cax2 = fig.colorbar(cimg2)
 
-    print inverse_model_PO4.shape
     m_PO4 = np.ma.masked_array(np.mean(inverse_model_PO4, axis=2), np.isnan(np.mean(inverse_model_PO4, axis=2)))
     inverse_model_PO4 = np.mean(m_PO4, axis=1)
     inverse_model_PO4.shape = (27,1)
 
     ax3 = fig.add_subplot(3,1,3)
     ax3text = 'Inverse model result - PO4'
-    ax3.text(21, 3, ax3text, fontsize=8)
+    ax3.text(15, 1, ax3text, fontsize=8)
     cimg3 = ax3.imshow(inverse_model_PO4.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
     cax3 = fig.colorbar(cimg3)
 
@@ -1133,12 +1125,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     '''
 
-    fig.savefig('daily84_1D_180_r1o4_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    plt.show()
+    fig.savefig('1D_360_045_r2o1_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, daily_d18O_180[:days.size], 'k--', linewidth=1.0)
+    ax1.plot(days, combo_d18O_360_45[:days.size], 'k--', linewidth=1.0)
     ax1.plot(days, M2_inverse_water_hist_truncated, 'b-', linewidth=2.0)
     ax1.plot(days, M2_inverse_blood_hist_truncated, 'r-', linewidth=2.0)
     ax1.plot(days, M2_inverse_PO4_eq_truncated, 'g-.', linewidth=1.0)
@@ -1150,17 +1141,15 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -18, textstr, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(50, 550)
+    ax1.set_ylim(-35, 15)
+    ax1.set_xlim(85, 550)
 
-    fig.savefig('daily84_1D_180_r1o4_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    plt.show()
+    fig.savefig('1D_360_045_r2o1_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(2.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('daily84_1D_180_r1o4_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    plt.show()
+    plt.savefig('1D_360_045_r2o1_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)
@@ -1210,7 +1199,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/daily84_d18O_180_1450745975.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/daily84_d18O_360_045.csv')
 
     return 0
 

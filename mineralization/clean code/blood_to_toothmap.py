@@ -862,33 +862,35 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
-    daily_d18O_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(584.)))-11.
-    daily_d18O_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(584.)))-11.
-    daily_d18O_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(584.)))-11.
-    daily_d18O_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(584.)))-11.
+    sin_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sin_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sin_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
 
-    combo_d18O_360_180 = (5.*np.sin((2*np.pi/180.)*(np.arange(584.)))) + daily_d18O_360
-    combo_d18O_360_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(584.)))) + daily_d18O_360
-    combo_d18O_360_45 = (5.*np.sin((2*np.pi/90.)*(np.arange(584.)))) + daily_d18O_180
-    combo_d18O_180_90 = (5.*np.sin((2*np.pi/45.)*(np.arange(584.)))) + daily_d18O_090
-    combo_d18O_180_45 = (5.*np.cos((2*np.pi/45.)*(np.arange(584.)))) + daily_d18O_090
+    sin_360_180 = (5.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sin_360
+    sin_360_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_360
+    sin_360_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_360
+    sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
+    sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
     # Make water, blood and PO4 history from synthetic water input
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
-    days = np.arange(584.)
-    water_hist = combo_d18O_180_45 # <----- ******** WATER HISTORY HERE *********
+    days = np.arange(84., 684.)
+    water_hist = sin_180_45 # <----- ******** WATER HISTORY HERE *********
     blood_hist = blood_delta(23.5, water_hist, 25.3, **forward_metabolic_kw)
     PO4_hist = PO4_dissoln_reprecip(3., 45., .3, blood_hist, **kwargs)
 
     # Convert to M1 timing and space
-    m2days, m2water_hist, m2blood_hist, m2PO4_hist = days[84:], water_hist[84:], blood_hist[84:], PO4_hist[84:]
+    #m2days, m2water_hist, m2blood_hist, m2PO4_hist = days[84:], water_hist[84:], blood_hist[84:], PO4_hist[84:]
     days_tmp, water_tmp, blood_tmp, PO4_tmp = np.ones(days.size), np.ones(days.size), np.ones(days.size), np.ones(days.size)
-    m1_days = tooth_timing_convert(m2days, *m2_m1_params)
-    for k,d in enumerate(m1_days):
+    m1_days = tooth_timing_convert(days, *m2_m1_params)
+    for k,d in enumerate(days):
         print k,d
         d = int(d)
         water_tmp[d:],blood_tmp[d:],PO4_tmp[d:] = water_hist[k], blood_hist[k], PO4_hist[k]
     m1water_hist, m1blood_hist, m1PO4_hist = water_tmp, blood_tmp, PO4_tmp
+    print 'M2 water hist = ', water_hist
+    print 'M1 water hist = ', m1water_hist
 
     # Create M1 isomaps
     PO4_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1PO4_hist)
@@ -938,29 +940,27 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     save_array = np.flipud(np.mean(PO4_model, axis=2).T)
     save_array[np.isnan(save_array)] = 0.00
-    np.savetxt('daily84_d18O_180_045_{0}.csv'.format(t_save), save_array, delimiter=',', fmt='%.2f')
+    #np.savetxt('sin_180_45{0}.csv'.format(t_save), save_array, delimiter=',', fmt='%.2f')
 
     fig = plt.figure(figsize=(3,3), dpi=300)
     ax1 = fig.add_subplot(1,1,1)
-    ax1text = 'daily84_d18O_180_045'
+    ax1text = 'sin_180_45'
     ax1.text(19, 3, ax1text, fontsize=8)
     cimg1 = ax1.imshow(np.mean(PO4_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
     cax1 = fig.colorbar(cimg1)
-    fig.savefig('synthetic84_sin180_045_{0}a.svg'.format(t_save), dpi=300)
+    #fig.savefig('sin_180_45{0}a.svg'.format(t_save), dpi=300)
     plt.show()
 
     fig = plt.figure(figsize=(3,3), dpi=300)
     ax1 = fig.add_subplot(1,1,1)
-    ax1text = 'daily84_d18O_180_045'
+    ax1text = 'sin_180_45'
     ax1.text(19, 3, ax1text, fontsize=8)
-    ax1.plot(m2days, m2water_hist, 'b-', linewidth=2.0)
-    ax1.plot(m2days, m2blood_hist, 'r-', linewidth=2.0)
-    ax1.plot(m2days, m2PO4_hist, 'g-.', linewidth=1.0)
+    ax1.plot(days, water_hist, 'b-', linewidth=1.0)
+    ax1.plot(days, blood_hist, 'r-', linewidth=1.0)
+    ax1.plot(days, PO4_hist, 'g-.', linewidth=1.0)
     cax1 = fig.colorbar(cimg1)
-    fig.savefig('synthetic84_sin180_045_{0}b.svg'.format(t_save), dpi=300)
+    #fig.savefig('sin_180_45{0}b.svg'.format(t_save), dpi=300)
     plt.show()
-
-
 
     '''
     ax1 = fig.add_subplot(6,1,1)
