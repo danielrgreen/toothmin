@@ -91,7 +91,7 @@ def main():
     daily_d18O_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
 
     days = np.arange(84., 684.)
-    converted_days = tooth_timing_convert_curv2lin(days, *m2_m2_params_curv2lin)
+    converted_days = tooth_timing_convert(days, *m2_m1_params)
 
     M2_test1 = np.ones(days.size)
     M2_test1[:] = 5.
@@ -107,7 +107,7 @@ def main():
         d = int(d)
         M1_test1_tmp[d:] = M2_test1[k]
     M1_test1 = M1_test1_tmp
-    M1_test1 = M1_test1[84:]
+    #M1_test1 = M1_test1[84:]
 
     print 'days =', days
     print 'converted days =', converted_days
@@ -120,22 +120,22 @@ def main():
 
     fig = plt.figure()
     ax1 = fig.add_subplot(2,1,1)
-    ax1text = 'M2->M2, M2_days start@84, M2/M2 plotted w/diff day_arrays'
+    ax1text = 'M2->M1, M2_days start@84, M2/M1 plotted w/diff day_arrays'
     ax1.text(0, 50, ax1text, fontsize=8)
     ax1.plot(days, M2_test1, 'k--', linewidth=1.0)
-    ax1.plot(converted_days[:-84], M1_test1, 'b-', linewidth=1.0)
+    ax1.plot(converted_days, M1_test1, 'b-', linewidth=1.0)
     ax1.set_ylim(-5, 65)
     ax1.set_xlim(-50, 600)
 
     ax1 = fig.add_subplot(2,1,2)
-    ax1text = 'M2->M2, M2_days start@84, M2/M2 plotted on same'
+    ax1text = 'M2->M1, M2_days start@84, M2/M1 plotted on same'
     ax1.text(0, 50, ax1text, fontsize=8)
     ax1.plot(np.arange(np.size(M2_test1)), M2_test1, 'k--', linewidth=1.0)
     ax1.plot(np.arange(np.size(M1_test1)), M1_test1, 'b-', linewidth=1.0)
     ax1.set_ylim(-5, 65)
     ax1.set_xlim(-50, 600)
 
-    fig.savefig('M2-M2_convert_testing_{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('M2-M1_convert_testing_{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     return 0
