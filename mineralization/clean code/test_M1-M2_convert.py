@@ -91,7 +91,10 @@ def main():
     daily_d18O_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
 
     days = np.arange(84., 684.)
+    m2_events = np.arange(0., 600., 50.)+84
     converted_days = tooth_timing_convert(days, *m2_m1_params)
+    converted_days = converted_days-converted_days[0]
+    m1_events = tooth_timing_convert(m2_events, *m2_m1_params)
 
     M2_test1 = np.ones(days.size)
     M2_test1[:] = 5.
@@ -137,6 +140,16 @@ def main():
 
     fig.savefig('M2-M1_convert_testing_{0}.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
+
+    # Converting back
+    m2_events_reverse = tooth_timing_convert(m1_events, *m1_m2_params)
+    print 'm2 events'
+    print m2_events
+    print 'm1 events'
+    print m1_events
+    print 'm2 events reverse'
+    print m2_events_reverse
+
 
     return 0
 

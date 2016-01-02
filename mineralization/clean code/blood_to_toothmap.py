@@ -13,6 +13,7 @@
 # 
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import h5py
 from PIL import Image
@@ -873,26 +874,41 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
+    number = '180_45'
+
     # Make water, blood and PO4 history from synthetic water input
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
     days = np.arange(84., 684.)
-    water_hist = sin_180_45 # <----- ******** WATER HISTORY HERE *********
+    water_hist = sin_180 # <----- ******** WATER HISTORY HERE *********
     blood_hist = blood_delta(23.5, water_hist, 25.3, **forward_metabolic_kw)
     PO4_hist = PO4_dissoln_reprecip(3., 45., .3, blood_hist, **kwargs)
 
     # Convert to M1 timing and space
     #m2days, m2water_hist, m2blood_hist, m2PO4_hist = days[84:], water_hist[84:], blood_hist[84:], PO4_hist[84:]
-    days_tmp, water_tmp, blood_tmp, PO4_tmp = np.ones(days.size), np.ones(days.size), np.ones(days.size), np.ones(days.size)
     m1_days = tooth_timing_convert(days, *m2_m1_params)
-    for k,d in enumerate(days):
-        print k,d
+    m1_days = m1_days - m1_days[0]
+    days_tmp, water_tmp, blood_tmp, PO4_tmp = np.ones(m1_days.size), np.ones(m1_days.size), np.ones(m1_days.size), np.ones(m1_days.size)
+    for k,d in enumerate(m1_days):
         d = int(d)
         water_tmp[d:],blood_tmp[d:],PO4_tmp[d:] = water_hist[k], blood_hist[k], PO4_hist[k]
     m1water_hist, m1blood_hist, m1PO4_hist = water_tmp, blood_tmp, PO4_tmp
     print 'M2 water hist = ', water_hist
     print 'M1 water hist = ', m1water_hist
 
+    #TESTING TO MAKE SURE ALL'S WORKING
+    #fig = plt.figure()
+    #ax1 = fig.add_subplot(1,1,1)
+    #days = np.arange(sin_180.size)
+    #ax1.plot(days, sin_180, 'k--', linewidth=1.0)
+    #ax1.plot(days, m1water_hist, 'b-', linewidth=2.0)
+    #ax1.plot(days, m1blood_hist, 'r-', linewidth=2.0)
+    #ax1.plot(days, m1PO4_hist, 'g-.', linewidth=1.0)
+    #plt.show()
+
+    #return 0
+
     # Create M1 isomaps
+    blood_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1blood_hist)
     PO4_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1PO4_hist)
 
     '''
@@ -938,28 +954,48 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     t_save = time()
 
-    save_array = np.flipud(np.mean(PO4_model, axis=2).T)
-    save_array[np.isnan(save_array)] = 0.00
-    #np.savetxt('sin_180_45{0}.csv'.format(t_save), save_array, delimiter=',', fmt='%.2f')
+    font = {'family' : 'normal',
+            'weight' : 'bold',
+            'size'   : 4}
 
-    fig = plt.figure(figsize=(3,3), dpi=300)
-    ax1 = fig.add_subplot(1,1,1)
-    ax1text = 'sin_180_45'
-    ax1.text(19, 3, ax1text, fontsize=8)
+    matplotlib.rc('font', **font)
+
+    save_PO4_array = np.flipud(np.mean(PO4_model, axis=2).T)
+    save_blood_array = np.flipud(np.mean(blood_model, axis=2).T)
+    save_PO4_array[np.isnan(save_PO4_array)] = 0.00
+    save_blood_array[np.isnan(save_blood_array)] = 0.00
+    np.savetxt('PO4_{0}_{1}.csv'.format(number, t_save), save_PO4_array, delimiter=',', fmt='%.2f')
+    np.savetxt('blood_{0}_{1}.csv'.format(number, t_save), save_blood_array, delimiter=',', fmt='%.2f')
+
+    fig = plt.figure(figsize=(2,2), dpi=300)
+    ax1 = fig.add_subplot(2,1,1)
+    ax1text = 'M2->M1 PO4_{0}'.format(number)
+    ax1.text(4, 3, ax1text, fontsize=4)
     cimg1 = ax1.imshow(np.mean(PO4_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
     cax1 = fig.colorbar(cimg1)
-    #fig.savefig('sin_180_45{0}a.svg'.format(t_save), dpi=300)
+    ax2 = fig.add_subplot(2,1,2)
+    ax2text = 'M2->M1 Blood_{0}'.format(number)
+    ax2.text(4, 3, ax2text, fontsize=4)
+    cimg2 = ax2.imshow(np.mean(blood_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+    cax2 = fig.colorbar(cimg2)
+
+    fig.savefig('PO4_and_Blood_{0}_{1}a.svg'.format(number, t_save), dpi=300)
     plt.show()
 
-    fig = plt.figure(figsize=(3,3), dpi=300)
-    ax1 = fig.add_subplot(1,1,1)
-    ax1text = 'sin_180_45'
-    ax1.text(19, 3, ax1text, fontsize=8)
+    fig = plt.figure(figsize=(2,2), dpi=300)
+    ax1 = fig.add_subplot(2,1,1)
+    ax1text = 'M2->M1 PO4_and_Blood_{0}'.format(number)
+    ax1.text(19, -20, ax1text, fontsize=4)
     ax1.plot(days, water_hist, 'b-', linewidth=1.0)
     ax1.plot(days, blood_hist, 'r-', linewidth=1.0)
     ax1.plot(days, PO4_hist, 'g-.', linewidth=1.0)
-    cax1 = fig.colorbar(cimg1)
-    #fig.savefig('sin_180_45{0}b.svg'.format(t_save), dpi=300)
+    ax2 = fig.add_subplot(2,1,2)
+    ax2text = 'M2->M1 PO4_and_Blood_{0} in M1 timing'.format(number)
+    ax2.text(19, -20, ax2text, fontsize=4)
+    ax2.plot(days, m1water_hist, 'b-', linewidth=1.0)
+    ax2.plot(days, m1blood_hist, 'r-', linewidth=1.0)
+    ax2.plot(days, m1PO4_hist, 'g-.', linewidth=1.0)
+    fig.savefig('PO4_and_Blood_{0}_{1}b.svg'.format(number, t_save), dpi=300)
     plt.show()
 
     '''

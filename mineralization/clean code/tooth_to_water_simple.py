@@ -611,7 +611,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score = np.sum(score**2)
 
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 2./1.)
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 1./3.)
     #prior_score_hist = prior_histogram(mu, data_isomap)
 
     return score+prior_score_rate
@@ -675,14 +675,15 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
     #M2_inverse_PO4_eq_truncated = M2_inverse_PO4_eq[84:]
     # Create M1 days, water, blood and phosphate histories from M2 inversion results
     M1_inverse_days = tooth_timing_convert(M2_inverse_days, *m2_m1_params)
+    M1_inverse_days = M1_inverse_days - M1_inverse_days[0]
     M1_inverse_water_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_blood_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_PO4_hist_tmp = np.ones(M1_inverse_days.size)
-    for k,d in enumerate(M2_inverse_days):
+    for k,d in enumerate(M1_inverse_days):
         d = int(d)
         M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist[k]
         M1_inverse_blood_hist_tmp[d:] = M2_inverse_blood_hist[k]
-        M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq_truncated[k]
+        M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq[k]
     M1_inverse_water_hist = M1_inverse_water_hist_tmp
     M1_inverse_blood_hist = M1_inverse_blood_hist_tmp
     M1_inverse_PO4_hist = M1_inverse_PO4_hist_tmp
@@ -913,6 +914,15 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         low_bounds.append(lower_bound)
         first_guess.append(guess)
 
+    # First guess artificial
+    #sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    #
+    # Convert guess to 2-week intervals
+    #n_2weeks = int(np.floor(sin_180.size / 14.))
+    #sin_180_2week = np.mean(np.reshape(sin_180[:n_2weeks*14], (n_2weeks, 14)), axis=1)
+    #print sin_180_2week.size
+    #first_guess = sin_180_2week[:40].tolist()
+
     # Addition of artificial switch
     switch_high, switch_low,switch_guess = [1., 1., 1., 1.], [1., 1., 1., 1.], [1., 1., 1., 1.]
     for j,k in enumerate(switch_high):
@@ -937,7 +947,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     global_opt.set_population(p_number+np.size(switch_guess))
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize(first_guess)
+    print 'first guess = ', first_guess
+    print len(first_guess)
+    print 'low = ', low_bounds
+    print len(low_bounds)
+    x_opt = global_opt.optimize(first_guess) # Is typically 'first_guess'
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -969,6 +983,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     forward_962_phosphate_eq_truncated = forward_962_phosphate_eq[84:]
     # Create M1-equivalent days, water, blood and PO4 eq
     m1_days_spl_962 = tooth_timing_convert(days_spl_962_truncated, *m2_m1_params)
+    m1_days_spl_962 = m1_days_spl_962 + m1_days_spl_962[0]
     water_spl_tmp = np.ones(m1_days_spl_962.size)
     blood_spl_tmp = np.ones(m1_days_spl_962.size)
     PO4_spl_tmp = np.ones(m1_days_spl_962.size)
@@ -993,34 +1008,49 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     M2_inverse_water_hist = spline_input_signal(x_opt[:40], 14., 1)
     M2_switch_params = x_opt[40:]
     #M2_inverse_water_hist[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-    M2_inverse_days = np.arange(np.size(M2_inverse_water_hist))
+    M2_inverse_days = np.arange(84., 84.+np.size(M2_inverse_water_hist))
     M2_inverse_blood_hist = blood_delta(23.5, M2_inverse_water_hist, 25.3, **forward_metabolic_kw)
     M2_inverse_PO4_eq = PO4_dissoln_reprecip(3.0, 45., .3, M2_inverse_blood_hist, **kwargs)
+
     # Truncate M2 inverse trial results before conversion to M1 timing
     print 'm2 inverse days = ', M2_inverse_days
-    M2_inverse_days_truncated = M2_inverse_days[84:]
-    print 'M2 inverse days truncated = ', M2_inverse_days_truncated
-    M2_inverse_water_hist_truncated = M2_inverse_water_hist[84:]
-    M2_inverse_blood_hist_truncated = M2_inverse_blood_hist[84:]
-    M2_inverse_PO4_eq_truncated = M2_inverse_PO4_eq[84:]
+    #M2_inverse_days_truncated = M2_inverse_days[84:]
+    #print 'M2 inverse days truncated = ', M2_inverse_days_truncated
+    #M2_inverse_water_hist_truncated = M2_inverse_water_hist[84:]
+    #M2_inverse_blood_hist_truncated = M2_inverse_blood_hist[84:]
+    #M2_inverse_PO4_eq_truncated = M2_inverse_PO4_eq[84:]
     # Create M1 days, water, blood and phosphate histories from M2 inversion results
-    M1_inverse_days = tooth_timing_convert(M2_inverse_days_truncated, *m2_m1_params)
+    M1_inverse_days = tooth_timing_convert(M2_inverse_days, *m2_m1_params)
+    M1_inverse_days = M1_inverse_days - M1_inverse_days[0]
     M1_inverse_water_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_blood_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_PO4_hist_tmp = np.ones(M1_inverse_days.size)
     for k,d in enumerate(M1_inverse_days):
         d = int(d)
-        M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist_truncated[k]
-        M1_inverse_blood_hist_tmp[d:] = M2_inverse_blood_hist_truncated[k]
-        M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq_truncated[k]
+        M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist[k]
+        M1_inverse_blood_hist_tmp[d:] = M2_inverse_blood_hist[k]
+        M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq[k]
     M1_inverse_water_hist = M1_inverse_water_hist_tmp
     M1_inverse_blood_hist = M1_inverse_blood_hist_tmp
     M1_inverse_PO4_hist = M1_inverse_PO4_hist_tmp
+
+    # TESTING TO MAKE SURE ALL'S WORKING
+    #fig = plt.figure()
+    #ax1 = fig.add_subplot(1,1,1)
+    #days = np.arange(M1_inverse_water_hist.size)
+    #ax1.plot(days, sin_180[:days.size], 'k--', linewidth=1.0)
+    #ax1.plot(days, M1_inverse_water_hist, 'b-', linewidth=2.0)
+    #ax1.plot(days, M1_inverse_blood_hist, 'r-', linewidth=2.0)
+    #ax1.plot(days, M1_inverse_PO4_hist, 'g-.', linewidth=1.0)
+    #plt.show()
+
+    #return 0
+
     # Create M1 equivalent isomap models for M2 inversion results
     inverse_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_blood_hist)
     inverse_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_PO4_hist)
 
-    #Save my result trials
+    #Save my result trials BLANKED FOR NOW 2016-01-01
     my_list.sort(key=getkey)
     save_list = [my_list[i] for i in range(0, keep_pct, keep_pct_jump)]
     list_water_results = [s[1] for s in save_list]
@@ -1042,26 +1072,27 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
+    number = '180'
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s, \nswitch_params= %.1f, %.1f, %.1f, %.1f' % (minf, run_time, trials, eval_p_sec, local_method, global_method, M2_switch_params[0], M2_switch_params[1], M2_switch_params[2], M2_switch_params[3])
     print textstr
 
     fig = plt.figure()
     ax1 = fig.add_subplot(4,1,1)
-    days = M2_inverse_days_truncated
-    ax1.plot(days, combo_d18O_360_45[:days.size], 'k--', linewidth=1.0)
-    ax1.plot(days, M2_inverse_water_hist_truncated, 'b-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_blood_hist_truncated, 'r-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_PO4_eq_truncated, 'g-.', linewidth=1.0)
-    for s in list_water_results[:-1]:
-        s = spline_input_signal(s[:40], 14., 1)
-        M2_switch_params = s[40:]
-        #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-        ax1.plot(days, s[84:], 'b-', alpha=0.03)
+    days = M2_inverse_days
+    ax1.plot(days, sin_180[:days.size], 'k--', linewidth=1.0)
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
+    #for s in list_water_results[:-1]:
+    #    s = spline_input_signal(s[:40], 14., 1)
+    #    M2_switch_params = s[40:]
+    #    #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+    #    ax1.plot(days, s[84:], 'b-', alpha=0.03)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -20, textstr, fontsize=8)
     ax1.set_ylim(-35, 15)
-    ax1.set_xlim(85, 550)
+    ax1.set_xlim(35, 750)
 
     #temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
     #opt_params = np.array([x_opt[0], x_opt[1], x_opt[2], x_opt[3], 3., 34.5, .3])
@@ -1076,7 +1107,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 
     ax3 = fig.add_subplot(4,1,3)
-    ax3text = 'Inverse model result - PO4'
+    ax3text = 'Inverse model result PO4 {0}'.format(number)
     ax3.text(21, 3, ax3text, fontsize=8)
     cimg3 = ax3.imshow(np.mean(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
     cax3 = fig.colorbar(cimg3)
@@ -1117,31 +1148,31 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     '''
 
-    fig.savefig('2D_2o1_360_045_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_1o3_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, combo_d18O_360_45[:days.size], 'k--', linewidth=1.0)
-    ax1.plot(days, M2_inverse_water_hist_truncated, 'b-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_blood_hist_truncated, 'r-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_PO4_eq_truncated, 'g-.', linewidth=1.0)
-    for s in list_water_results[:-1]:
-        s = spline_input_signal(s[:40], 14., 1)
-        M2_switch_params = s[40:]
-        #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-        ax1.plot(days, s[84:], 'b-', alpha=0.03)
+    ax1.plot(days, sin_180[:days.size], 'k--', linewidth=1.0)
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
+    #for s in list_water_results[:-1]:
+    #    s = spline_input_signal(s[:40], 14., 1)
+    #    M2_switch_params = s[40:]
+    #    #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+    #    ax1.plot(days, s[84:], 'b-', alpha=0.03)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -18, textstr, fontsize=8)
     ax1.set_ylim(-35, 15)
-    ax1.set_xlim(85, 550)
+    ax1.set_xlim(35, 750)
 
-    fig.savefig('2D_2o1_360_045_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_1o3_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
-    plt.hist(hist_list, bins=np.logspace(2.0, 5.0, 30), alpha=.6)
+    plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('2D_2o1_360_045_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('2D_1o3_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)
@@ -1191,7 +1222,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/daily84_d18O_360_045.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/962_tooth_iso_tooth.csv')
 
     return 0
 

@@ -993,24 +993,25 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     M2_inverse_water_hist = spline_input_signal(x_opt[:40], 14., 1)
     M2_switch_params = x_opt[40:]
     M2_inverse_water_hist[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-    M2_inverse_days = np.arange(np.size(M2_inverse_water_hist))
+    M2_inverse_days = np.arange(84., np.size(M2_inverse_water_hist)+84.)
     M2_inverse_blood_hist = blood_delta(23.5, M2_inverse_water_hist, 25.3, **forward_metabolic_kw)
     M2_inverse_PO4_eq = PO4_dissoln_reprecip(6.0, 35., .4, M2_inverse_blood_hist, **kwargs)
     # Truncate M2 inverse trial results before conversion to M1 timing
-    M2_inverse_days_truncated = M2_inverse_days[50:]
-    M2_inverse_water_hist_truncated = M2_inverse_water_hist[50:]
-    M2_inverse_blood_hist_truncated = M2_inverse_blood_hist[50:]
-    M2_inverse_PO4_eq_truncated = M2_inverse_PO4_eq[50:]
+    #M2_inverse_days_truncated = M2_inverse_days[50:]
+    #M2_inverse_water_hist_truncated = M2_inverse_water_hist[50:]
+    #M2_inverse_blood_hist_truncated = M2_inverse_blood_hist[50:]
+    #M2_inverse_PO4_eq_truncated = M2_inverse_PO4_eq[50:]
     # Create M1 days, water, blood and phosphate histories from M2 inversion results
-    M1_inverse_days = tooth_timing_convert(M2_inverse_days_truncated, *m2_m1_params)
+    M1_inverse_days = tooth_timing_convert(M2_inverse_days, *m2_m1_params)
+    M1_inverse_days = M1_inverse_days - M1_inverse_days[0]
     M1_inverse_water_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_blood_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_PO4_hist_tmp = np.ones(M1_inverse_days.size)
     for k,d in enumerate(M1_inverse_days):
         d = int(d)
-        M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist_truncated[k]
-        M1_inverse_blood_hist_tmp[d:] = M2_inverse_blood_hist_truncated[k]
-        M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq_truncated[k]
+        M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist[k]
+        M1_inverse_blood_hist_tmp[d:] = M2_inverse_blood_hist[k]
+        M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq[k]
     M1_inverse_water_hist = M1_inverse_water_hist_tmp
     M1_inverse_blood_hist = M1_inverse_blood_hist_tmp
     M1_inverse_PO4_hist = M1_inverse_PO4_hist_tmp
@@ -1033,10 +1034,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     fig = plt.figure()
     ax1 = fig.add_subplot(7,1,1)
-    days = M2_inverse_days_truncated
-    ax1.plot(days, M2_inverse_water_hist_truncated, 'b-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_blood_hist_truncated, 'r-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_PO4_eq_truncated, 'g-.', linewidth=1.0)
+    days = M2_inverse_days
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
     ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0)
     ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0)
     for s in list_water_results[:-1]:
@@ -1100,14 +1101,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg7 = ax7.imshow(np.mean(forward_model_calculated_M1_PO4_hist_from_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax7 = fig.colorbar(cimg7)
 
-    fig.savefig('fixed_inverse_trials_14d_rate1o2_19_h6p0_p35_fp40_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('fixed_inverse_trials_14d_rate1o2_19_h1p0_p01_fp01_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, M2_inverse_water_hist_truncated, 'b-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_blood_hist_truncated, 'r-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_PO4_eq_truncated, 'g-.', linewidth=1.0)
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
     ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0)
     ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0)
     for s in list_water_results[:-1]:
@@ -1121,13 +1122,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-22, 0)
     ax1.set_xlim(50, 550)
 
-    fig.savefig('fixed_inverse_trials_14d_rate1o2_19_h6p0_p35_fp40_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('fixed_inverse_trials_14d_rate1o2_19_h1p0_p01_fp01_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(2.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('fixed_inverse_trials_14d_rate1o2_19_h6p0_p35_fp40_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('fixed_inverse_trials_14d_rate1o2_19_h1p0_p01_fp01_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     #residuals_real = np.isfinite(residuals)
