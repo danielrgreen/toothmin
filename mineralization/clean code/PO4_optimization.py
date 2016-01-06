@@ -645,10 +645,6 @@ def water_hist_likelihood(PO4_half, PO4_pause, PO4_frac, **kwargs):
     # Loading daily blood and water d18O history from 962 data
     forward_962_water_hist,forward_962_blood_hist,days_spl_962 = spline_962_input(1)
 
-    # Calculate water history on each day (***IS THIS NECESSARY HERE????***)
-    #block_length = int(kwargs.get('block_length', 1))
-    #M2_inverse_water_hist = calc_water_step2(w_iso_hist, block_length)
-
     # Declare tooth growth parameters
     tooth_model = kwargs.get('tooth_model', None)
     assert(tooth_model != None)
@@ -661,32 +657,55 @@ def water_hist_likelihood(PO4_half, PO4_pause, PO4_frac, **kwargs):
     m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
     m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
 
+    # M1, M2 gestation times
+    m1_gestation_times = np.array([-49., 0.])
+    m1_gestation = m1_gestation_times[1]-m1_gestation_times[0]
+    m2_gestation_times_curve = tooth_timing_convert([-49., 0.], *m1_m2_params)
+    m2_gestation_curve = int(m2_gestation_times_curve[1] - m2_gestation_times_curve[0])
+    m2_gestation_simple = int(m1_gestation*(341./275.))
+
     # Declare physiological parameters
     d_O2 = kwargs.get('d_O2', 23.5)
     d_feed = kwargs.get('d_feed', 25.3)
     metabolic_kw = kwargs.get('metabolic_kw', {})
 
     # Generate PO4 from optimization guess
-    M2_inverse_PO4_eq = PO4_dissoln_reprecip(PO4_half, PO4_pause, PO4_frac, forward_962_blood_hist, **kwargs)
-    # Truncate M2 inverse trial results before conversion to M1 timing
-    #M2_inverse_days_truncated = days_spl_962[50:]
-    #M2_inverse_PO4_eq_truncated = M2_inverse_PO4_eq[50:]
-    # Create M1 days, and phosphate histories from M2 inversion results
-    M1_inverse_days = tooth_timing_convert(days_spl_962, *m2_m1_params)
-    M1_inverse_days = M1_inverse_days - M1_inverse_days[0]
-    M1_inverse_PO4_hist_tmp = np.ones(M1_inverse_days.size)
-    for k,d in enumerate(M1_inverse_days):
+    forward_962_phosphate_eq = PO4_dissoln_reprecip(3.0, 34.5, 0.3, forward_962_blood_hist, **kwargs)
+    m1_days_spl_962 = tooth_timing_convert(days_spl_962, *m2_m1_params) # Days here are 84+
+    m1_days_spl_962 = m1_days_spl_962 - m1_days_spl_962[0] # This sets the M1 day array to begin at 0.
+    PO4_spl_tmp = np.ones(m1_days_spl_962.size)
+    for k,d in enumerate(m1_days_spl_962):
         d = int(d)
-        M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq[k]
-    M1_inverse_PO4_hist = M1_inverse_PO4_hist_tmp
+        PO4_spl_tmp[d:] = forward_962_phosphate_eq[k]
+    forward_962_PO4_hist_m1 = PO4_spl_tmp
+    forward_962_PO4_hist_m1_gest = np.append(np.mean(forward_962_PO4_hist_m1[:m1_gestation]), forward_962_PO4_hist_m1[m1_gestation:])
 
     # Create M1 equivalent isomap models for M2 inversion results
-    inverse_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_PO4_hist)
+    inverse_model_M1_PO4_params = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1_gest)
 
     # Calculate score comparing inverse to real
-    score = compare(inverse_model_PO4, data_isomap)
+    score = compare(inverse_model_M1_PO4_params, data_isomap)
+    print 'score = ', score
 
-    return score, inverse_model_PO4
+    fig = plt.figure()
+    ax1 = fig.add_subplot(2,1,1)
+    ax1text = '962 data'
+    ax1.text(21, 3, ax1text, fontsize=8)
+    cimg1 = ax1.imshow(data_isomap.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    cax1 = fig.colorbar(cimg1)
+
+    forward_PO4_text = 'score = {0}'.format(score)
+    ax2 = fig.add_subplot(2,1,2)
+    ax2text = 'PO4 param inverse result'
+    ax2.text(21, 3, ax2text, fontsize=8)
+    ax2.text(21, 2, forward_PO4_text, fontsize=8)
+    cimg2 = ax2.imshow(np.mean(inverse_model_M1_PO4_params, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
+    cax2 = fig.colorbar(cimg2)
+
+    plt.show()
+    return 0
+
+    return score, inverse_model_M1_PO4_params
 
 def water_hist_prob(w_params, **kwargs):
 
@@ -873,23 +892,6 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/80.)
-
-    # Parameters for time series only
-    p_number = 40
-    fit_kwargs['time_interval'] = 14.
-    upper_bound,lower_bound,guess = 2.,-18.,-6.
-    up_bounds,low_bounds,first_guess = [],[],[]
-    for i in xrange(p_number):
-        up_bounds.append(upper_bound)
-        low_bounds.append(lower_bound)
-        first_guess.append(guess)
-
-    # Addition of artificial switch
-    #switch_high, switch_low,switch_guess = [1., 8., 350., 120.], [-1., -28., 70., 5.], [0., -20., 200., 60.]
-    #for j,k in enumerate(switch_high):
-    #    up_bounds.append(switch_high[j])
-    #    low_bounds.append(switch_low[j])
-    #    first_guess.append(switch_guess[j])
 
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
