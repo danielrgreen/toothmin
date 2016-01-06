@@ -618,7 +618,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score = np.sum(score**2)
 
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 1./4.)
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 1./2.)
     #prior_score_hist = prior_histogram(mu, data_isomap)
 
     return score+prior_score_rate
@@ -640,8 +640,8 @@ def prior_histogram(model_isomap, data_isomap):
 def prior_rate_change(w_iso_hist, M2_switch_days, rate):
 
     diff_water = np.diff(w_iso_hist)
-    diff_water[int(M2_switch_days[0])-3:int(M2_switch_days[0])+1] = 0.
-    diff_water[int(M2_switch_days[1])-3:int(M2_switch_days[1])+1] = 0.
+    diff_water[int(M2_switch_days[0])-3:int(M2_switch_days[0])+2] = 0.
+    diff_water[int(M2_switch_days[1])-3:int(M2_switch_days[1])+2] = 0.
     prior_score = np.sum((diff_water/rate)**2.)
 
     return prior_score
@@ -659,7 +659,7 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
     m1_gestation = m1_gestation_times[1]-m1_gestation_times[0]
     m2_gestation_times_curve = tooth_timing_convert([-49., 0.], *m1_m2_params)
     m2_gestation_curve = int(m2_gestation_times_curve[1] - m2_gestation_times_curve[0])
-    m2_gestation_simple = int(m1_gestation*(370./280.))
+    m2_gestation_simple = int(m1_gestation*(341./275.))
 
     # Declare tooth growth parameters
     tooth_model = kwargs.get('tooth_model', None)
@@ -763,7 +763,7 @@ def water_hist_prob(w_params, **kwargs):
     switch_params = iso_hist[40:]
     w_iso_hist[switch_params[2]:switch_params[2]+switch_params[3]] = switch_params[1]
 
-    p, model_isomap = water_hist_likelihood(w_iso_hist, switch_params, 3.0, 45.0, .3, **kwargs)
+    p, model_isomap = water_hist_likelihood(w_iso_hist, switch_params, 3.0, 34.5, 0.3, **kwargs)
 
     list_tuple = (p, np.array(w_params))
     my_list.append(list_tuple)
@@ -935,8 +935,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 500
-    keep_pct = 40. # Percent of trials to record
+    trials = 25000
+    keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/80.)
@@ -944,7 +944,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     # Parameters for time series only
     p_number = 40
     fit_kwargs['time_interval'] = 14.
-    upper_bound,lower_bound,guess = 10.,-30.,-6.5
+    upper_bound,lower_bound,guess = 6.,-30.,-6.5
     up_bounds,low_bounds,first_guess = [],[],[]
     for i in xrange(p_number):
         up_bounds.append(upper_bound)
@@ -952,7 +952,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         first_guess.append(guess)
 
     # Addition of artificial switch. Params are baseline, switch value, switch onset, switch length
-    switch_high, switch_low, switch_guess = [0.1, 10., 450., 250.], [-0.1, -30., 1., 1.], [0., -19.3, 73., 60.]
+    switch_high, switch_low, switch_guess = [0.1, 10., 250., 250.], [-0.1, -30., 1., 1.], [0., -19.3, 73., 60.]
     for j,k in enumerate(switch_high):
         up_bounds.append(switch_high[j])
         low_bounds.append(switch_low[j])
@@ -1001,12 +1001,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     m1_gestation = m1_gestation_times[1]-m1_gestation_times[0]
     m2_gestation_times_curve = tooth_timing_convert([-49., 0.], *m1_m2_params)
     m2_gestation_curve = int(m2_gestation_times_curve[1] - m2_gestation_times_curve[0])
-    m2_gestation_simple = int(m1_gestation*(370./280.))
+    m2_gestation_simple = int(m1_gestation*(341./275.))
 
     # Make trial forward data *******FORWARD BASED ON EXPECTATIONS PRIOR TO INVERSION*******
     forward_962_water_hist,forward_962_blood_hist,days_spl_962 = spline_962_input(1)
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
-    forward_962_phosphate_eq = PO4_dissoln_reprecip(3.0, 45.0, .3, forward_962_blood_hist, **kwargs)
+    forward_962_phosphate_eq = PO4_dissoln_reprecip(3.0, 34.5, 0.3, forward_962_blood_hist, **kwargs)
 
     # Plotting forward blood and water from 962 data
     textstr1a = 'as loaded into model'
@@ -1122,6 +1122,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     forward_model_M1_blood_hist = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_blood_hist_m1_gest)
     forward_model_M1_PO4_hist = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1_gest)
+    forward_M2_switch_days_for_check = np.array([116.,178.])
+    forward_score = compare(forward_model_M1_PO4_hist, data_isomap, forward_962_water_hist, forward_M2_switch_days_for_check)
 
     # Assemble inverse data *******INVERSE BASED ON OPTIMIZER RESULTS*******
     # Assemble inverse trial result data in M2 format
@@ -1129,7 +1131,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     M2_switch_params = x_opt[40:]
     M2_inverse_water_hist[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
     M2_inverse_blood_hist = blood_delta(23.5, M2_inverse_water_hist, 25.3, **forward_metabolic_kw)
-    M2_inverse_PO4_eq = PO4_dissoln_reprecip(3.0, 45.0, .3, M2_inverse_blood_hist, **kwargs)
+    M2_inverse_PO4_eq = PO4_dissoln_reprecip(3.0, 34.5, 0.3, M2_inverse_blood_hist, **kwargs)
 
     # Plotting M2 inverse blood and water from x_opt
     textstr1a = 'as loaded into model'
@@ -1165,7 +1167,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     M2_inverse_water_hist_gest = np.insert(M2_inverse_water_hist, 0, np.ones(m2_gestation_simple)*M2_inverse_water_hist[0])
     M2_inverse_days = np.arange(84., np.size(M2_inverse_water_hist)+84.)
     M2_inverse_blood_hist_gest = blood_delta(23.5, M2_inverse_water_hist_gest, 25.3, **forward_metabolic_kw)
-    M2_inverse_PO4_eq_gest = PO4_dissoln_reprecip(3.0, 45.0, .3, M2_inverse_blood_hist_gest, **kwargs)
+    M2_inverse_PO4_eq_gest = PO4_dissoln_reprecip(3.0, 34.5, 0.3, M2_inverse_blood_hist_gest, **kwargs)
 
     # Plotting M2 inverse blood and water with gestation
     textstr1a = 'as loaded into model (this would incorrectly count gestation time twice)'
@@ -1331,14 +1333,16 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg5 = ax5.imshow(np.mean(forward_model_M1_blood_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
+    forward_PO4_text = 'score = {0}'.format(forward_score)
     ax6 = fig.add_subplot(6,1,6)
     ax6text = 'forward model: PO4 hist from blood'
     ax6.text(21, 3, ax6text, fontsize=8)
+    ax6.text(21, 2, forward_PO4_text, fontsize=8)
     cimg6 = ax6.imshow(np.mean(forward_model_M1_PO4_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax6 = fig.colorbar(cimg6)
 
-    fig.savefig('962trial_14d_rate1o2_19_h3p0_p45_f0p3_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    plt.show()
+    fig.savefig('962trial_14d_rate1o2_19_h3p0_p35_f0p3_{0}a_gestsimple.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    #plt.show()
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1361,17 +1365,17 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -18, textstr, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
+    ax1.set_ylim(-26, 2)
+    ax1.set_xlim(84, 550)
 
-    fig.savefig('962trial_14d_rate1o2_19_h3p0_p45_f0p3_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    plt.show()
+    fig.savefig('962trial_14d_rate1o2_19_h3p0_p35_f0p3_{0}b_gestsimple.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    #plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('962trial_14d_rate1o2_19_h3p0_p45_f0p3_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    plt.show()
+    fig.savefig('962trial_14d_rate1o2_19_h3p0_p35_f0p3_{0}c_gestsimple.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    #plt.show()
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)
