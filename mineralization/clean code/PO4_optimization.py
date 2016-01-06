@@ -895,20 +895,20 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
     local_opt.set_xtol_abs(.01)
     local_opt.set_lower_bounds([1.0, 1.0, 0.01])
-    local_opt.set_upper_bounds([30., 70., 0.8])
+    local_opt.set_upper_bounds([1.0, 1.0, 0.01])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 3)
     global_opt.set_maxeval(trials)
     global_opt.set_lower_bounds([1.0, 1.0, 0.01])
-    global_opt.set_upper_bounds([30., 70., 0.8])
+    global_opt.set_upper_bounds([1.0, 1.0, 0.01])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(3)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([3., 35., 0.3])
+    x_opt = global_opt.optimize([1.0, 1.0, 0.01])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -957,10 +957,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     calculated_M1_PO4_hist_from_water = PO4_dissoln_reprecip(3., 35., .3, calculated_M1_blood_hist_from_water, **kwargs)
     calculated_M1_PO4_hist_from_blood = PO4_dissoln_reprecip(3., 35., .3, forward_962_blood_hist_m1, **kwargs)
 
-    forward_model_calculated_M1_blood_hist_from_m2blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_blood_hist_m1)
-    forward_model_calculated_M1_blood_hist_from_water = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, calculated_M1_blood_hist_from_water)
-    forward_model_calculated_M1_PO4_hist_from_water = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, calculated_M1_PO4_hist_from_water) # This takes the blood history from 962 scaled to the M1 without also downscaling the blood turnover
-    forward_model_calculated_M1_PO4_hist_from_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, calculated_M1_PO4_hist_from_blood)
+    forward_model_962_water_measurements = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_water_hist_m1)
+    forward_model_962_blood_measurements = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_blood_hist_m1)
+    forward_model_962_PO4_from_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1)
 
     # Assemble inverse trial result data in M2 format (***INVERSE RESULTS FOLLOW HERE***)
     forward_962_water_hist,forward_962_blood_hist,days_spl_962 = spline_962_input(1)
@@ -993,7 +992,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     print textstr
 
     fig = plt.figure()
-    ax1 = fig.add_subplot(7,1,1)
+    ax1 = fig.add_subplot(6,1,1)
     days = days_spl_962
     ax1.plot(days, forward_962_water_hist, 'b-', linewidth=1.0)
     ax1.plot(days, forward_962_blood_hist, 'r-', linewidth=1.0)
@@ -1009,42 +1008,42 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-30, 10)
     ax1.set_xlim(-50, 750)
 
-    ax2 = fig.add_subplot(7,1,2)
+    ax2 = fig.add_subplot(6,1,2)
     ax2text = '962 data'
     ax2.text(21, 3, ax2text, fontsize=8)
     cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax2 = fig.colorbar(cimg2)
 
-    ax3 = fig.add_subplot(7,1,3)
+    ax3 = fig.add_subplot(6,1,3)
     ax3text = 'Inverse model result - PO4'
     ax3.text(21, 3, ax3text, fontsize=8)
     cimg3 = ax3.imshow(np.mean(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax3 = fig.colorbar(cimg3)
 
     residuals = np.mean(inverse_model_PO4, axis=2) - data_isomap
-    ax4 = fig.add_subplot(7,1,4)
-    ax4text = 'forward model: bloodhist'
+    ax4 = fig.add_subplot(6,1,4)
+    ax4text = 'forward model: water measurements'
     ax4.text(21, 3, ax4text, fontsize=8)
-    cimg4 = ax4.imshow(np.mean(forward_model_calculated_M1_blood_hist_from_m2blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
+    cimg4 = ax4.imshow(np.mean(forward_model_962_water_measurements, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax4 = fig.colorbar(cimg4)
 
-    ax5 = fig.add_subplot(7,1,5)
-    ax5text = 'forward model: bloodhist from water'
+    ax5 = fig.add_subplot(6,1,5)
+    ax5text = 'forward model: bloodhist measurements'
     ax5.text(21, 3, ax5text, fontsize=8)
-    cimg5 = ax5.imshow(np.mean(forward_model_calculated_M1_blood_hist_from_water, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    cimg5 = ax5.imshow(np.mean(forward_model_962_blood_measurements, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    ax6 = fig.add_subplot(7,1,6)
-    ax6text = 'forward model: PO4 hist from water'
+    ax6 = fig.add_subplot(6,1,6)
+    ax6text = 'forward model: PO4 from blood measures'
     ax6.text(21, 3, ax6text, fontsize=8)
-    cimg6 = ax6.imshow(np.mean(forward_model_calculated_M1_PO4_hist_from_water, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
+    cimg6 = ax6.imshow(np.mean(forward_model_962_PO4_from_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax6 = fig.colorbar(cimg6)
 
-    ax7 = fig.add_subplot(7,1,7)
-    ax7text = 'forward model: PO4 hist from blood'
-    ax7.text(21, 3, ax7text, fontsize=8)
-    cimg7 = ax7.imshow(np.mean(forward_model_calculated_M1_PO4_hist_from_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
-    cax7 = fig.colorbar(cimg7)
+    #ax7 = fig.add_subplot(7,1,7)
+    #ax7text = 'forward model: PO4 hist from blood'
+    #ax7.text(21, 3, ax7text, fontsize=8)
+    #cimg7 = ax7.imshow(np.mean(forward_model_calculated_M1_PO4_hist_from_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
+    #cax7 = fig.colorbar(cimg7)
 
     fig.savefig('PO4opt_hista0p3_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     plt.show()

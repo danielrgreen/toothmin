@@ -874,12 +874,15 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = '180_45'
+    realish = np.ones(600) * -6.
+    realish[56:116] = -19.
+
+    number = 'real-ish'
 
     # Make water, blood and PO4 history from synthetic water input
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
     days = np.arange(84., 684.)
-    water_hist = sin_180 # <----- ******** WATER HISTORY HERE *********
+    water_hist = realish # <----- ******** WATER HISTORY HERE *********
     blood_hist = blood_delta(23.5, water_hist, 25.3, **forward_metabolic_kw)
     PO4_hist = PO4_dissoln_reprecip(3., 45., .3, blood_hist, **kwargs)
 
