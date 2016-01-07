@@ -612,10 +612,33 @@ def compare(model_isomap, data_isomap, score_max=100., data_sigma=0.25, sigma_fl
     mu = np.median(model_isomap, axis=2)
     sigma = np.std(model_isomap, axis=2)
     sigma = np.sqrt(sigma**2. + data_sigma**2. + sigma_floor**2.)
+
+    print 'mu = ', mu
+    print 'data = ', data_isomap
+
     score = (mu - data_isomap) / sigma
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
-    score = np.sum(score**2)
+
+    #print 'score = ', score
+
+    #print score[0]
+    #print score[1]
+    #print score[2]
+    #return 0
+
+    #print np.sum(score[:5]**2.)
+    #print np.sum(score[:5]**2.)/5.
+    #print np.sum(score[:5]**2.)/10.
+
+    #print np.sum(score**2.)
+    #print np.sum(score[:5]**2.) + np.sum(score[5:]**2.)
+    #print np.sum(score[:5]**2.)/5. + np.sum(score[5:]**2.)
+
+    #return 0
+    #score = np.sum(score[:5]**2.)/5. + np.sum(score[5:]**2.)
+
+    score = np.sum(score**2.)
 
     prior_score = prior_histogram(mu, data_isomap)
     #prior_score = prior_rate_change(w_iso_hist, M2_switch_days, 1./2.)
@@ -632,7 +655,7 @@ def prior_histogram(model_isomap, data_isomap):
     model_hist = np.histogram(model_isomap[model_real], bins=10, range=min_max)
     data_hist = np.histogram(data_isomap[data_real], bins=10, range=min_max)
 
-    hist_sigma = 0.5
+    hist_sigma = 0.3
     prior_score = (model_hist[0] - data_hist[0]) / hist_sigma
     prior_score = (np.sum(prior_score**2))
 
@@ -680,18 +703,61 @@ def water_hist_likelihood(PO4_half, PO4_pause, PO4_frac, **kwargs):
 
     # Generate PO4 from optimization guess
     forward_962_phosphate_eq = PO4_dissoln_reprecip(PO4_half, PO4_pause, PO4_frac, forward_962_blood_hist, **kwargs)
-    m1_days_spl_962 = tooth_timing_convert(days_spl_962, *m2_m1_params) # Days here are 84+
+    forward_962_PO4_hist_m2_gest = np.append(np.mean(forward_962_phosphate_eq[:m2_gestation_curve]), forward_962_phosphate_eq[m2_gestation_curve+1:])
+    forward_962_water_hist_gest = np.append(np.mean(forward_962_water_hist[:m2_gestation_curve]), forward_962_water_hist[m2_gestation_curve+1:])
+    forward_962_blood_hist_gest = np.append(np.mean(forward_962_blood_hist[:m2_gestation_curve]), forward_962_blood_hist[m2_gestation_curve+1:])
+
+    #text = 'line={0}, time={1}'.format(lineno(), t_save)
+    #fig = plt.figure()
+    #ax1 = fig.add_subplot(1,1,1)
+    #ax1.plot(days_spl_962[m2_gestation_curve:], forward_962_PO4_hist_m2_gest, 'g-', label='forward_962_water_hist', linewidth=1.0)
+    #ax1.plot(days_spl_962[m2_gestation_curve:], forward_962_water_hist_gest, 'b-', label='forward_962_blood_hist', linewidth=1.0)
+    #ax1.plot(days_spl_962[m2_gestation_curve:], forward_962_blood_hist_gest, 'r-', label='forward_962_phosphate_eq', linewidth=1.0)
+    #ax1.grid(True)
+    #ax1.text(0, -26, text, fontsize=8)
+    #ax1.set_ylim(-30, 10)
+    #ax1.set_xlim(-50, 750)
+    #ax1.legend(fontsize=8)
+    #plt.show()
+
+    m1_days_spl_962 = tooth_timing_convert(days_spl_962[m2_gestation_simple:], *m2_m1_params) # Days here are 84+
     m1_days_spl_962 = m1_days_spl_962 - m1_days_spl_962[0] # This sets the M1 day array to begin at 0.
     PO4_spl_tmp = np.ones(m1_days_spl_962.size)
     for k,d in enumerate(m1_days_spl_962):
         d = int(d)
-        PO4_spl_tmp[d:] = forward_962_phosphate_eq[k]
+        PO4_spl_tmp[d:] = forward_962_PO4_hist_m2_gest[k]
     forward_962_PO4_hist_m1 = PO4_spl_tmp
-    forward_962_PO4_hist_m1_gest = np.append(np.mean(forward_962_PO4_hist_m1[:m1_gestation]), forward_962_PO4_hist_m1[m1_gestation:])
+    #forward_962_PO4_hist_m1_gest = np.append(np.mean(forward_962_PO4_hist_m1[:m1_gestation]), forward_962_PO4_hist_m1[m1_gestation:])
+
+    #text = 'line={0}, time={1}'.format(lineno(), t_save)
+    #fig = plt.figure()
+    #ax1 = fig.add_subplot(1,1,1)
+    #ax1.plot(np.arange(len(forward_962_PO4_hist_m1)), forward_962_PO4_hist_m1, 'g-', label='forward_962_PO4_hist_m1', linewidth=1.0)
+    #ax1.grid(True)
+    #ax1.text(0, -26, text, fontsize=8)
+    #ax1.set_ylim(-30, 10)
+    #ax1.set_xlim(-50, 750)
+    #ax1.legend(fontsize=8)
+    #plt.show()
+
+    #return 0
 
     # Create M1 equivalent isomap models for M2 inversion results
-    inverse_model_M1_PO4_params = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1_gest)
+    inverse_model_M1_PO4_params = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1)
+    fig = plt.figure()
+    ax2 = fig.add_subplot(2,1,1)
+    ax2text = '962 data'
+    ax2.text(21, 3, ax2text, fontsize=8)
+    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    cax2 = fig.colorbar(cimg2)
 
+    ax3 = fig.add_subplot(2,1,2)
+    ax3text = 'Inverse model param result - PO4'
+    ax3.text(21, 3, ax3text, fontsize=8)
+    cimg3 = ax3.imshow(np.mean(inverse_model_M1_PO4_params, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    cax3 = fig.colorbar(cimg3)
+    plt.show()
+    return 0
     # Calculate score comparing inverse to real
     score = compare(inverse_model_M1_PO4_params, data_isomap)
 
@@ -879,7 +945,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 25000
+    trials = 2500
     keep_pct = 40. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -889,20 +955,20 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
     local_opt.set_xtol_abs(.01)
     local_opt.set_lower_bounds([1.0, 1.0, 0.01])
-    local_opt.set_upper_bounds([15.0, 80., 0.8])
+    local_opt.set_upper_bounds([20.0, 85., 0.8])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 3)
     global_opt.set_maxeval(trials)
     global_opt.set_lower_bounds([1.0, 1.0, 0.01])
-    global_opt.set_upper_bounds([15.0, 80., 0.8])
+    global_opt.set_upper_bounds([20.0, 85., 0.8])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(3)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([3.0, 35.0, 0.3])
+    x_opt = global_opt.optimize([3.0, 65.0, 0.3])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -1164,7 +1230,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax2 = fig.add_subplot(2,1,2)
     ax2.plot(np.arange(np.size(forward_962_water_hist_m1))-m1_gestation, forward_962_water_hist_m1, 'b-', label='forward_962_water_hist_m1', linewidth=1.0)
     ax2.plot(np.arange(np.size(forward_962_blood_hist_m1))-m1_gestation, forward_962_blood_hist_m1, 'r-', label='forward_962_blood_hist_m1', linewidth=1.0)
-    ax2.plot(np.arange(np.size(inverse_962_PO4_hist_m1_gest))-m1_gestation, inverse_962_PO4_hist_m1_gest, 'g-', label='inverse_962_PO4_hist_m1_gest', linewidth=1.0)
+    ax2.plot(np.arange(np.size(inverse_962_PO4_hist_m1_gest)), inverse_962_PO4_hist_m1_gest, 'g-', label='inverse_962_PO4_hist_m1_gest', linewidth=1.0)
     ax2.grid(True)
     ax2.text(0, -26, textstr2a, fontsize=8)
     ax2.text(0, -28, textstr2b, fontsize=8)
@@ -1249,7 +1315,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #cimg7 = ax7.imshow(np.mean(forward_model_calculated_M1_PO4_hist_from_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     #cax7 = fig.colorbar(cimg7)
 
-    fig.savefig('PO4opt_noprior_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_PO4opt_hist02_lim85_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
@@ -1273,13 +1339,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-26, 2)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('PO4opt_noprior_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_PO4opt_hist02_lim85_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    fig.savefig('PO4opt_noprior_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_PO4opt_hist02_lim85_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     #residuals_real = np.isfinite(residuals)
