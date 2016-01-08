@@ -618,7 +618,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score = np.sum(score**2)
 
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, .8)
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, .65)
     #prior_score_hist = prior_histogram(mu, data_isomap)
 
     return score+prior_score_rate
@@ -1341,7 +1341,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg6 = ax6.imshow(np.mean(forward_model_M1_PO4_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax6 = fig.colorbar(cimg6)
 
-    fig.savefig('962trial_14d_rate80_19_h3p0_p35_f0p3_{0}a_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962trial_14d_rate65_19_h3p0_p35_f0p3_{0}a_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
@@ -1368,13 +1368,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-26, 2)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('962trial_14d_rate80_19_h3p0_p35_f0p3_{0}b_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962trial_14d_rate65_19_h3p0_p35_f0p3_{0}b_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    fig.savefig('962trial_14d_rate80_19_h3p0_p35_f0p3_{0}c_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962trial_14d_rate65_19_h3p0_p35_f0p3_{0}c_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     #residuals_real = np.isfinite(residuals)

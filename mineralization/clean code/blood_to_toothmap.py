@@ -874,17 +874,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    realish = np.ones(600) * -6.
-    realish[56:116] = -19.
-
-    number = 'real-ish'
+    number = '180_45'
 
     # Make water, blood and PO4 history from synthetic water input
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
     days = np.arange(84., 684.)
-    water_hist = realish # <----- ******** WATER HISTORY HERE *********
+    water_hist = sin_180_45 # <----- ******** WATER HISTORY HERE *********
     blood_hist = blood_delta(23.5, water_hist, 25.3, **forward_metabolic_kw)
-    PO4_hist = PO4_dissoln_reprecip(3., 45., .3, blood_hist, **kwargs)
+    PO4_hist = PO4_dissoln_reprecip(3., 34.5, .3, blood_hist, **kwargs)
 
     # Convert to M1 timing and space
     #m2days, m2water_hist, m2blood_hist, m2PO4_hist = days[84:], water_hist[84:], blood_hist[84:], PO4_hist[84:]
@@ -911,7 +908,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #return 0
 
     # Create M1 isomaps
-    blood_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1blood_hist)
+    #blood_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1blood_hist)
     PO4_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1PO4_hist)
 
     '''
@@ -964,11 +961,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     matplotlib.rc('font', **font)
 
     save_PO4_array = np.flipud(np.mean(PO4_model, axis=2).T)
-    save_blood_array = np.flipud(np.mean(blood_model, axis=2).T)
+    #save_blood_array = np.flipud(np.mean(blood_model, axis=2).T)
     save_PO4_array[np.isnan(save_PO4_array)] = 0.00
-    save_blood_array[np.isnan(save_blood_array)] = 0.00
+    #save_blood_array[np.isnan(save_blood_array)] = 0.00
     np.savetxt('PO4_{0}_{1}.csv'.format(number, t_save), save_PO4_array, delimiter=',', fmt='%.2f')
-    np.savetxt('blood_{0}_{1}.csv'.format(number, t_save), save_blood_array, delimiter=',', fmt='%.2f')
+    #np.savetxt('blood_{0}_{1}.csv'.format(number, t_save), save_blood_array, delimiter=',', fmt='%.2f')
 
     fig = plt.figure(figsize=(2,2), dpi=300)
     ax1 = fig.add_subplot(2,1,1)
@@ -976,14 +973,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.text(4, 3, ax1text, fontsize=4)
     cimg1 = ax1.imshow(np.mean(PO4_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
     cax1 = fig.colorbar(cimg1)
-    ax2 = fig.add_subplot(2,1,2)
-    ax2text = 'M2->M1 Blood_{0}'.format(number)
-    ax2.text(4, 3, ax2text, fontsize=4)
-    cimg2 = ax2.imshow(np.mean(blood_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
-    cax2 = fig.colorbar(cimg2)
+    #ax2 = fig.add_subplot(2,1,2)
+    #ax2text = 'M2->M1 Blood_{0}'.format(number)
+    #ax2.text(4, 3, ax2text, fontsize=4)
+    #cimg2 = ax2.imshow(np.mean(blood_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+    #cax2 = fig.colorbar(cimg2)
 
     fig.savefig('PO4_and_Blood_{0}_{1}a.svg'.format(number, t_save), dpi=300)
-    plt.show()
+    #plt.show()
 
     fig = plt.figure(figsize=(2,2), dpi=300)
     ax1 = fig.add_subplot(2,1,1)
@@ -999,7 +996,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax2.plot(days, m1blood_hist, 'r-', linewidth=1.0)
     ax2.plot(days, m1PO4_hist, 'g-.', linewidth=1.0)
     fig.savefig('PO4_and_Blood_{0}_{1}b.svg'.format(number, t_save), dpi=300)
-    plt.show()
+    #plt.show()
 
     '''
     ax1 = fig.add_subplot(6,1,1)
