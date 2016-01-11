@@ -611,7 +611,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score = np.sum(score**2)
 
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 1./3.)
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 2./3.) # rate prior
     #prior_score_hist = prior_histogram(mu, data_isomap)
 
     return score+prior_score_rate
@@ -668,11 +668,7 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
     M2_inverse_days = np.arange(84., 84.+np.size(M2_inverse_water_hist))
     M2_inverse_blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **metabolic_kw)
     M2_inverse_PO4_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, M2_inverse_blood_hist, **kwargs)
-    # Truncate M2 inverse trial results before conversion to M1 timing
-    #M2_inverse_days_truncated = M2_inverse_days[84:]
-    #M2_inverse_water_hist_truncated = M2_inverse_water_hist[84:]
-    #M2_inverse_blood_hist_truncated = M2_inverse_blood_hist[84:]
-    #M2_inverse_PO4_eq_truncated = M2_inverse_PO4_eq[84:]
+
     # Create M1 days, water, blood and phosphate histories from M2 inversion results
     M1_inverse_days = tooth_timing_convert(M2_inverse_days, *m2_m1_params)
     M1_inverse_days = M1_inverse_days - M1_inverse_days[0]
@@ -834,7 +830,7 @@ def spline_962_input(smoothness):
     water_days = np.array([1.0, 31.0, 46.0, 74.0, 131.0, 170.0, 198.0, 199.0, 200.0, 201.0, 216.0, 219.0, 220.0, 221.0, 222.0, 261.0, 262.0, 272.0, 322.0, 358.0, 383.0, 411.0, 423.0, 469.0, 483.0, 496.0])
     blood_data = np.array([-5.71, -5.01, -4.07, -3.96, -4.53, -3.95, -4.96, -8.56, -10.34, -12.21, -13.09, -13.49, -13.16, -12.93, -13.46, -13.29, -5.68, -4.87, -4.76, -4.97, -4.60, -4.94, -5.45, -9.34, -5.56, -6.55, -4.25, -4.31])
     water_data = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -17.63, -5.93, -13.66, -13.67, -6.83, -6.65, -6.98])
-    days = np.arange(1., np.max(days_data), 1.)
+    days = np.arange(84., 84.+np.max(days_data), 1.)
 
     water_spl = InterpolatedUnivariateSpline(water_days, water_data, k=smoothness)
     blood_spl = InterpolatedUnivariateSpline(blood_days, blood_data, k=smoothness)
@@ -898,7 +894,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 5000
+    trials = 15000
     keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -976,33 +972,27 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     forward_962_water_hist,forward_962_blood_hist,days_spl_962 = spline_962_input(1)
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
     forward_962_phosphate_eq = PO4_dissoln_reprecip(3.0, 34.5, .3, forward_962_blood_hist, **kwargs)
-    # Truncate days, water, blood and PO4_eq for eventual M1 model use
-    forward_962_water_hist_truncated = forward_962_water_hist[84:]
-    forward_962_blood_hist_truncated = forward_962_blood_hist[84:]
-    days_spl_962_truncated = days_spl_962[84:]
-    forward_962_phosphate_eq_truncated = forward_962_phosphate_eq[84:]
     # Create M1-equivalent days, water, blood and PO4 eq
-    m1_days_spl_962 = tooth_timing_convert(days_spl_962_truncated, *m2_m1_params)
-    m1_days_spl_962 = m1_days_spl_962 + m1_days_spl_962[0]
+    m1_days_spl_962 = tooth_timing_convert(days_spl_962, *m2_m1_params)
+    m1_days_spl_962 = m1_days_spl_962 - m1_days_spl_962[0]
     water_spl_tmp = np.ones(m1_days_spl_962.size)
     blood_spl_tmp = np.ones(m1_days_spl_962.size)
     PO4_spl_tmp = np.ones(m1_days_spl_962.size)
     for k,d in enumerate(m1_days_spl_962):
         d = int(d)
-        water_spl_tmp[d:] = forward_962_water_hist_truncated[k]
-        blood_spl_tmp[d:] = forward_962_blood_hist_truncated[k]
-        PO4_spl_tmp[d:] = forward_962_phosphate_eq_truncated[k]
+        water_spl_tmp[d:] = forward_962_water_hist[k]
+        blood_spl_tmp[d:] = forward_962_blood_hist[k]
+        PO4_spl_tmp[d:] = forward_962_phosphate_eq[k]
     forward_962_water_hist_m1 = water_spl_tmp
     forward_962_blood_hist_m1 = blood_spl_tmp
     forward_962_PO4_hist_m1 = PO4_spl_tmp
 
-    calculated_M1_blood_hist_from_water = blood_delta(23.5, forward_962_water_hist_m1, 25.3, **forward_metabolic_kw)
-    calculated_M1_PO4_hist_from_water = PO4_dissoln_reprecip(3.0, 34.5, .3, calculated_M1_blood_hist_from_water, **kwargs)
-    calculated_M1_PO4_hist_from_blood = PO4_dissoln_reprecip(3.0, 34.5, .3, forward_962_blood_hist_m1, **kwargs)
+    #calculated_M1_blood_hist_from_water = blood_delta(23.5, forward_962_water_hist_m1, 25.3, **forward_metabolic_kw)
+    #calculated_M1_PO4_hist_from_water = PO4_dissoln_reprecip(3.0, 34.5, .3, calculated_M1_blood_hist_from_water, **kwargs)
+    #calculated_M1_PO4_hist_from_blood = PO4_dissoln_reprecip(3.0, 34.5, .3, forward_962_blood_hist_m1, **kwargs)
 
-    forward_model_calculated_M1_blood_hist_from_water = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, calculated_M1_blood_hist_from_water)
-    forward_model_calculated_M1_PO4_hist_from_water = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, calculated_M1_PO4_hist_from_water) # This takes the blood history from 962 scaled to the M1 without also downscaling the blood turnover
-    forward_model_calculated_M1_PO4_hist_from_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, calculated_M1_PO4_hist_from_blood)
+    forward_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_blood_hist_m1) # This takes the blood history from 962 scaled to the M1 without also downscaling the blood turnover
+    forward_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1)
 
     # Assemble inverse trial result data in M2 format
     M2_inverse_water_hist = spline_input_signal(x_opt[:40], 14., 1)
@@ -1047,7 +1037,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #return 0
 
     # Create M1 equivalent isomap models for M2 inversion results
-    inverse_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_blood_hist)
+    #inverse_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_blood_hist)
     inverse_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_PO4_hist)
 
     #Save my result trials BLANKED FOR NOW 2016-01-01
@@ -1072,14 +1062,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = '180_90'
+    number = '360_90'
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s, \nswitch_params= %.1f, %.1f, %.1f, %.1f' % (minf, run_time, trials, eval_p_sec, local_method, global_method, M2_switch_params[0], M2_switch_params[1], M2_switch_params[2], M2_switch_params[3])
     print textstr
 
     fig = plt.figure()
     ax1 = fig.add_subplot(4,1,1)
     days = M2_inverse_days
-    ax1.plot(days, sin_180_90[:days.size], 'k--', linewidth=1.0)  # **************** sin curve here **********
+    ax1.plot(days, sin_360_90[:days.size], 'k--', linewidth=1.0)  # **************** sin curve here **********
     ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
     ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
     ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
@@ -1119,11 +1109,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg4 = ax4.imshow(residuals, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
     cax4 = fig.colorbar(cimg4)
 
-    fig.savefig('2D_1o3_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, sin_180_90[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
+    ax1.plot(days, sin_360_90[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
     ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
     ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
     ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
@@ -1138,12 +1128,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(84, 600)
 
-    fig.savefig('2D_1o3_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('2D_1o3_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('2D_r2o3_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)
@@ -1193,7 +1183,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_180_90b.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_360_90b.csv')
 
     return 0
 
