@@ -585,7 +585,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 19. #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
             model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2) # ***No. at end denotes deletion from top***
 
@@ -618,7 +618,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score = np.sum(score**2)
 
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, .75)
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, .65) # rate prior
     #prior_score_hist = prior_histogram(mu, data_isomap)
 
     return score+prior_score_rate
@@ -952,7 +952,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         first_guess.append(guess)
 
     # Addition of artificial switch. Params are baseline, switch value, switch onset, switch length
-    switch_high, switch_low, switch_guess = [0.1, 10., 250., 250.], [-0.1, -30., 1., 1.], [0., -19.1, 65., 65.]
+    switch_high, switch_low, switch_guess = [0.1, 10., 250., 250.], [-0.1, -30., 1., 1.], [0., -19.1, 66., 65.]
     for j,k in enumerate(switch_high):
         up_bounds.append(switch_high[j])
         low_bounds.append(switch_low[j])
@@ -1341,7 +1341,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg6 = ax6.imshow(np.mean(forward_model_M1_PO4_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax6 = fig.colorbar(cimg6)
 
-    fig.savefig('962trial_14d_rate75_19_h3p0_p35_f0p3_{0}a_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962trial_14d_rate65_18p6_h3p0_p35_f0p3_{0}a_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
@@ -1353,8 +1353,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.plot(days[m2_gestation_curve:], M2_inverse_water_hist[:-m2_gestation_curve], 'b-', linewidth=2.0)
     ax1.plot(days[m2_gestation_curve:], M2_inverse_blood_hist[:-m2_gestation_curve], 'r-', linewidth=2.0)
     ax1.plot(days[m2_gestation_curve:], M2_inverse_PO4_eq[:-m2_gestation_curve], 'g-', linewidth=1.0)
-    ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0)
-    ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0)
+    ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0, markersize=8)
+    ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0, markersize=8)
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
         M2_switch_params = s[40:]
@@ -1365,16 +1365,16 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -18, textstr, fontsize=8)
-    ax1.set_ylim(-26, 2)
+    ax1.set_ylim(-24, 0)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('962trial_14d_rate75_19_h3p0_p35_f0p3_{0}b_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962trial_14d_rate65_18p6_h3p0_p35_f0p3_{0}b_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    fig.savefig('962trial_14d_rate75_19_h3p0_p35_f0p3_{0}c_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962trial_14d_rate65_18p6_h3p0_p35_f0p3_{0}c_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     #residuals_real = np.isfinite(residuals)

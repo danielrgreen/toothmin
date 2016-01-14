@@ -617,12 +617,12 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
     score = np.sum(score**2)
-
+    rate_prior = (2./3.)
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, 3./4.) # rate prior
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, rate_prior/(27./110.)) # rate prior
     #prior_score_hist = prior_histogram(mu, data_isomap)
 
-    return score+prior_score_rate
+    return score#+prior_score_rate
 
 def prior_histogram(model_isomap, data_isomap):
 
@@ -920,7 +920,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 5000
+    trials = 15000
     keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -1069,7 +1069,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #return 0
 
     # Make linear inverse result. "41" refers to M2 molar height, "416" refers to est. days to crown completion, 500-84 = 416.
-    m2_m2_params_curv2lin = np.array([67.974, 0.003352, -25.414, 41., (41./416.), -8.3, 41.]) # 'synch86', outlier, 100k
+    m2_m2_params_curv2lin = np.array([67.974, 0.003352, -25.414, 41., (41./466.), -8.3, 41.]) # 'synch86', outlier, 100k
     M2_linear_days = tooth_timing_convert_curv2lin(M2_inverse_days, *m2_m2_params_curv2lin)
     M2_linear_days = M2_linear_days - M2_linear_days[0]
     print 'M2 linear days = ', M2_linear_days
@@ -1086,9 +1086,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     M2_linear_blood = M2_linear_blood_tmp
     M2_linear_PO4 = M2_linear_PO4_tmp
 
-    M2_linear_water_end = M2_linear_water[416:]
-    M2_linear_blood_end = M2_linear_blood[416:]
-    M2_linear_PO4_end = M2_linear_PO4[416:]
+    M2_linear_water_end = M2_linear_water[466:]
+    M2_linear_blood_end = M2_linear_blood[466:]
+    M2_linear_PO4_end = M2_linear_PO4[466:]
 
     # Graph
     #fig = plt.figure()
@@ -1126,7 +1126,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = '360_90'
+    number = '90'
 
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s, \nswitch_params= %.1f, %.1f, %.1f, %.1f' % (minf, run_time, trials, eval_p_sec, local_method, global_method, M2_switch_params[0], M2_switch_params[1], M2_switch_params[2], M2_switch_params[3])
     print textstr
@@ -1134,13 +1134,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig = plt.figure()
     ax1 = fig.add_subplot(3,1,1)
     days = M2_inverse_days
-    ax1.plot(days, sin_360_90[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
-    ax1.plot(days[416:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
-    ax1.plot(days[:416], M2_linear_water[:416], 'b-', linewidth=2.0)
-    ax1.plot(days[416:], M2_linear_blood_end, 'r--', linewidth=2.0, alpha=0.5)
-    ax1.plot(days[:416], M2_linear_blood[:416], 'r-', linewidth=2.0)
-    ax1.plot(days[416:], M2_linear_PO4_end, 'g--', linewidth=1.0, alpha=0.5)
-    ax1.plot(days[:416], M2_linear_PO4[:416], 'g-.', linewidth=1.0)
+    ax1.plot(days, sin_090[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
+    ax1.plot(days[466:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_water[:466], 'b-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_blood_end, 'r--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_blood[:466], 'r-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_PO4_end, 'g--', linewidth=1.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_PO4[:466], 'g-.', linewidth=1.0)
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
         s_tmp = np.ones(M2_linear_days.size)
@@ -1148,11 +1148,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
             d = int(d)
             s_tmp[d:] = s[k]
         s = s_tmp
-        s_end = s[416:]
+        s_end = s[466:]
         M2_switch_params = s[40:]
         #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-        ax1.plot(days[:416], s[:416], 'b-', alpha=0.03)
-        ax1.plot(days[416:], s_end, 'b--', alpha=0.02)
+        ax1.plot(days[:466], s[:466], 'b-', alpha=0.03)
+        ax1.plot(days[466:], s_end, 'b--', alpha=0.02)
     ax1.text(350, -20, textstr, fontsize=8)
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
@@ -1177,17 +1177,17 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg3 = ax3.imshow(inverse_model_PO4.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
     cax3 = fig.colorbar(cimg3)
 
-    fig.savefig('1Dlin_{0}_r3o4_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_{0}_rNonecorr2_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, sin_360_90[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
-    ax1.plot(days[416:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
-    ax1.plot(days[:416], M2_linear_water[:416], 'b-', linewidth=2.0)
-    ax1.plot(days[416:], M2_linear_blood_end, 'r--', linewidth=2.0, alpha=0.5)
-    ax1.plot(days[:416], M2_linear_blood[:416], 'r-', linewidth=2.0)
-    ax1.plot(days[416:], M2_linear_PO4_end, 'g--', linewidth=1.0, alpha=0.5)
-    ax1.plot(days[:416], M2_linear_PO4[:416], 'g-.', linewidth=1.0)
+    ax1.plot(days, sin_090[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
+    ax1.plot(days[466:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_water[:466], 'b-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_blood_end, 'r--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_blood[:466], 'r-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_PO4_end, 'g--', linewidth=1.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_PO4[:466], 'g-.', linewidth=1.0)
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
         s_tmp = np.ones(M2_linear_days.size)
@@ -1195,25 +1195,25 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
             d = int(d)
             s_tmp[d:] = s[k]
         s = s_tmp
-        s_end = s[416:]
+        s_end = s[466:]
         M2_switch_params = s[40:]
         #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-        ax1.plot(days[:416], s[:416], 'b-', alpha=0.03)
-        ax1.plot(days[416:], s_end, 'b--', alpha=0.02)    #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
+        ax1.plot(days[:466], s[:466], 'b-', alpha=0.03)
+        ax1.plot(days[466:], s_end, 'b--', alpha=0.02)    #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     ax1.text(350, -20, textstr, fontsize=8)
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
 
-    fig.savefig('1Dlin_{0}_r3o4_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_{0}_rNonecorr2_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('1Dlin_{0}_r3o4_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('1Dlin_{0}_rNonecorr2_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_360_90.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_90.csv')
 
     return 0
 

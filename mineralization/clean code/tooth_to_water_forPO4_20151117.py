@@ -625,7 +625,7 @@ def prior_histogram(model_isomap, data_isomap):
     model_hist = np.histogram(model_isomap[model_real], bins=10, range=min_max)
     data_hist = np.histogram(data_isomap[data_real], bins=10, range=min_max)
 
-    hist_sigma = 2.
+    hist_sigma = .2
     prior_score = (model_hist[0] - data_hist[0]) #/ hist_sigma
     prior_score = np.sum(prior_score**2) / 1000.
 
@@ -881,8 +881,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 5000
-    keep_pct = 60. # Percent of trials to record
+    trials = 300
+    keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/80.)

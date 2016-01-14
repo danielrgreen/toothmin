@@ -585,7 +585,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 19. #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
             model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2) # ***No. at end denotes deletion from top***
 
@@ -612,9 +612,6 @@ def compare(model_isomap, data_isomap, score_max=100., data_sigma=0.25, sigma_fl
     mu = np.median(model_isomap, axis=2)
     sigma = np.std(model_isomap, axis=2)
     sigma = np.sqrt(sigma**2. + data_sigma**2. + sigma_floor**2.)
-
-    print 'mu = ', mu
-    print 'data = ', data_isomap
 
     score = (mu - data_isomap) / sigma
     score[~np.isfinite(score)] = 0.
@@ -655,7 +652,7 @@ def prior_histogram(model_isomap, data_isomap):
     model_hist = np.histogram(model_isomap[model_real], bins=10, range=min_max)
     data_hist = np.histogram(data_isomap[data_real], bins=10, range=min_max)
 
-    hist_sigma = 0.3
+    hist_sigma = 0.2
     prior_score = (model_hist[0] - data_hist[0]) / hist_sigma
     prior_score = (np.sum(prior_score**2))
 
@@ -720,7 +717,7 @@ def water_hist_likelihood(PO4_half, PO4_pause, PO4_frac, **kwargs):
     #ax1.legend(fontsize=8)
     #plt.show()
 
-    m1_days_spl_962 = tooth_timing_convert(days_spl_962[m2_gestation_simple:], *m2_m1_params) # Days here are 84+
+    m1_days_spl_962 = tooth_timing_convert(days_spl_962[m2_gestation_curve:], *m2_m1_params) # Days here are 84+
     m1_days_spl_962 = m1_days_spl_962 - m1_days_spl_962[0] # This sets the M1 day array to begin at 0.
     PO4_spl_tmp = np.ones(m1_days_spl_962.size)
     for k,d in enumerate(m1_days_spl_962):
@@ -744,20 +741,19 @@ def water_hist_likelihood(PO4_half, PO4_pause, PO4_frac, **kwargs):
 
     # Create M1 equivalent isomap models for M2 inversion results
     inverse_model_M1_PO4_params = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1)
-    fig = plt.figure()
-    ax2 = fig.add_subplot(2,1,1)
-    ax2text = '962 data'
-    ax2.text(21, 3, ax2text, fontsize=8)
-    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
-    cax2 = fig.colorbar(cimg2)
+    #fig = plt.figure()
+    #ax2 = fig.add_subplot(2,1,1)
+    #ax2text = '962 data'
+    #ax2.text(21, 3, ax2text, fontsize=8)
+    #cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    #cax2 = fig.colorbar(cimg2)
 
-    ax3 = fig.add_subplot(2,1,2)
-    ax3text = 'Inverse model param result - PO4'
-    ax3.text(21, 3, ax3text, fontsize=8)
-    cimg3 = ax3.imshow(np.mean(inverse_model_M1_PO4_params, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
-    cax3 = fig.colorbar(cimg3)
-    plt.show()
-    return 0
+    #ax3 = fig.add_subplot(2,1,2)
+    #ax3text = 'Inverse model param result - PO4'
+    #ax3.text(21, 3, ax3text, fontsize=8)
+    #cimg3 = ax3.imshow(np.mean(inverse_model_M1_PO4_params, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    #cax3 = fig.colorbar(cimg3)
+    #plt.show()
     # Calculate score comparing inverse to real
     score = compare(inverse_model_M1_PO4_params, data_isomap)
 
@@ -945,8 +941,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 2500
-    keep_pct = 40. # Percent of trials to record
+    trials = 80000
+    keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/80.)
@@ -968,7 +964,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     global_opt.set_population(3)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([3.0, 65.0, 0.3])
+    x_opt = global_opt.optimize([3.0, 30.0, 0.3])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -1315,7 +1311,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #cimg7 = ax7.imshow(np.mean(forward_model_calculated_M1_PO4_hist_from_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     #cax7 = fig.colorbar(cimg7)
 
-    fig.savefig('tests_PO4opt_hist02_lim85_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('PO4opt_histNone_lim85_18p6_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
@@ -1339,13 +1335,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-26, 2)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('tests_PO4opt_hist02_lim85_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('PO4opt_histNone_lim85_18p6_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    fig.savefig('tests_PO4opt_hist02_lim85_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('PO4opt_histNone_lim85_18p6_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     #residuals_real = np.isfinite(residuals)
