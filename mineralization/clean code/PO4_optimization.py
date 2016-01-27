@@ -941,7 +941,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 80000
+    trials = 30000
     keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -950,21 +950,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([1.0, 1.0, 0.01])
-    local_opt.set_upper_bounds([20.0, 85., 0.8])
+    local_opt.set_lower_bounds([1.0, 34.4, 0.01])
+    local_opt.set_upper_bounds([20.0, 34.6, 0.8])
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 3)
     global_opt.set_maxeval(trials)
-    global_opt.set_lower_bounds([1.0, 1.0, 0.01])
-    global_opt.set_upper_bounds([20.0, 85., 0.8])
+    global_opt.set_lower_bounds([1.0, 34.4, 0.01])
+    global_opt.set_upper_bounds([20.0, 34.6, 0.8])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(3)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize([3.0, 30.0, 0.3])
+    x_opt = global_opt.optimize([3.0, 34.5, 0.3])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt

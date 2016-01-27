@@ -895,7 +895,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
     trials = 100000
-    keep_pct = 30. # Percent of trials to record
+    keep_pct = 25. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/80.)
@@ -1068,6 +1068,17 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
+    sm_360 = 3.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sm_180 = 3.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sm_090 = 3.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sm_045 = 3.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+
+    sm_360_180 = (1.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
+    sm_360_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
+    sm_360_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_360
+    sm_180_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_180
+    sm_180_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_180
+
     sin_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
     sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
     sin_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
@@ -1082,6 +1093,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     number = 'N_Platte'
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
+
+    water_hist = water_hist
+
+    # Forward and Inverse result Diffs for histogram plotting
+    for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
 
     fig = plt.figure()
     ax1 = fig.add_subplot(4,1,1)
@@ -1161,7 +1177,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -18, textstr, fontsize=8)
-    ax1.set_ylim(-28, 4)
+    ax1.set_ylim(np.min(water_hist)-6, np.max(water_hist)+6)
     ax1.set_xlim(84, 550)
 
     fig.savefig('2D_r1o3_18p6_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
@@ -1180,7 +1196,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -18, textstr, fontsize=8)
-    ax1.set_ylim(-22, -2)
+    ax1.set_ylim(np.min(water_hist)-2, np.max(water_hist)+2)
     ax1.set_xlim(84, 550)
 
     fig.savefig('2D_r1o3_{0}_18p6_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
@@ -1188,7 +1204,19 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('2D_r1o3_18p6_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r1o3_18p6_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
+    fig.savefig('2D_r1o3_18p6_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
+    ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
+    fig.savefig('2D_r1o3_18p6_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)
@@ -1238,7 +1266,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_N_Platte_186.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_N_Platte.csv')
 
     return 0
 

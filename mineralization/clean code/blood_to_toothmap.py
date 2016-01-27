@@ -599,7 +599,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 19.
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6
         for c in xrange(model_isomap[k].shape[0]):
             model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2)
 
@@ -834,60 +834,6 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     # np.concatenate((month_d180,month_d180)), month_d180[:24]
     water_hist = spline_input_signal(np.concatenate((month_d180,month_d180)), 30, 1)
 
-
-    '''
-    # Conversion monthly precipitation isotope record into daily record
-    year_iso_days = np.arange((24))*(730./(24.))+84.
-    m1_iso_days = tooth_timing_convert(np.arange(400.), *m2_m1_params)
-    m1_iso_days -= (0. + m1_iso_days[0])
-    w_iso_hist = np.ones(400.)
-    month_d180 = np.concatenate((month_d180, month_d180))
-    month_d180 = np.concatenate((month_d180, month_d180))
-    for k,d in enumerate(m1_iso_days):
-        d = int(d)
-        w_iso_hist[d:] = month_d180[k[0]+0]
-
-    water_spl, blood_spl, days_spl, i33_spl, i50_spl, i66_spl = spline_input_signal(1)
-    water_spl = water_spl[50:]
-    blood_spl = blood_spl[50:]
-    days_spl = days_spl[50:]
-    i33_spl = i33_spl[50:]
-    i50_spl = i50_spl[50:]
-    i66_spl = i66_spl[50:]
-
-    m1_days_spl = tooth_timing_convert(days_spl, *m2_m1_params)
-
-    water_spl_tmp = np.ones(days_spl.size)
-    blood_spl_tmp = np.ones(days_spl.size)
-    i33_spl_tmp = np.ones(days_spl.size)
-    i50_spl_tmp = np.ones(days_spl.size)
-    i66_spl_tmp = np.ones(days_spl.size)
-
-    print i33_spl.size, i33_spl_tmp.size, water_spl_tmp.size, m1_days_spl.size
-
-
-    for k,d in enumerate(m1_days_spl):
-        d = int(d)
-        water_spl_tmp[d:] = water_spl[k]
-        blood_spl_tmp[d:] = blood_spl[k]
-        i33_spl_tmp[d:] = i33_spl[k]
-        i50_spl_tmp[d:] = i50_spl[k]
-        i66_spl_tmp[d:] = i66_spl[k]
-
-    water_spl = water_spl_tmp
-    blood_spl = blood_spl_tmp
-    i33_spl = i33_spl_tmp
-    i50_spl = i50_spl_tmp
-    i66_spl = i66_spl_tmp
-
-    # Full model loading and isomap
-    #fit_kwargs['tooth_model'] = tooth_model
-    #model_isomap_full = water_hist_likelihood_fl(w_iso_hist, **fit_kwargs)
-    #model_isomap_full = np.array(model_isomap_full)
-    #mu_fl = np.median(model_isomap_full, axis=0)
-    '''
-
-
     # Small tooth model generation
     tooth_model_sm = tooth_model.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
 
@@ -900,6 +846,17 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
+    sm_360 = 3.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sm_180 = 3.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sm_090 = 3.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sm_045 = 3.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+
+    sm_360_180 = (1.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
+    sm_360_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
+    sm_360_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_360
+    sm_180_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_180
+    sm_180_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_180
+
     sin_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
     sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
     sin_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
@@ -911,12 +868,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = 'N_Platte'
+    number = 'sm_180_45'
 
     # Make water, blood and PO4 history from synthetic water input
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
+    water_hist = sm_180_45 # <----- ******** WATER HISTORY HERE *********
     days = np.arange(84., len(water_hist)+84.)
-    water_hist = water_hist # <----- ******** WATER HISTORY HERE *********
     blood_hist = blood_delta(23.5, water_hist, 25.3, **forward_metabolic_kw)
     PO4_hist = PO4_dissoln_reprecip(3., 34.5, .3, blood_hist, **kwargs)
 
