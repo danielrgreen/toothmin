@@ -617,7 +617,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
     score = np.sum(score**2)
-    rate_prior = (2./3.)
+    rate_prior = (1./3.)
     #prior_score = prior_histogram(mu, data_isomap)
     prior_score_rate = prior_rate_change(w_iso_hist, rate_prior) # Rate prior, Division due to pixel#
     #prior_score_hist = prior_histogram(mu, data_isomap)
@@ -1078,7 +1078,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     mulu = spline_input_signal(month_mulu[:24], 30, 1)
     platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
 
-    water_hist = mulu
+    water_hist = entebbe
 
     #Save my result trials
     my_list.sort(key=getkey)
@@ -1116,7 +1116,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
-    number = 'Mulu'
+    number = 'Entebbe'
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
     water_hist = water_hist
@@ -1162,7 +1162,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cax3 = fig.colorbar(cimg3)
 
 
-    fig.savefig('1D_{0}_r2o3_18p6_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1D_{0}_rate1o3_18p6_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1179,7 +1179,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
 
-    fig.savefig('1D_{0}_r2o3_18p6_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1D_{0}_rate1o3_18p6_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1190,10 +1190,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
         ax1.plot(days, s, 'b-', alpha=0.03)
-    ax1.text(350, -18, textstr, fontsize=8)
+    ax1.text(350, -4, textstr, fontsize=8)
     ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
     ax1.set_xlim(84, 550)
-    fig.savefig('1D_r2o3_18p6_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1D_rate1o3_18p6_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
     print water_hist[0], water_hist[-1]
     print len(water_hist)
     print '1D HEYO!!!!!!!!!!!!', np.min(water_hist)-6., np.max(water_hist)+6.
@@ -1211,28 +1212,28 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-2., np.max(water_hist)+2.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('1D_r2o3_18p6_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1D_rate1o3_18p6_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('1D_{0}_r2o3_18p6_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('1D_{0}_rate1o3_18p6_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
-    fig.savefig('1D_r2o3_18p6_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1D_rate1o3_18p6_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.set_ylim(0, 220)
-    fig.savefig('1D_r2o3_18p6_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1D_rate1o3_18p6_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Mulu.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Entebbe.csv')
 
     return 0
 

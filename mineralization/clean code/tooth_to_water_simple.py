@@ -1189,7 +1189,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         ax1.plot(days, s, 'b-', alpha=0.03)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
-    ax1.text(350, -18, textstr, fontsize=8)
+    ax1.text(350, -4, textstr, fontsize=8)
     ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
     ax1.set_xlim(84, 550)
     fig.savefig('2D_r1o3_18p6_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')

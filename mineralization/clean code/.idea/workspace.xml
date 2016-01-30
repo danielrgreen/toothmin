@@ -2,10 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="147c6fc5-fdbe-4c43-8ea3-6e97dc03c34a" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rate_damp_like_test.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tooth_to_water_simple1D_5samples.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_water_simple.py" afterPath="$PROJECT_DIR$/tooth_to_water_simple.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_water_simple1D.py" afterPath="$PROJECT_DIR$/tooth_to_water_simple1D.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_water_simple1D_1o2.py" afterPath="$PROJECT_DIR$/tooth_to_water_simple1D_1o2.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py" afterPath="$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tooth_to_water_simple1D_2o3.py" afterPath="$PROJECT_DIR$/tooth_to_water_simple1D_2o3.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
@@ -25,7 +27,7 @@
     <SUITE FILE_PATH="coverage/clean code$june_2015_growthgraph_m2.coverage" NAME="june_2015_growthgraph_m2 Coverage Results" MODIFIED="1435709612433" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$blood_delta.coverage" NAME="blood_delta Coverage Results" MODIFIED="1439041454243" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$blood_to_toothmap_diffusion.coverage" NAME="blood_to_toothmap_diffusion Coverage Results" MODIFIED="1438195593880" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D.coverage" NAME="tooth_to_water_simple1D Coverage Results" MODIFIED="1454063202671" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D.coverage" NAME="tooth_to_water_simple1D Coverage Results" MODIFIED="1454149144550" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$blood_to_toothmap6.coverage" NAME="blood_to_toothmap6 Coverage Results" MODIFIED="1426112101193" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood.coverage" NAME="tooth_to_blood Coverage Results" MODIFIED="1428349130818" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$december_2014_growthgraph_figure1.coverage" NAME="december_2014_growthgraph_figure1 Coverage Results" MODIFIED="1435280561369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
@@ -34,6 +36,7 @@
     <SUITE FILE_PATH="coverage/clean code$rainpick2.coverage" NAME="rainpick2 Coverage Results" MODIFIED="1424476151407" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../../rainfall" />
     <SUITE FILE_PATH="coverage/clean code$blood_to_toothmap.coverage" NAME="blood_to_toothmap Coverage Results" MODIFIED="1453327562282" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$PO4_optimization.coverage" NAME="PO4_optimization Coverage Results" MODIFIED="1453783194285" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$rate_damp_like_test.coverage" NAME="rate_damp_like_test Coverage Results" MODIFIED="1454124612770" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_optimize_alone.coverage" NAME="m1_optimize_alone Coverage Results" MODIFIED="1437606170167" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$imshow_tooth.coverage" NAME="imshow_tooth Coverage Results" MODIFIED="1440778338618" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$m1_2_all_optimize.coverage" NAME="m1-2_all_optimize Coverage Results" MODIFIED="1438572371367" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
@@ -44,8 +47,9 @@
     <SUITE FILE_PATH="coverage/clean code$blood_delta_experimentation.coverage" NAME="blood_delta_experimentation Coverage Results" MODIFIED="1440950958818" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$test_resize.coverage" NAME="test_resize Coverage Results" MODIFIED="1426134745286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$blood_plotting.coverage" NAME="blood_plotting Coverage Results" MODIFIED="1448986232198" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D_1o2.coverage" NAME="tooth_to_water_simple1D_1o2 Coverage Results" MODIFIED="1454063195533" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D_1o2.coverage" NAME="tooth_to_water_simple1D_1o2 Coverage Results" MODIFIED="1454149044994" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_special3paramMay2015.coverage" NAME="tooth_to_blood_minimize_special3paramMay2015 Coverage Results" MODIFIED="1438283844634" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D_5samples.coverage" NAME="tooth_to_water_simple1D_5samples Coverage Results" MODIFIED="1454148407936" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$t2b_nlo_od_test.coverage" NAME="t2b_nlo_od_test Coverage Results" MODIFIED="1438374050904" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_2convert.coverage" NAME="m1-2convert Coverage Results" MODIFIED="1435605414155" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_minimize_diffusion.coverage" NAME="tooth_to_blood_minimize_diffusion Coverage Results" MODIFIED="1438196550744" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -58,12 +62,12 @@
     <SUITE FILE_PATH="coverage/clean code$test_M1_M2_convert.coverage" NAME="test_M1-M2_convert Coverage Results" MODIFIED="1451589607424" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$likelihood_min_model_TMCMC_point_5graphmultiple.coverage" NAME="likelihood_min_model_TMCMC_point_5graphmultiple Coverage Results" MODIFIED="1430423537525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$blood_delta_nlopt.coverage" NAME="blood_delta_nlopt Coverage Results" MODIFIED="1439265879559" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D_1o3.coverage" NAME="tooth_to_water_simple1D_1o3 Coverage Results" MODIFIED="1454063191993" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D_1o3.coverage" NAME="tooth_to_water_simple1D_1o3 Coverage Results" MODIFIED="1454149086976" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D_linear.coverage" NAME="tooth_to_water_simple1D_linear Coverage Results" MODIFIED="1452625266417" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_water.coverage" NAME="tooth_to_water Coverage Results" MODIFIED="1453883237953" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$test_tooth_to_blood_image.coverage" NAME="test_tooth_to_blood_image Coverage Results" MODIFIED="1426889307048" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$tooth_to_blood_reduced_minimize.coverage" NAME="tooth_to_blood_reduced_minimize Coverage Results" MODIFIED="1427403781115" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D_2o3.coverage" NAME="tooth_to_water_simple1D_2o3 Coverage Results" MODIFIED="1454063198893" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/clean code$tooth_to_water_simple1D_2o3.coverage" NAME="tooth_to_water_simple1D_2o3 Coverage Results" MODIFIED="1454149115965" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$blood_delta__pools_nlopt.coverage" NAME="blood_delta__pools_nlopt Coverage Results" MODIFIED="1440691549883" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/clean code$m1_2_figure.coverage" NAME="m1-2_figure Coverage Results" MODIFIED="1439594832215" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.." />
     <SUITE FILE_PATH="coverage/clean code$dissoln_reprecip_nlopt_figure5.coverage" NAME="dissoln_reprecip_nlopt_figure5 Coverage Results" MODIFIED="1439656731098" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -90,16 +94,6 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="blood_plotting.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blood_plotting.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="700" max-vertical-offset="1830">
-              <caret line="46" column="55" selection-start-line="46" selection-start-column="55" selection-end-line="46" selection-end-column="55" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="blood_to_toothmap.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/blood_to_toothmap.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -140,18 +134,18 @@
       <file leaf-file-name="tooth_to_water_simple.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tooth_to_water_simple.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-12.037037" vertical-offset="15560" max-vertical-offset="19245">
-              <caret line="1076" column="11" selection-start-line="1076" selection-start-column="11" selection-end-line="1076" selection-end-column="11" />
+            <state vertical-scroll-proportion="-6.4814816" vertical-offset="17435" max-vertical-offset="19245">
+              <caret line="1191" column="20" selection-start-line="1191" selection-start-column="20" selection-end-line="1191" selection-end-column="20" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="tooth_to_water_simple1D.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="tooth_to_water_simple1D.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-27.037037" vertical-offset="15785" max-vertical-offset="18495">
-              <caret line="1118" column="18" selection-start-line="1118" selection-start-column="18" selection-end-line="1118" selection-end-column="18" />
+            <state vertical-scroll-proportion="0.4632207" vertical-offset="18007" max-vertical-offset="18510">
+              <caret line="1233" column="11" selection-start-line="1233" selection-start-column="11" selection-end-line="1233" selection-end-column="11" />
               <folding />
             </state>
           </provider>
@@ -160,18 +154,18 @@
       <file leaf-file-name="tooth_to_water_simple1D_2o3.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_2o3.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-9.814815" vertical-offset="18125" max-vertical-offset="18630">
-              <caret line="1243" column="84" selection-start-line="1243" selection-start-column="84" selection-end-line="1243" selection-end-column="84" />
+            <state vertical-scroll-proportion="-9.740741" vertical-offset="15892" max-vertical-offset="18630">
+              <caret line="1094" column="19" selection-start-line="1094" selection-start-column="19" selection-end-line="1094" selection-end-column="19" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="tooth_to_water_simple1D_1o2.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="tooth_to_water_simple1D_1o2.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_1o2.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5247525" vertical-offset="18365" max-vertical-offset="18870">
-              <caret line="1242" column="84" selection-start-line="1242" selection-start-column="84" selection-end-line="1242" selection-end-column="84" />
+            <state vertical-scroll-proportion="-9.185185" vertical-offset="16207" max-vertical-offset="18870">
+              <caret line="1097" column="60" selection-start-line="1097" selection-start-column="60" selection-end-line="1097" selection-end-column="60" />
               <folding>
                 <element signature="e#400#418#0" expanded="true" />
               </folding>
@@ -182,8 +176,18 @@
       <file leaf-file-name="tooth_to_water_simple1D_1o3.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-7.037037" vertical-offset="15800" max-vertical-offset="18615">
-              <caret line="1083" column="0" selection-start-line="1083" selection-start-column="0" selection-end-line="1083" selection-end-column="0" />
+            <state vertical-scroll-proportion="-8.62963" vertical-offset="18097" max-vertical-offset="18600">
+              <caret line="1239" column="11" selection-start-line="1239" selection-start-column="11" selection-end-line="1239" selection-end-column="11" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="tooth_to_water_simple1D_5samples.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_5samples.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-10.296296" vertical-offset="18097" max-vertical-offset="18600">
+              <caret line="1242" column="0" selection-start-line="1242" selection-start-column="0" selection-end-line="1242" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -201,16 +205,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="tooth_to_water_simple1D_linear.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_linear.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="13470" max-vertical-offset="18210">
-              <caret line="923" column="48" selection-start-line="923" selection-start-column="48" selection-end-line="923" selection-end-column="48" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
     </leaf>
   </component>
   <component name="Git.Settings">
@@ -219,8 +213,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/tooth_to_blood.py" />
-        <option value="$PROJECT_DIR$/../m1-2convert.py" />
         <option value="$PROJECT_DIR$/../june_2015_growthgraph_m2.py" />
         <option value="$PROJECT_DIR$/tooth_to_blood_minimize_gaussian.py" />
         <option value="$PROJECT_DIR$/../m1-2optimize.py" />
@@ -266,10 +258,12 @@
         <option value="$PROJECT_DIR$/PO4_optimization.py" />
         <option value="$PROJECT_DIR$/tooth_to_water.py" />
         <option value="$PROJECT_DIR$/tooth_to_water_simple.py" />
-        <option value="$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py" />
-        <option value="$PROJECT_DIR$/tooth_to_water_simple1D.py" />
-        <option value="$PROJECT_DIR$/tooth_to_water_simple1D_2o3.py" />
+        <option value="$PROJECT_DIR$/rate_damp_like_test.py" />
+        <option value="$PROJECT_DIR$/tooth_to_water_simple1D_5samples.py" />
         <option value="$PROJECT_DIR$/tooth_to_water_simple1D_1o2.py" />
+        <option value="$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py" />
+        <option value="$PROJECT_DIR$/tooth_to_water_simple1D_2o3.py" />
+        <option value="$PROJECT_DIR$/tooth_to_water_simple1D.py" />
       </list>
     </option>
   </component>
@@ -277,9 +271,9 @@
     <detection-done>true</detection-done>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="297" />
+    <option name="x" value="452" />
     <option name="y" value="22" />
-    <option name="width" value="1143" />
+    <option name="width" value="988" />
     <option name="height" value="817" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -328,46 +322,6 @@
     </key>
   </component>
   <component name="RunManager" selected="Python.tooth_to_water_simple1D">
-    <configuration default="false" name="tooth_to_water" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="clean code" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_water.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <RunnerSettings RunnerId="PythonRunner" />
-      <ConfigurationWrapper RunnerId="PythonRunner" />
-      <method />
-    </configuration>
-    <configuration default="false" name="tooth_to_water_simple" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="clean code" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_water_simple.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <RunnerSettings RunnerId="PythonRunner" />
-      <ConfigurationWrapper RunnerId="PythonRunner" />
-      <method />
-    </configuration>
     <configuration default="false" name="tooth_to_water_simple1D_1o2" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -422,6 +376,46 @@
       <module name="clean code" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="rate_damp_like_test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="clean code" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rate_damp_like_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="tooth_to_water_simple1D_5samples" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="clean code" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tooth_to_water_simple1D_5samples.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <RunnerSettings RunnerId="PythonRunner" />
@@ -640,19 +634,19 @@
     </configuration>
     <list size="6">
       <item index="0" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D" />
-      <item index="1" class="java.lang.String" itemvalue="Python.tooth_to_water" />
-      <item index="2" class="java.lang.String" itemvalue="Python.tooth_to_water_simple" />
-      <item index="3" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_1o2" />
-      <item index="4" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_2o3" />
-      <item index="5" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_1o3" />
+      <item index="1" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_1o2" />
+      <item index="2" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_2o3" />
+      <item index="3" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_1o3" />
+      <item index="4" class="java.lang.String" itemvalue="Python.rate_damp_like_test" />
+      <item index="5" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_5samples" />
     </list>
     <recent_temporary>
       <list size="5">
         <item index="0" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_2o3" />
-        <item index="1" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_1o2" />
-        <item index="2" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_1o3" />
-        <item index="3" class="java.lang.String" itemvalue="Python.tooth_to_water_simple" />
-        <item index="4" class="java.lang.String" itemvalue="Python.tooth_to_water" />
+        <item index="1" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_1o3" />
+        <item index="2" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_1o2" />
+        <item index="3" class="java.lang.String" itemvalue="Python.tooth_to_water_simple1D_5samples" />
+        <item index="4" class="java.lang.String" itemvalue="Python.rate_damp_like_test" />
       </list>
     </recent_temporary>
   </component>
@@ -690,14 +684,14 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="297" y="22" width="1143" height="817" extended-state="0" />
+    <frame x="452" y="22" width="988" height="817" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32965517" sideWeight="0.49918434" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32689655" sideWeight="0.49713877" order="12" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3290735" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39614856" sideWeight="0.83838385" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.22971115" sideWeight="0.19891009" order="8" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23034483" sideWeight="0.1987315" order="8" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.0" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32965517" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -705,7 +699,7 @@
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294893" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32827586" sideWeight="0.49713877" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.22971115" sideWeight="0.80108994" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23034483" sideWeight="0.8012685" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3297587" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -784,20 +778,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_4.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.39698493" vertical-offset="4132" max-vertical-offset="7965">
-          <caret line="286" column="0" selection-start-line="284" selection-start-column="0" selection-end-line="286" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../likelihood_min_model_TMCMC_point_5graph.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="5730" max-vertical-offset="7845">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tooth_to_blood_minimize_diffusion.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="13336" max-vertical-offset="13860">
@@ -1135,43 +1115,59 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/tooth_to_water_simple.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-12.037037" vertical-offset="15560" max-vertical-offset="19245">
-          <caret line="1076" column="11" selection-start-line="1076" selection-start-column="11" selection-end-line="1076" selection-end-column="11" />
+        <state vertical-scroll-proportion="-6.4814816" vertical-offset="17435" max-vertical-offset="19245">
+          <caret line="1191" column="20" selection-start-line="1191" selection-start-column="20" selection-end-line="1191" selection-end-column="20" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py">
+    <entry file="file://$PROJECT_DIR$/rate_damp_like_test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-7.037037" vertical-offset="15800" max-vertical-offset="18615">
-          <caret line="1083" column="0" selection-start-line="1083" selection-start-column="0" selection-end-line="1083" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="510">
+          <caret line="21" column="38" selection-start-line="21" selection-start-column="38" selection-end-line="21" selection-end-column="38" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D.py">
+    <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_5samples.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-27.037037" vertical-offset="15785" max-vertical-offset="18495">
-          <caret line="1118" column="18" selection-start-line="1118" selection-start-column="18" selection-end-line="1118" selection-end-column="18" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_2o3.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-9.814815" vertical-offset="18125" max-vertical-offset="18630">
-          <caret line="1243" column="84" selection-start-line="1243" selection-start-column="84" selection-end-line="1243" selection-end-column="84" />
+        <state vertical-scroll-proportion="-10.296296" vertical-offset="18097" max-vertical-offset="18600">
+          <caret line="1242" column="0" selection-start-line="1242" selection-start-column="0" selection-end-line="1242" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_1o2.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5247525" vertical-offset="18365" max-vertical-offset="18870">
-          <caret line="1242" column="84" selection-start-line="1242" selection-start-column="84" selection-end-line="1242" selection-end-column="84" />
+        <state vertical-scroll-proportion="-9.185185" vertical-offset="16207" max-vertical-offset="18870">
+          <caret line="1097" column="60" selection-start-line="1097" selection-start-column="60" selection-end-line="1097" selection-end-column="60" />
           <folding>
             <element signature="e#400#418#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_1o3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-8.62963" vertical-offset="18097" max-vertical-offset="18600">
+          <caret line="1239" column="11" selection-start-line="1239" selection-start-column="11" selection-end-line="1239" selection-end-column="11" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D_2o3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-9.740741" vertical-offset="15892" max-vertical-offset="18630">
+          <caret line="1094" column="19" selection-start-line="1094" selection-start-column="19" selection-end-line="1094" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tooth_to_water_simple1D.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.4632207" vertical-offset="18007" max-vertical-offset="18510">
+          <caret line="1233" column="11" selection-start-line="1233" selection-start-column="11" selection-end-line="1233" selection-end-column="11" />
+          <folding />
         </state>
       </provider>
     </entry>
