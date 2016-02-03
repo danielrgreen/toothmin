@@ -591,7 +591,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     return remodeled
 
-def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.25, sigma_floor=0.05):
+def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.25, sigma_floor=0.50):
     '''
 
     :param model_isomap:        modeled tooth isotope data
@@ -609,7 +609,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
     score = np.sum(score**2)
-    rate_prior = (1./3.)
+    rate_prior = (2./3.)
     #prior_score = prior_histogram(mu, data_isomap)
     prior_score_rate = prior_rate_change(w_iso_hist, rate_prior) # rate prior
     #prior_score_hist = prior_histogram(mu, data_isomap)
@@ -898,7 +898,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 300
+    trials = 50000
     keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -907,7 +907,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     # Parameters for time series only
     p_number = 40
     fit_kwargs['time_interval'] = 14.
-    upper_bound,lower_bound,guess = 10.,-30.,-2.
+    upper_bound,lower_bound,guess = 10.,-30.,-10.
     up_bounds,low_bounds,first_guess = [],[],[]
     for i in xrange(p_number):
         up_bounds.append(upper_bound)
@@ -1076,14 +1076,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     mulu = spline_input_signal(month_mulu[:24], 30, 1)
     platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
 
-    water_hist = entebbe
+    water_hist = platte
 
     # Synthetic signal production
 
-    sm_360 = 3.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
-    sm_180 = 3.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
-    sm_090 = 3.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
-    sm_045 = 3.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+    sm_360 = 2.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sm_180 = 2.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sm_090 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sm_045 = 2.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
 
     sm_360_180 = (1.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
     sm_360_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
@@ -1102,7 +1102,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = 'Mulu'
+    number = 'platte'
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
@@ -1155,7 +1155,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg4 = ax4.imshow(residuals, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
     cax4 = fig.colorbar(cimg4)
 
-    fig.savefig('2D_r1o3_18p6_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1174,7 +1174,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('2D_r1o3_18p6_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1192,7 +1192,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.text(350, -4, textstr, fontsize=8)
     ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
     ax1.set_xlim(84, 550)
-    fig.savefig('2D_r1o3_18p6_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
     print water_hist[0], water_hist[-1]
     print len(water_hist)
     print '2D HEYO!!!!!!!!!!!!', np.min(water_hist)-6., np.max(water_hist)+6.
@@ -1214,24 +1214,24 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-2., np.max(water_hist)+2.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('2D_r1o3_{0}_18p6_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    fig.savefig('2D_r1o3_18p6_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
-    fig.savefig('2D_r1o3_18p6_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.set_ylim(0, 220)
-    fig.savefig('2D_r1o3_18p6_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
 
     #residuals_real = np.isfinite(residuals)
@@ -1282,7 +1282,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Mulu.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_N_Platte.csv')
 
     return 0
 

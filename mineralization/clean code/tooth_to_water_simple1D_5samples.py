@@ -912,7 +912,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 5000
+    trials = 50000
     keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -1082,7 +1082,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     mulu = spline_input_signal(month_mulu[:24], 30, 1)
     platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
 
-    water_hist = platte
+    water_hist = entebbe
 
     #Save my result trials
     my_list.sort(key=getkey)
@@ -1095,10 +1095,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
-    sm_360 = 3.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
-    sm_180 = 3.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
-    sm_090 = 3.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
-    sm_045 = 3.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+    sm_360 = 2.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sm_180 = 2.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sm_090 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sm_045 = 2.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
 
     sm_360_180 = (1.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
     sm_360_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
@@ -1120,7 +1120,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
-    number = 'Platte'
+    number = 'Entebbe'
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
     water_hist = water_hist
@@ -1218,7 +1218,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-2., np.max(water_hist)+2.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('1Dpx5_rate1o3_18p6_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx3_rate1o3_18p6_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
@@ -1228,7 +1228,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
-    fig.savefig('1Dpx5_rate1o3_18p6_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx3_rate1o3_18p6_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1239,7 +1239,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_N_Platte.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Entebbe.csv')
 
     return 0
 

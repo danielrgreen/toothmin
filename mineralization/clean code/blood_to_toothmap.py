@@ -846,16 +846,16 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
-    sm_360 = 3.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
-    sm_180 = 3.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
-    sm_090 = 3.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
-    sm_045 = 3.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+    sm_360 = 2.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sm_180 = 2.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sm_090 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sm_045 = 2.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
 
-    sm_360_180 = (1.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
-    sm_360_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
-    sm_360_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_360
-    sm_180_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_180
-    sm_180_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_180
+    sm_360_180 = (1.0*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
+    sm_360_90 = (1.0*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
+    sm_360_45 = (1.0*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_360
+    sm_180_90 = (1.0*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_180
+    sm_180_45 = (1.0*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_180
 
     sin_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
     sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
@@ -868,11 +868,11 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = 'sm_180_45'
+    number = 'sm_090'
 
     # Make water, blood and PO4 history from synthetic water input
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
-    water_hist = sm_180_45 # <----- ******** WATER HISTORY HERE *********
+    water_hist = sm_090 # <----- ******** WATER HISTORY HERE *********
     days = np.arange(84., len(water_hist)+84.)
     blood_hist = blood_delta(23.5, water_hist, 25.3, **forward_metabolic_kw)
     PO4_hist = PO4_dissoln_reprecip(3., 34.5, .3, blood_hist, **kwargs)
