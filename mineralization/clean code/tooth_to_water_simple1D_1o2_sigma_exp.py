@@ -601,18 +601,61 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     :param sigma_floor:
     :return:
     '''
+    tooth_samples = 13
+    m_model = np.ma.masked_array(model_isomap, np.isnan(model_isomap))
+    sigma = np.std(model_isomap, axis=2)
+
+    print m_model.shape
+    print m_model
+
+    model_1D = np.mean(m_model, axis=1)
+    model_1D_resized = np.mean(np.repeat(model_1D,tooth_samples).reshape(tooth_samples,model_1D.shape[0],model_1D.shape[1]), axis=1)
+    model_1D_resized_sigma = np.std(model_1D_resized, axis=1)
+    print model_1D_resized.shape
+    print model_1D_resized
+    print model_1D_resized_sigma.shape
+    print model_1D_resized_sigma
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(4,1,1)
+    ax1text = '2D data'
+    ax1.text(3, 3, ax1text, fontsize=8)
+    cimg1 = ax1.imshow(np.mean(m_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+    cax2 = fig.colorbar(cimg1)
+
+    model_1D = np.mean(model_1D, axis=1)
+    model_1D.shape = (27,1)
+    ax2 = fig.add_subplot(4,1,2)
+    ax2text = '1D data full'
+    ax2.text(2, 1, ax2text, fontsize=8)
+    cimg2 = ax2.imshow(model_1D.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+    cax2 = fig.colorbar(cimg2)
+
+    model_1D_resized = np.mean(model_1D_resized, axis=1)
+    model_1D_resized.shape = (13,1)
+    ax3 = fig.add_subplot(4,1,3)
+    ax3text = '1D data reduced'
+    ax3.text(2, 1, ax3text, fontsize=8)
+    cimg3 = ax3.imshow(model_1D_resized.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+    cax3 = fig.colorbar(cimg3)
+
+    ax4 = fig.add_subplot(4,1,4)
+    ax4text = '2D sigma'
+    ax4.text(3, 3, ax3text, fontsize=8)
+    cimg4 = ax4.imshow(sigma.T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
+    cax4 = fig.colorbar(cimg4)
+
+    plt.show()
+
+    return 0
+
+
 
     mu = np.median(model_isomap, axis=2)
     m_mu = np.ma.masked_array(mu, np.isnan(mu))
     m_data = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
     mu = np.mean(m_mu, axis=1)
     data_isomap = np.mean(m_data, axis=1)
-
-    sigma = np.std(model_isomap, axis=2)
-    m_sigma = np.ma.masked_array(sigma, np.isnan(sigma))
-    sigma = np.mean(m_sigma, axis=1)
-
-    sigma = np.sqrt(sigma**2. + data_sigma**2. + sigma_floor**2.)
 
     #mu = np.mean(np.repeat(mu, 18).reshape(18,27), axis=1)
     #data_isomap = np.mean(np.repeat(data_isomap, 18).reshape(18,27), axis=1)
@@ -621,6 +664,14 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     sample_number = 13.
     mu = np.mean(np.repeat(mu, sample_number).reshape(sample_number,27), axis=1)
     data_isomap = np.mean(np.repeat(data_isomap, sample_number).reshape(sample_number,27), axis=1)
+
+    sigma = np.std(model_isomap, axis=2)
+    m_sigma = np.ma.masked_array(sigma, np.isnan(sigma))
+    sigma = np.mean(m_sigma, axis=1)
+
+    sigma = np.sqrt(sigma**2. + data_sigma**2. + sigma_floor**2.)
+
+
     sigma = np.mean(np.repeat(sigma, sample_number).reshape(sample_number,27), axis=1)
 
     score = (mu - data_isomap) / sigma
@@ -737,6 +788,10 @@ def water_hist_prob(w_params, **kwargs):
 
     # Turning w parameters into daily d18O history, excluding switch params
     w_iso_hist = spline_input_signal(iso_hist[:40], 14, 1)
+
+    month_platte = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
+    platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
+    w_iso_hist = platte
 
     # Adding switch history onto w_iso_hist
     switch_params = iso_hist[40:]

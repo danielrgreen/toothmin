@@ -592,7 +592,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     return remodeled
 
-def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.25, sigma_floor=0.50):
+def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.25, sigma_floor=0.05):
     '''
 
     :param model_isomap:        modeled tooth isotope data
