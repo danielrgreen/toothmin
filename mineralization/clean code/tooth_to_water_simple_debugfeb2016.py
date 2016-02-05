@@ -18,7 +18,6 @@ import matplotlib.mlab as mlab
 import h5py
 import nlopt
 from PIL import Image
-import inspect
 
 from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
@@ -31,12 +30,6 @@ from blood_delta import calc_blood_gaussian
 from scipy.optimize import curve_fit, minimize, leastsq
 
 from time import time
-
-def lineno():
-    '''
-    Returns the current line number in our program.
-    '''
-    return inspect.currentframe().f_back.f_lineno
 
 class ToothModel:
     def __init__(self, fname=None):
@@ -115,6 +108,13 @@ class ToothModel:
         if interp:
             img_interp = interp1d(self.ages, img)
             return img_interp
+
+        img = np.array(img)
+        print img.shape
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        ax.imshow(img[:,:,-1].T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+        plt.show()
 
         return img
 
@@ -584,10 +584,42 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
     '''
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
+
+    model_isomap = np.array(model_isomap)
+    print model_isomap.shape
+    sigma = np.std(model_isomap, axis=0)
+    mean = np.mean(model_isomap, axis=0)
+
+    fig = plt.figure()
+    for i in xrange(8):
+        print i
+        print model_isomap[i].shape
+        ax = fig.add_subplot(model_isomap.shape[0],1,i+1)
+        ax.imshow(model_isomap[i,:,:,-1].T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+
+    plt.show()
+
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(2,1,1)
+    ax1text = 'sigma'
+    ax1.text(1, 1, ax1text, fontsize=8)
+    cimg1 = ax1.imshow(sigma[:,:,400].T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    cax1 = fig.colorbar(cimg1)
+
+    ax2 = fig.add_subplot(2,1,2)
+    ax2text = 'mean'
+    ax2.text(1, 1, ax2text, fontsize=8)
+    cimg2 = ax2.imshow(mean[:,:,400].T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    cax2 = fig.colorbar(cimg2)
+
+    plt.show()
+    return 0
+
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,0:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
-            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 0) # ***No. at end denotes deletion from top***
+            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2) # ***No. at end denotes deletion from top***
 
     re_shape = (iso_shape[0], iso_shape[1], len(model_isomap))
     remodeled = np.empty(re_shape, dtype='f8')
@@ -598,7 +630,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     return remodeled
 
-def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100., data_sigma=0.25, sigma_floor=0.5):
+def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.25, sigma_floor=0.50):
     '''
 
     :param model_isomap:        modeled tooth isotope data
@@ -616,10 +648,14 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
     score = np.sum(score**2)
-
+    rate_prior = (2./3.)
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, .50) # rate prior
+    prior_score_rate = prior_rate_change(w_iso_hist, rate_prior) # rate prior
     #prior_score_hist = prior_histogram(mu, data_isomap)
+
+    print '2D score = ', score
+    print '2D rate_score = ', prior_score_rate
+    print '2D percent prior = ', prior_score_rate/(score+prior_score_rate)*100.
 
     return score+prior_score_rate
 
@@ -637,11 +673,11 @@ def prior_histogram(model_isomap, data_isomap):
 
     return prior_score
 
-def prior_rate_change(w_iso_hist, M2_switch_days, rate):
+def prior_rate_change(w_iso_hist, rate):
 
     diff_water = np.diff(w_iso_hist)
-    diff_water[int(M2_switch_days[0])-3:int(M2_switch_days[0])+2] = 0.
-    diff_water[int(M2_switch_days[1])-3:int(M2_switch_days[1])+2] = 0.
+    #diff_water[int(M2_switch_days[0])-3:int(M2_switch_days[0])+1] = 0.
+    #diff_water[int(M2_switch_days[1])-3:int(M2_switch_days[1])+1] = 0.
     prior_score = np.sum((diff_water/rate)**2.)
 
     return prior_score
@@ -652,15 +688,6 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
     block_length = int(kwargs.get('block_length', 1))
     M2_inverse_water_hist = calc_water_step2(w_iso_hist, block_length)
 
-    # Calculate start time for model
-    m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
-    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
-    m1_gestation_times = np.array([-49., 0.])
-    m1_gestation = m1_gestation_times[1]-m1_gestation_times[0]
-    m2_gestation_times_curve = tooth_timing_convert([-49., 0.], *m1_m2_params)
-    m2_gestation_curve = int(m2_gestation_times_curve[1] - m2_gestation_times_curve[0])
-    m2_gestation_simple = int(m1_gestation*(341./275.))
-
     # Declare tooth growth parameters
     tooth_model = kwargs.get('tooth_model', None)
     assert(tooth_model != None)
@@ -670,7 +697,9 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
     assert(isomap_shape != None)
     assert(data_isomap != None)
     assert(isomap_data_x_ct != None)
-    M2_switch_days = np.array([switch_params[2],switch_params[2]+switch_params[3]])
+    m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
+    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
+    #M2_switch_days = np.array([switch_params[2],switch_params[2]+switch_params[3]])
     #M1_switch_days = tooth_timing_convert(M2_switch_days, *m2_m1_params)
 
     # Declare physiological parameters
@@ -679,56 +708,31 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
     metabolic_kw = kwargs.get('metabolic_kw', {})
 
     # Generate blood and PO4 from proposed water
-    M2_inverse_days = np.arange(84., np.size(M2_inverse_water_hist)+84.)
-    M2_inverse_blood_hist = blood_delta(23.5, M2_inverse_water_hist, 25.3, **metabolic_kw)
+    M2_inverse_days = np.arange(84., 84.+np.size(M2_inverse_water_hist))
+    M2_inverse_blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **metabolic_kw)
     M2_inverse_PO4_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, M2_inverse_blood_hist, **kwargs)
+
     # Create M1 days, water, blood and phosphate histories from M2 inversion results
-    M1_inverse_days = tooth_timing_convert(M2_inverse_days+m2_gestation_curve, *m2_m1_params)
+    M1_inverse_days = tooth_timing_convert(M2_inverse_days, *m2_m1_params)
     M1_inverse_days = M1_inverse_days - M1_inverse_days[0]
-    #M1_inverse_water_hist_tmp = np.ones(M1_inverse_days.size)
-    #M1_inverse_blood_hist_tmp = np.ones(M1_inverse_days.size)
+    M1_inverse_water_hist_tmp = np.ones(M1_inverse_days.size)
+    M1_inverse_blood_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_PO4_hist_tmp = np.ones(M1_inverse_days.size)
     for k,d in enumerate(M1_inverse_days):
         d = int(d)
-        #M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist[k]
-        #M1_inverse_blood_hist_tmp[d:] = M2_inverse_blood_hist[k]
+        M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist[k]
+        M1_inverse_blood_hist_tmp[d:] = M2_inverse_blood_hist[k]
         M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq[k]
-    #M1_inverse_water_hist = M1_inverse_water_hist_tmp
-    #M1_inverse_blood_hist = M1_inverse_blood_hist_tmp
+    M1_inverse_water_hist = M1_inverse_water_hist_tmp
+    M1_inverse_blood_hist = M1_inverse_blood_hist_tmp
     M1_inverse_PO4_hist = M1_inverse_PO4_hist_tmp
-
-    '''
-    textstr1 = 'forward, inverse m2 blood history'
-    textstr2 = 'forward, inverse m1 blood history'
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2,1,1)
-    #ax1.plot(np.arange(np.size(forward_962_blood_hist)), forward_962_blood_hist, 'r-', label='m2 blood forward', linewidth=1.0)
-    ax1.plot(np.arange(np.size(M2_inverse_blood_hist)), M2_inverse_blood_hist, 'r-.', label='m2 blood inverse', linewidth=1.0)
-    ax1.text(0, -28, textstr1, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
-    ax1.legend(fontsize=8)
-    ax1.grid('on')
-    ax2 = fig.add_subplot(2,1,2)
-    #ax2.plot(np.arange(np.size(forward_962_blood_hist_m1)), forward_962_blood_hist_m1, 'r-', label='m1 blood forward', linewidth=1.0)
-    ax2.plot(np.arange(np.size(M1_inverse_blood_hist)), M1_inverse_blood_hist, 'r-.', label='m1 blood inverse', linewidth=1.0)
-    ax2.text(0, -28, textstr2, fontsize=8)
-    ax2.set_ylim(-30, 10)
-    ax2.set_xlim(-50, 750)
-    ax2.legend(fontsize=8)
-    ax2.grid('on')
-    #fig.savefig('inverse m1 m2 line 691.svg')
-    #plt.show()
-
-    #return 0
-    '''
 
     # Create M1 equivalent isomap models for M2 inversion results
     #inverse_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_blood_hist)
     inverse_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_PO4_hist)
 
     # Calculate score comparing inverse to real
-    score = compare(inverse_model_PO4, data_isomap, w_iso_hist, M2_switch_days)
+    score = compare(inverse_model_PO4, data_isomap, w_iso_hist)
 
     return score, inverse_model_PO4
 
@@ -759,11 +763,18 @@ def water_hist_prob(w_params, **kwargs):
     # Turning w parameters into daily d18O history, excluding switch params
     w_iso_hist = spline_input_signal(iso_hist[:40], 14, 1)
 
+    month_platte = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
+
+    # np.concatenate((month_d180, month_d180)) month_d180[:24]
+    platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
+
+    w_iso_hist = platte
+
     # Adding switch history onto w_iso_hist
     switch_params = iso_hist[40:]
-    w_iso_hist[switch_params[2]:switch_params[2]+switch_params[3]] = switch_params[1]
+    #w_iso_hist[switch_params[2]:switch_params[2]+switch_params[3]] = switch_params[1]
 
-    p, model_isomap = water_hist_likelihood(w_iso_hist, switch_params, 3.0, 34.5, 0.3, **kwargs)
+    p, model_isomap = water_hist_likelihood(w_iso_hist, switch_params, 3.0, 34.5, .3, **kwargs)
 
     list_tuple = (p, np.array(w_params))
     my_list.append(list_tuple)
@@ -869,7 +880,7 @@ def spline_962_input(smoothness):
     water_days = np.array([1.0, 31.0, 46.0, 74.0, 131.0, 170.0, 198.0, 199.0, 200.0, 201.0, 216.0, 219.0, 220.0, 221.0, 222.0, 261.0, 262.0, 272.0, 322.0, 358.0, 383.0, 411.0, 423.0, 469.0, 483.0, 496.0])
     blood_data = np.array([-5.71, -5.01, -4.07, -3.96, -4.53, -3.95, -4.96, -8.56, -10.34, -12.21, -13.09, -13.49, -13.16, -12.93, -13.46, -13.29, -5.68, -4.87, -4.76, -4.97, -4.60, -4.94, -5.45, -9.34, -5.56, -6.55, -4.25, -4.31])
     water_data = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -17.63, -5.93, -13.66, -13.67, -6.83, -6.65, -6.98])
-    days = np.arange(84., np.max(days_data)+84., 1.)
+    days = np.arange(84., 84.+np.max(days_data), 1.)
 
     water_spl = InterpolatedUnivariateSpline(water_days, water_data, k=smoothness)
     blood_spl = InterpolatedUnivariateSpline(blood_days, blood_data, k=smoothness)
@@ -887,8 +898,6 @@ def spline_962_input(smoothness):
 def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     '''
     '''
-
-    t_save = time()
 
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
@@ -936,46 +945,62 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
     trials = 50000
-    keep_pct = 30. # Percent of trials to record. Typically 20-30.
+    keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
-    keep_pct_jump = int(keep_pct/80.) # was 80.
+    keep_pct_jump = int(keep_pct/80.)
 
     # Parameters for time series only
     p_number = 40
     fit_kwargs['time_interval'] = 14.
-    upper_bound,lower_bound,guess = 6.,-30.,-6.5
+    upper_bound,lower_bound,guess = 10.,-30.,-10.
     up_bounds,low_bounds,first_guess = [],[],[]
     for i in xrange(p_number):
         up_bounds.append(upper_bound)
         low_bounds.append(lower_bound)
         first_guess.append(guess)
 
-    # Addition of artificial switch. Params are baseline, switch value, switch onset, switch length
-    switch_high, switch_low, switch_guess = [0.1, 0., 200., 120.], [-0.1, -26., 20., 10.], [0., -19.1, 66., 55.]
-    for j,k in enumerate(switch_high):
-        up_bounds.append(switch_high[j])
-        low_bounds.append(switch_low[j])
-        first_guess.append(switch_guess[j])
+    #first_guess = np.array(first_guess)
+    #first_guess[::2] = -4.
+    #first_guess = list(first_guess)
+    # First guess artificial
+    #sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    #
+    # Convert guess to 2-week intervals
+    #n_2weeks = int(np.floor(sin_180.size / 14.))
+    #sin_180_2week = np.mean(np.reshape(sin_180[:n_2weeks*14], (n_2weeks, 14)), axis=1)
+    #print sin_180_2week.size
+    #first_guess = sin_180_2week[:40].tolist()
+
+    # Addition of artificial switch
+    #switch_high, switch_low,switch_guess = [1., 1., 1., 1.], [1., 1., 1., 1.], [1., 1., 1., 1.]
+    #for j,k in enumerate(switch_high):
+    #    up_bounds.append(switch_high[j])
+    #    low_bounds.append(switch_low[j])
+    #    first_guess.append(switch_guess[j])
 
     local_method = 'LN_COBYLA'
-    local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number+np.size(switch_guess))
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number)
     local_opt.set_xtol_abs(.01)
     local_opt.set_lower_bounds(low_bounds)
     local_opt.set_upper_bounds(up_bounds)
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
-    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number+np.size(switch_guess))
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number)
     global_opt.set_maxeval(trials)
     global_opt.set_lower_bounds(low_bounds)
     global_opt.set_upper_bounds(up_bounds)
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
-    global_opt.set_population(p_number+np.size(switch_guess))
+    global_opt.set_population(p_number)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize(first_guess)
+    print 'first guess = ', first_guess
+    print len(first_guess)
+    print 'low = ', low_bounds
+    print len(low_bounds)
+    x_opt = global_opt.optimize(first_guess) # Is typically 'first_guess'
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -996,51 +1021,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 85.571, .003262, -58.095, 41.]) # 'synch98', 100k
     #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 90.469, .004068, -16.811, 41.]) # 'synch114', 100k
 
-    # Calculate start time for model
-    m1_gestation_times = np.array([-49., 0.])
-    m1_gestation = m1_gestation_times[1]-m1_gestation_times[0]
-    m2_gestation_times_curve = tooth_timing_convert([-49., 0.], *m1_m2_params)
-    m2_gestation_curve = int(m2_gestation_times_curve[1] - m2_gestation_times_curve[0])
-    m2_gestation_simple = int(m1_gestation*(341./275.))
-
     # Make trial forward data *******FORWARD BASED ON EXPECTATIONS PRIOR TO INVERSION*******
     forward_962_water_hist,forward_962_blood_hist,days_spl_962 = spline_962_input(1)
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
-    forward_962_phosphate_eq = PO4_dissoln_reprecip(3.0, 34.5, 0.3, forward_962_blood_hist, **kwargs)
-
-    # Plotting forward blood and water from 962 data
-    textstr1a = 'as loaded into model'
-    textstr1b = 'forw m2 w+b+p hist load from spline_962_output start@0 line={0} time={1}'.format(lineno(), t_save)
-    textstr2a = 'as occurred in nature'
-    textstr2b = 'forw m2 w+b+p hist load from spline_962_output start@84 line={0} time={1}'.format(lineno(), t_save)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2,1,1)
-    ax1.plot(np.arange(np.size(forward_962_water_hist)), forward_962_water_hist, 'b-', label='forward_962_water_hist', linewidth=1.0)
-    ax1.plot(np.arange(np.size(forward_962_blood_hist)), forward_962_blood_hist, 'r-', label='forward_962_blood_hist', linewidth=1.0)
-    ax1.plot(np.arange(np.size(forward_962_phosphate_eq)), forward_962_phosphate_eq, 'g-', label='forward_962_phosphate_eq', linewidth=1.0)
-    ax1.grid(True)
-    ax1.text(0, -26, textstr1a, fontsize=8)
-    ax1.text(0, -28, textstr1b, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
-    ax1.legend(fontsize=8)
-    ax2 = fig.add_subplot(2,1,2)
-    ax2.plot(np.arange(np.size(forward_962_water_hist))+84, forward_962_water_hist, 'b-', label='forward_962_water_hist', linewidth=1.0)
-    ax2.plot(np.arange(np.size(forward_962_blood_hist))+84, forward_962_blood_hist, 'r-', label='forward_962_blood_hist', linewidth=1.0)
-    ax2.plot(np.arange(np.size(forward_962_phosphate_eq))+84, forward_962_phosphate_eq, 'r-', label='forward_962_phosphate_eq', linewidth=1.0)
-    ax2.grid(True)
-    ax2.text(0, -26, textstr2a, fontsize=8)
-    ax2.text(0, -28, textstr2b, fontsize=8)
-    ax2.set_ylim(-30, 10)
-    ax2.set_xlim(-50, 750)
-    ax2.legend(fontsize=8)
-    fig.suptitle('M2 962 data blood, water, and calc PO4eq', fontsize=12)
-    fig.savefig('forw_m2_w_b_p_line={0}_time={1}.svg'.format(lineno(), t_save))
-    #plt.show()
-
+    forward_962_phosphate_eq = PO4_dissoln_reprecip(3.0, 34.5, .3, forward_962_blood_hist, **kwargs)
     # Create M1-equivalent days, water, blood and PO4 eq
-    m1_days_spl_962 = tooth_timing_convert(days_spl_962, *m2_m1_params) # Days here are 84+
-    m1_days_spl_962 = m1_days_spl_962 - m1_days_spl_962[0] # This sets the M1 day array to begin at 0.
+    m1_days_spl_962 = tooth_timing_convert(days_spl_962, *m2_m1_params)
+    m1_days_spl_962 = m1_days_spl_962 - m1_days_spl_962[0]
     water_spl_tmp = np.ones(m1_days_spl_962.size)
     blood_spl_tmp = np.ones(m1_days_spl_962.size)
     PO4_spl_tmp = np.ones(m1_days_spl_962.size)
@@ -1053,159 +1040,34 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     forward_962_blood_hist_m1 = blood_spl_tmp
     forward_962_PO4_hist_m1 = PO4_spl_tmp
 
-    # Plotting forward blood and water as transformed from M2 data to M1
-    textstr1a = 'as loaded into model'
-    textstr1b = 'forw m1 w+b+p hist calc from m2 data start@0 line={0} time={1}'.format(lineno(), t_save)
-    textstr2a = 'as occurred in nature'
-    textstr2b = 'forw m1 w+b+p hist calc from m2 data start@-50 line={0} time={1}'.format(lineno(), t_save)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2,1,1)
-    ax1.plot(np.arange(np.size(forward_962_water_hist_m1)), forward_962_water_hist_m1, 'b-', label='forward_962_water_hist_m1', linewidth=1.0)
-    ax1.plot(np.arange(np.size(forward_962_blood_hist_m1)), forward_962_blood_hist_m1, 'r-', label='forward_962_blood_hist_m1', linewidth=1.0)
-    ax1.plot(np.arange(np.size(forward_962_PO4_hist_m1)), forward_962_PO4_hist_m1, 'g-', label='forward_962_PO4_hist_m1', linewidth=1.0)
-    ax1.grid(True)
-    ax1.text(0, -26, textstr1a, fontsize=8)
-    ax1.text(0, -28, textstr1b, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
-    ax1.legend(fontsize=8)
-    ax2 = fig.add_subplot(2,1,2)
-    ax2.plot(np.arange(np.size(forward_962_water_hist_m1))-50, forward_962_water_hist_m1, 'b-', label='forward_962_water_hist_m1', linewidth=1.0)
-    ax2.plot(np.arange(np.size(forward_962_blood_hist_m1))-50, forward_962_blood_hist_m1, 'r-', label='forward_962_blood_hist_m1', linewidth=1.0)
-    ax2.plot(np.arange(np.size(forward_962_PO4_hist_m1))-50, forward_962_PO4_hist_m1, 'g-', label='forward_962_PO4_hist_m1', linewidth=1.0)
-    ax2.grid(True)
-    ax2.text(0, -26, textstr2a, fontsize=8)
-    ax2.text(0, -28, textstr2b, fontsize=8)
-    ax2.set_ylim(-30, 10)
-    ax2.set_xlim(-50, 750)
-    ax2.legend(fontsize=8)
-    fig.suptitle('M1 blood and water calc from data', fontsize=12)
-    fig.savefig('forw_m1_w_b_p_line={0}_time={1}.svg'.format(lineno(), t_save))
-    #plt.show()
+    #calculated_M1_blood_hist_from_water = blood_delta(23.5, forward_962_water_hist_m1, 25.3, **forward_metabolic_kw)
+    #calculated_M1_PO4_hist_from_water = PO4_dissoln_reprecip(3.0, 34.5, .3, calculated_M1_blood_hist_from_water, **kwargs)
+    #calculated_M1_PO4_hist_from_blood = PO4_dissoln_reprecip(3.0, 34.5, .3, forward_962_blood_hist_m1, **kwargs)
 
-    # Configure forward M1 history taking into account Gestation time in model
-    # This will take average gestation values, remove them, apply them to first value of history
+    forward_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_blood_hist_m1) # This takes the blood history from 962 scaled to the M1 without also downscaling the blood turnover
+    forward_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1)
 
-    forward_962_water_hist_m1_gest = np.append(np.mean(forward_962_water_hist_m1[:m1_gestation]), forward_962_water_hist_m1[m1_gestation:])
-    forward_962_blood_hist_m1_gest = np.append(np.mean(forward_962_blood_hist_m1[:m1_gestation]), forward_962_blood_hist_m1[m1_gestation:])
-    forward_962_PO4_hist_m1_gest = np.append(np.mean(forward_962_PO4_hist_m1[:m1_gestation]), forward_962_PO4_hist_m1[m1_gestation:])
-
-    # Plotting M1 forward blood and water taking into account gestation in model
-    textstr1a = 'as loaded into model'
-    textstr1b = 'forw m1 w+b+p hist accounting gestation start@0 line={0} time={1}'.format(lineno(), t_save)
-    textstr2a = 'as occurred in nature'
-    textstr2b = 'forw m1 w+b+p hist no gestation start@-50 line={0} time={1}'.format(lineno(), t_save)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2,1,1)
-    ax1.plot(np.arange(np.size(forward_962_water_hist_m1_gest)), forward_962_water_hist_m1_gest, 'b-', label='forward_962_water_hist_m1_gest', linewidth=1.0)
-    ax1.plot(np.arange(np.size(forward_962_blood_hist_m1_gest)), forward_962_blood_hist_m1_gest, 'r-', label='forward_962_blood_hist_m1_gest', linewidth=1.0)
-    ax1.plot(np.arange(np.size(forward_962_PO4_hist_m1_gest)), forward_962_PO4_hist_m1_gest, 'g-', label='forward_962_PO4_hist_m1_gest', linewidth=1.0)
-    ax1.grid(True)
-    ax1.text(0, -26, textstr1a, fontsize=8)
-    ax1.text(0, -28, textstr1b, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
-    ax1.legend(fontsize=8)
-    ax2 = fig.add_subplot(2,1,2)
-    ax2.plot(np.arange(np.size(forward_962_water_hist_m1))-m1_gestation, forward_962_water_hist_m1, 'b-', label='forward_962_water_hist_m1', linewidth=1.0)
-    ax2.plot(np.arange(np.size(forward_962_blood_hist_m1))-m1_gestation, forward_962_blood_hist_m1, 'r-', label='forward_962_blood_hist_m1', linewidth=1.0)
-    ax2.plot(np.arange(np.size(forward_962_PO4_hist_m1))-m1_gestation, forward_962_PO4_hist_m1, 'g-', label='forward_962_PO4_hist_m1', linewidth=1.0)
-    ax2.grid(True)
-    ax2.text(0, -26, textstr2a, fontsize=8)
-    ax2.text(0, -28, textstr2b, fontsize=8)
-    ax2.set_ylim(-30, 10)
-    ax2.set_xlim(-50, 750)
-    ax2.legend(fontsize=8)
-    fig.suptitle('M1 blood+water with/without gestation', fontsize=12)
-    fig.savefig('forw_m1_w_b_p_gestation_line={0}_time={1}.svg'.format(lineno(), t_save))
-    #plt.show()
-
-    forward_model_M1_blood_hist = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_blood_hist_m1_gest)
-    forward_model_M1_PO4_hist = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1_gest)
-    forward_M2_switch_days_for_check = np.array([116.,178.])
-    forward_score = compare(forward_model_M1_PO4_hist, data_isomap, forward_962_water_hist, forward_M2_switch_days_for_check)
-
-    # Assemble inverse data *******INVERSE BASED ON OPTIMIZER RESULTS*******
     # Assemble inverse trial result data in M2 format
     M2_inverse_water_hist = spline_input_signal(x_opt[:40], 14., 1)
     M2_switch_params = x_opt[40:]
-    M2_inverse_water_hist[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+    #M2_inverse_water_hist[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+    M2_inverse_days = np.arange(84., 84.+np.size(M2_inverse_water_hist))
     M2_inverse_blood_hist = blood_delta(23.5, M2_inverse_water_hist, 25.3, **forward_metabolic_kw)
-    M2_inverse_PO4_eq = PO4_dissoln_reprecip(3.0, 34.5, 0.3, M2_inverse_blood_hist, **kwargs)
+    M2_inverse_PO4_eq = PO4_dissoln_reprecip(3.0, 34.5, .3, M2_inverse_blood_hist, **kwargs)
 
-    # Plotting M2 inverse blood and water from x_opt
-    textstr1a = 'as loaded into model'
-    textstr1b = 'inv m2 w+b+p hist from x_opt start@0 line={0} time={1}'.format(lineno(), t_save)
-    textstr2a = 'as occurred in nature'
-    textstr2b = 'inv m2 w+b+p hist from x_opt start@84 line={0} time={1}'.format(lineno(), t_save)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2,1,1)
-    ax1.plot(np.arange(np.size(M2_inverse_water_hist)), M2_inverse_water_hist, 'b-', label='M2_inverse_water_hist', linewidth=1.0)
-    ax1.plot(np.arange(np.size(M2_inverse_blood_hist)), M2_inverse_blood_hist, 'r-', label='M2_inverse_blood_hist', linewidth=1.0)
-    ax1.plot(np.arange(np.size(M2_inverse_PO4_eq)), M2_inverse_PO4_eq, 'g-', label='M2_inverse_PO4_eq', linewidth=1.0)
-    ax1.grid(True)
-    ax1.text(0, -26, textstr1a, fontsize=8)
-    ax1.text(0, -28, textstr1b, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
-    ax1.legend(fontsize=8)
-    ax2 = fig.add_subplot(2,1,2)
-    ax2.plot(np.arange(np.size(M2_inverse_water_hist))+m2_gestation_curve, M2_inverse_water_hist, 'b-', label='M2_inverse_water_hist', linewidth=1.0)
-    ax2.plot(np.arange(np.size(M2_inverse_blood_hist))+m2_gestation_curve, M2_inverse_blood_hist, 'r-', label='M2_inverse_blood_hist', linewidth=1.0)
-    ax2.plot(np.arange(np.size(M2_inverse_PO4_eq))+m2_gestation_curve, M2_inverse_PO4_eq, 'g-', label='M2_inverse_PO4_eq', linewidth=1.0)
-    ax2.grid(True)
-    ax2.text(0, -26, textstr2a, fontsize=8)
-    ax2.text(0, -28, textstr2b, fontsize=8)
-    ax2.set_ylim(-30, 10)
-    ax2.set_xlim(-50, 750)
-    ax2.legend(fontsize=8)
-    fig.suptitle('M2 inverse blood+water from x_opt', fontsize=12)
-    fig.savefig('inv_m2_w_b_p_from_x_opt_line={0}_time={1}.svg'.format(lineno(), t_save))
-    #plt.show()
-
-    # Adding gestation days and data that are hidden from model output
-    M2_inverse_water_hist_gest = np.insert(M2_inverse_water_hist, 0, np.ones(m2_gestation_curve)*M2_inverse_water_hist[0])
-    M2_inverse_days = np.arange(84., np.size(M2_inverse_water_hist)+84.)
-    M2_inverse_blood_hist_gest = blood_delta(23.5, M2_inverse_water_hist_gest, 25.3, **forward_metabolic_kw)
-    M2_inverse_PO4_eq_gest = PO4_dissoln_reprecip(3.0, 34.5, 0.3, M2_inverse_blood_hist_gest, **kwargs)
-
-    # Plotting M2 inverse blood and water with gestation
-    textstr1a = 'as loaded into model (this would incorrectly count gestation time twice)'
-    textstr1b = 'inv m2 w+b+p hist accounting gestation start@0 line={0} time={1}'.format(lineno(), t_save)
-    textstr2a = 'as occurred in nature'
-    textstr2b = 'inv m2 w+b+p hist accounting gestation start@84 line={0} time={1}'.format(lineno(), t_save)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2,1,1)
-    ax1.plot(np.arange(np.size(M2_inverse_water_hist_gest)), M2_inverse_water_hist_gest, 'b-', label='M2_inverse_water_hist_gest', linewidth=1.0)
-    ax1.plot(np.arange(np.size(M2_inverse_blood_hist_gest)), M2_inverse_blood_hist_gest, 'r-', label='M2_inverse_blood_hist_gest', linewidth=1.0)
-    ax1.plot(np.arange(np.size(M2_inverse_PO4_eq_gest)), M2_inverse_PO4_eq_gest, 'g-', label='M2_inverse_PO4_eq_gest', linewidth=1.0)
-    ax1.grid(True)
-    ax1.text(0, -26, textstr1a, fontsize=8)
-    ax1.text(0, -28, textstr1b, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
-    ax1.legend(fontsize=8)
-    ax2 = fig.add_subplot(2,1,2)
-    ax2.plot(np.arange(np.size(M2_inverse_water_hist_gest))+84, M2_inverse_water_hist_gest, 'b-', label='M2_inverse_water_hist_gest', linewidth=1.0)
-    ax2.plot(np.arange(np.size(M2_inverse_blood_hist_gest))+84, M2_inverse_blood_hist_gest, 'r-', label='M2_inverse_blood_hist_gest', linewidth=1.0)
-    ax2.plot(np.arange(np.size(M2_inverse_PO4_eq_gest))+84, M2_inverse_PO4_eq_gest, 'g-', label='M2_inverse_PO4_eq_gest', linewidth=1.0)
-    ax2.grid(True)
-    ax2.text(0, -26, textstr2a, fontsize=8)
-    ax2.text(0, -28, textstr2b, fontsize=8)
-    ax2.set_ylim(-30, 10)
-    ax2.set_xlim(-50, 750)
-    ax2.legend(fontsize=8)
-    fig.suptitle('M2 inverse blood+water with gestation', fontsize=12)
-    fig.savefig('inv_m2_w_b_p_gestation_line={0}_time={1}.svg'.format(lineno(), t_save))
-    #plt.show()
-
+    # Truncate M2 inverse trial results before conversion to M1 timing
+    print 'm2 inverse days = ', M2_inverse_days
+    #M2_inverse_days_truncated = M2_inverse_days[84:]
+    #print 'M2 inverse days truncated = ', M2_inverse_days_truncated
+    #M2_inverse_water_hist_truncated = M2_inverse_water_hist[84:]
+    #M2_inverse_blood_hist_truncated = M2_inverse_blood_hist[84:]
+    #M2_inverse_PO4_eq_truncated = M2_inverse_PO4_eq[84:]
     # Create M1 days, water, blood and phosphate histories from M2 inversion results
-    M1_inverse_days = tooth_timing_convert(M2_inverse_days+m2_gestation_curve, *m2_m1_params) # days here are 84+. Gestation added because inverse result accounts for it.
-    M1_inverse_days = M1_inverse_days - M1_inverse_days[0] # M1 days will now start at 0
+    M1_inverse_days = tooth_timing_convert(M2_inverse_days, *m2_m1_params)
+    M1_inverse_days = M1_inverse_days - M1_inverse_days[0]
     M1_inverse_water_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_blood_hist_tmp = np.ones(M1_inverse_days.size)
     M1_inverse_PO4_hist_tmp = np.ones(M1_inverse_days.size)
-    # Here, M1 data will be drawn directly from M2 x_opt result, not gestation addition
     for k,d in enumerate(M1_inverse_days):
         d = int(d)
         M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist[k]
@@ -1213,167 +1075,210 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq[k]
     M1_inverse_water_hist = M1_inverse_water_hist_tmp
     M1_inverse_blood_hist = M1_inverse_blood_hist_tmp
-    print 'M1 inverse blood hist = ', M1_inverse_blood_hist
     M1_inverse_PO4_hist = M1_inverse_PO4_hist_tmp
 
-    # Adding gestation to M1 for plotting purposes only
-    # This will extend the beginning of the array using the first value to cover time during gestation
-    M1_inverse_water_hist_gest = np.insert(M1_inverse_water_hist, 0, np.ones(m1_gestation)*M1_inverse_water_hist[0])
-    M1_inverse_blood_hist_gest = np.insert(M1_inverse_blood_hist, 0, np.ones(m1_gestation)*M1_inverse_blood_hist[0])
-    M1_inverse_PO4_hist_gest = np.insert(M1_inverse_PO4_hist, 0, np.ones(m1_gestation)*M1_inverse_PO4_hist[0])
-
-    # Plotting M1 inverse blood and water (no gestation necessary, except for plotting)
-    textstr1a = 'as loaded into model'
-    textstr1b = 'inv m1 w+b+p hist start@0 line={0} time={1}'.format(lineno(), t_save)
-    textstr2a = 'as occurred in nature'
-    textstr2b = 'inv m1 w+b+p hist accounting gestation start@-50 line={0} time={1}'.format(lineno(), t_save)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2,1,1)
-    ax1.plot(np.arange(np.size(M1_inverse_water_hist)), M1_inverse_water_hist, 'b-', label='M1_inverse_water_hist', linewidth=1.0)
-    ax1.plot(np.arange(np.size(M1_inverse_blood_hist)), M1_inverse_blood_hist, 'r-', label='M1_inverse_blood_hist', linewidth=1.0)
-    ax1.plot(np.arange(np.size(M1_inverse_PO4_hist)), M1_inverse_PO4_hist, 'g-', label='M1_inverse_PO4_hist', linewidth=1.0)
-    ax1.grid(True)
-    ax1.text(0, -26, textstr1a, fontsize=8)
-    ax1.text(0, -28, textstr1b, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
-    ax1.legend(fontsize=8)
-    ax2 = fig.add_subplot(2,1,2)
-    ax2.plot(np.arange(np.size(M1_inverse_water_hist_gest))-m1_gestation, M1_inverse_water_hist_gest, 'b-', label='M1_inverse_water_hist_gest', linewidth=1.0)
-    ax2.plot(np.arange(np.size(M1_inverse_blood_hist_gest))-m1_gestation, M1_inverse_blood_hist_gest, 'r-', label='M1_inverse_blood_hist_gest', linewidth=1.0)
-    ax2.plot(np.arange(np.size(M1_inverse_PO4_hist_gest))-m1_gestation, M1_inverse_PO4_hist_gest, 'g-', label='M1_inverse_PO4_hist_gest', linewidth=1.0)
-    ax2.grid(True)
-    ax2.text(0, -26, textstr2a, fontsize=8)
-    ax2.text(0, -28, textstr2b, fontsize=8)
-    ax2.set_ylim(-30, 10)
-    ax2.set_xlim(-50, 750)
-    ax2.legend(fontsize=8)
-    fig.suptitle('M1 inverse blood+water for model and in plotting', fontsize=12)
-    fig.savefig('inv_m1_w_b_p_model+plotting_line={0}_time={1}.svg'.format(lineno(), t_save))
+    # TESTING TO MAKE SURE ALL'S WORKING
+    #fig = plt.figure()
+    #ax1 = fig.add_subplot(1,1,1)
+    #days = np.arange(M1_inverse_water_hist.size)
+    #ax1.plot(days, sin_180[:days.size], 'k--', linewidth=1.0)
+    #ax1.plot(days, M1_inverse_water_hist, 'b-', linewidth=2.0)
+    #ax1.plot(days, M1_inverse_blood_hist, 'r-', linewidth=2.0)
+    #ax1.plot(days, M1_inverse_PO4_hist, 'g-.', linewidth=1.0)
     #plt.show()
 
-    # Create M1 equivalent isomap models for M2 inversion results. Don't add gestation because model should account for this?
-    inverse_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_blood_hist)
+    #return 0
+
+    # Create M1 equivalent isomap models for M2 inversion results
+    #inverse_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_blood_hist)
     inverse_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_PO4_hist)
 
-    #Save my result trials
+    #Save my result trials BLANKED FOR NOW 2016-01-01
     my_list.sort(key=getkey)
     save_list = [my_list[i] for i in range(0, keep_pct, keep_pct_jump)]
     list_water_results = [s[1] for s in save_list]
 
     hist_list = [z[0] for j,z in enumerate(my_list[i] for i in range(len(my_list)))]
 
-    textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s, \nswitch_params= %.1f, %.1f, %.1f, %.1f' % (minf, run_time, trials, eval_p_sec, local_method, global_method, M2_switch_params[0], M2_switch_params[1], M2_switch_params[2], M2_switch_params[3])
-    print textstr
+    t_save = time()
+
+    # Real climate data
+    #month_d180 = np.array([-1.95, -1.92, -2.94, -3.44, -2.22, -1.10, -0.67, -1.71, -0.81, -1.47, -2.31, -3.19]) # Dar Es Salaam
+    month_addis = np.array([-0.21, 0.30, -0.04, 0.25, -0.75, -0.19, -3.16, -4.53, -0.95, 0.29, -1.26, -1.73]) # Addis Ababa
+    month_entebbe = np.array([-1.39, -0.35, -2.42, -3.25, -3.08, -1.44, -0.98, -1.88, -1.33, -3.10, -3.80, -1.63]) # Entebbe, Uganda
+    #month_d180 = np.array([-6.31, -7.09, -4.87, -3.33, -1.83, -1.22, -1.08, -0.47, -0.17, -0.48, -2.92, -5.90]) # Harare, Zimbabwe
+    #month_d180 = np.array([-2.98, -2.20, -4.74, -5.94, -2.64, -3.80, -0.25, -1.80, -1.25, -4.15, -5.80, -5.42]) # Kinshasa, DRC
+    #month_d180 = np.array([-1.58, -1.54, -1.81, -3.08, -3.40, -3.69, -3.38, -3.78, -2.46, -2.19, -2.12, -1.79]) # Cape Town
+    #month_d180 = np.array([-4.31, -3.50, -4.14, -4.68, -4.87, -5.11, -4.77, -4.80, -4.71, -4.50, -4.53, -4.77]) # Marion Island
+    #month_d180 = np.array([0.00, -2.40, -1.75, -3.70, -3.90, -6.20, -7.75, -8.10, -6.25, -3.30, -4.75, -8.95, -2.10, -0.40, -4.55, -3.25, -5.75, -3.70, -8.60, -7.10, -8.50, -5.30, -4.55, -3.10, -2.75	-4.60, -2.00, -3.10, -5.25, -6.10]) # Hong Kong
+    #month_d180 = np.array([-2.75, -5.35, -2.70, -1.60, -6.30, -7.25, -9.00, -8.10, -9.50, -5.30, -5.75, -4.00]) # Liuzhou
+    month_mulu = np.array([-5.30, -4.73, -7.44, -4.38, -4.39, -7.07, -9.76, -3.99, -3.95, -5.81, -8.98, -9.89, -8.62, -8.88, -8.25, -8.21, -9.74, -6.83, -6.69, -6.38, -10.33, -7.95, -5.72, -10.52, -10.74, -7.48, -9.30, -8.50, -12.66, -10.52, -10.82, -6.01, -8.34, -5.51, -7.03, -5.75, -8.14, -6.85, -4.82, -7.31, -8.79, -4.77, -6.14, -2.96, -2.31, -5.13, -9.31, -8.88, -9.22, -9.08, -7.51, -7.72, -10.29, -10.38, -9.69, -8.64, -10.66, -7.85, -6.94]) # Mulu, Borneo
+    #week_d180 = np.array([-19.40, -19.4, -19.4, -19.4, -15.9, -15.9, -15.9, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -16.5, -16.5, -8.8, -8.8, -10.6, -10.6, -2.5, -9.3, -6.7, -8.2, -1.6, -6, -7, -4.4, -8.8, -6.5, -6.1, -6.1, -6.1, -0.6, 1.7, -4.5, -4.5, -4.5, -12.4, -12.4, -9.7, -12.2, -12.2, -12.2, -15.1, -15.1, -11, -11, -11, -30.5, -30.5, -30.5])  # North Platte Nebraska
+    month_platte = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
+
+    # np.concatenate((month_d180, month_d180)) month_d180[:24]
+    addis = spline_input_signal(np.concatenate((month_addis, month_addis)), 30, 1)
+    entebbe = spline_input_signal(np.concatenate((month_entebbe, month_entebbe)), 30, 1)
+    mulu = spline_input_signal(month_mulu[:24], 30, 1)
+    platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
+
+    water_hist = entebbe
 
     # Synthetic signal production
+
+    sm_360 = 2.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sm_180 = 2.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sm_090 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sm_045 = 2.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+
+    sm_360_180 = (1.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
+    sm_360_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
+    sm_360_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_360
+    sm_180_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_180
+    sm_180_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_180
+
+    sin_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
     sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
-    first_result_water = np.ones(m2_gestation_curve)*M2_inverse_water_hist[0]
-    first_result_blood = np.ones(m2_gestation_curve)*M2_inverse_blood_hist[0]
-    first_result_PO4_eq = np.ones(m2_gestation_curve)*M2_inverse_PO4_eq[0]
+    sin_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sin_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+
+    sin_360_180 = (5.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sin_360
+    sin_360_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_360
+    sin_360_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_360
+    sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
+    sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
+
+    number = 'entebbe'
+    textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
+    print textstr
+    #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
+
+    water_hist = water_hist
+
+    # Forward and Inverse result Diffs for histogram plotting
+    for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
 
     fig = plt.figure()
-    ax1 = fig.add_subplot(6,1,1)
+    ax1 = fig.add_subplot(4,1,1)
     days = M2_inverse_days
-    #ax1.plot(days, sin_180[:days.size], 'k--', linewidth=1.0)
-    ax1.plot(days[:m2_gestation_curve], first_result_water, 'b-.', linewidth=2.0)
-    ax1.plot(days[:m2_gestation_curve], first_result_blood, 'r-.', linewidth=2.0)
-    ax1.plot(days[:m2_gestation_curve], first_result_PO4_eq, 'g-.', linewidth=1.0)
-    ax1.plot(days[m2_gestation_curve:], M2_inverse_water_hist[:-m2_gestation_curve], 'b-', linewidth=2.0)
-    ax1.plot(days[m2_gestation_curve:], M2_inverse_blood_hist[:-m2_gestation_curve], 'r-', linewidth=2.0)
-    ax1.plot(days[m2_gestation_curve:], M2_inverse_PO4_eq[:-m2_gestation_curve], 'g-', linewidth=1.0)
-    ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0)
-    ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0)  # **************** sin curve here **********
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
     for s in list_water_results[:-1]:
-        M2_switch_params = s[40:]
         s = spline_input_signal(s[:40], 14., 1)
+        M2_switch_params = s[40:]
         s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-        s_1 = np.ones(m2_gestation_curve)*s[0]
-        ax1.plot(days[:m2_gestation_curve], s_1, 'b-.', alpha=0.03)
-        ax1.plot(days[m2_gestation_curve:], s[:-m2_gestation_curve], 'b-', alpha=0.03)
-    ax1.text(0, -26, textstr, fontsize=8)
-    ax1.set_ylim(-30, 10)
-    ax1.set_xlim(-50, 750)
+        ax1.plot(days, s, 'b-', alpha=0.03)
+    #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
+    #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
+    ax1.text(350, -20, textstr, fontsize=8)
+    ax1.set_ylim(-35, 15)
+    ax1.set_xlim(35, 750)
 
     #temp, model_isomap = water_hist_prob_4param(x_opt, **fit_kwargs)
     #opt_params = np.array([x_opt[0], x_opt[1], x_opt[2], x_opt[3], 3., 34.5, .3])
     #temp_opt, model_isomap_opt = water_hist_prob_4param(opt_params, **fit_kwargs)
 
-    ax2 = fig.add_subplot(6,1,2)
-    ax2text = '962 data'
+    fig = plt.figure()
+    ax2 = fig.add_subplot(4,1,2)
+    ax2text = 'Synthetic data'
     ax2.text(21, 3, ax2text, fontsize=8)
-    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
     cax2 = fig.colorbar(cimg2)
 
-    ax3 = fig.add_subplot(6,1,3)
-    ax3text = 'Inverse model result - PO4'
+
+    ax3 = fig.add_subplot(4,1,3)
+    ax3text = 'Inverse model result PO4 {0}'.format(number)
     ax3.text(21, 3, ax3text, fontsize=8)
-    cimg3 = ax3.imshow(np.mean(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
+    cimg3 = ax3.imshow(np.mean(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
     cax3 = fig.colorbar(cimg3)
 
-    residuals = np.mean(inverse_model_PO4, axis=2) - data_isomap
-    ax4 = fig.add_subplot(6,1,4)
-    ax4text = 'Inverse model result - blood only'
+    residuals = np.mean(inverse_model_PO4, axis=2).T - data_isomap.T
+    ax4 = fig.add_subplot(4,1,4)
+    ax4text = 'residuals'
     ax4.text(21, 3, ax4text, fontsize=8)
-    cimg4 = ax4.imshow(np.mean(inverse_model_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
+    cimg4 = ax4.imshow(residuals, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
     cax4 = fig.colorbar(cimg4)
 
-    #residuals = np.mean(inverse_model_PO4, axis=2) - data_isomap
-    #ax4 = fig.add_subplot(7,1,4)
-    #ax4text = 'inverse model - data residuals'
-    #ax4.text(21, 3, ax4text, fontsize=8)
-    #cimg4 = ax4.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
-    #cax4 = fig.colorbar(cimg4)
-
-    ax5 = fig.add_subplot(6,1,5)
-    ax5text = 'forward model: bloodhist'
-    ax5.text(21, 3, ax5text, fontsize=8)
-    cimg5 = ax5.imshow(np.mean(forward_model_M1_blood_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
-    cax5 = fig.colorbar(cimg5)
-
-    forward_PO4_text = 'score = {0}'.format(forward_score)
-    ax6 = fig.add_subplot(6,1,6)
-    ax6text = 'forward model: PO4 hist from blood'
-    ax6.text(21, 3, ax6text, fontsize=8)
-    ax6.text(21, 2, forward_PO4_text, fontsize=8)
-    cimg6 = ax6.imshow(np.mean(forward_model_M1_PO4_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
-    cax6 = fig.colorbar(cimg6)
-
-    fig.savefig('962trial_14d_rate50_18p6_del_{0}a_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    #plt.show()
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    #ax1.plot(days, sin_180[:days.size], 'k--', linewidth=1.0)
-    ax1.plot(days[:m2_gestation_curve], first_result_water, 'b-.', linewidth=2.0)
-    ax1.plot(days[:m2_gestation_curve], first_result_blood, 'r-.', linewidth=2.0)
-    ax1.plot(days[:m2_gestation_curve], first_result_PO4_eq, 'g-.', linewidth=1.0)
-    ax1.plot(days[m2_gestation_curve:], M2_inverse_water_hist[:-m2_gestation_curve], 'b-', linewidth=2.0)
-    ax1.plot(days[m2_gestation_curve:], M2_inverse_blood_hist[:-m2_gestation_curve], 'r-', linewidth=2.0)
-    ax1.plot(days[m2_gestation_curve:], M2_inverse_PO4_eq[:-m2_gestation_curve], 'g-', linewidth=1.0)
-    ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0, markersize=8)
-    ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0, markersize=8)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
     for s in list_water_results[:-1]:
-        M2_switch_params = s[40:]
         s = spline_input_signal(s[:40], 14., 1)
-        s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-        s_1 = np.ones(m2_gestation_curve)*s[0]
-        ax1.plot(days[:m2_gestation_curve], s_1, 'b-.', alpha=0.03)
-        ax1.plot(days[m2_gestation_curve:], s[:-m2_gestation_curve], 'b-', alpha=0.03)
+        #M2_switch_params = s[40:]
+        #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+        ax1.plot(days, s, 'b-', alpha=0.03)
     #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
     #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
     ax1.text(350, -18, textstr, fontsize=8)
-    ax1.set_ylim(-24, 0)
+    ax1.set_ylim(-35, 15)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('962trial_14d_rate50_18p6_del_{0}b_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    #plt.show()
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
-    plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
+    for s in list_water_results[:-1]:
+        s = spline_input_signal(s[:40], 14., 1)
+        #M2_switch_params = s[40:]
+        #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+        ax1.plot(days, s, 'b-', alpha=0.03)
+    #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
+    #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
+    ax1.text(350, -4, textstr, fontsize=8)
+    ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
+    ax1.set_xlim(84, 550)
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    print water_hist[0], water_hist[-1]
+    print len(water_hist)
+    print '2D HEYO!!!!!!!!!!!!', np.min(water_hist)-6., np.max(water_hist)+6.
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
+    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
+    for s in list_water_results[:-1]:
+        s = spline_input_signal(s[:40], 14., 1)
+        #M2_switch_params = s[40:]
+        #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+        ax1.plot(days, s, 'b-', alpha=0.03)
+    #vmin = np.min(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) - 1.
+    #vmax = np.max(np.concatenate((real_switch_hist, w_iso_hist, blood_hist), axis=0)) + 1.
+    ax1.text(350, -18, textstr, fontsize=8)
+    ax1.set_ylim(np.min(water_hist)-2., np.max(water_hist)+2.)
+    ax1.set_xlim(84, 550)
+
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
+    fig = plt.figure()
+    plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    fig.savefig('962trial_14d_rate50_18p6_del_{0}c_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
-    #plt.show()
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
+    ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
+    ax1.set_ylim(0, 220)
+    fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)
@@ -1423,7 +1328,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/962_tooth_iso_data.csv') # 962_tooth_iso_data
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Entebbe.csv')
 
     return 0
 

@@ -54,7 +54,7 @@ class ToothModel:
         self.age_expanded = np.einsum('ij,j->ij', self.age_mask, self.ages)
         
         self.n_pix, self.n_samples, self.n_ages = self.pct_min_samples.shape
-    
+
     def _interp_missing_ages(self):
         '''
         Calculate mineralization percent on days that weren't sampled.
@@ -82,7 +82,7 @@ class ToothModel:
 
         Output shape: (# of pixels, # of ages)
         '''
-        
+
         idx0 = np.arange(self.n_pix)
         idx1 = np.random.randint(self.n_samples, size=self.n_pix)
         pix_val_rand = pix_val[idx0, idx1, :]
@@ -577,6 +577,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
     '''
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
+
     for k in xrange(len(model_isomap)):
         model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
@@ -616,7 +617,9 @@ def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.
 
     print '2D score = ', score
     print '2D rate_score = ', prior_score_rate
-    print '2D percent prior = ', prior_score_rate/(score+prior_score_rate)*100.
+    prior_pct = prior_score_rate/(score+prior_score_rate)*100.
+    print '2D percent prior = ', prior_pct
+    prior_pct_list.append(score, prior_pct)
 
     return score+prior_score_rate
 
@@ -793,6 +796,7 @@ def getkey(item):
     return item[0]
 
 my_list = []
+prior_pct_list = []
 
 def spline_input_signal(iso_values, value_days, smoothness):
     '''
@@ -858,7 +862,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     print 'loading tooth model ...'
     tooth_model_lg = ToothModel(model_fname)
-    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1) # Addition typically 5
+    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 25) # Addition typically 5
 
     # Set keyword arguments to be used in fitting procedure
     fit_kwargs = kwargs.copy()
@@ -898,7 +902,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 50000
+    trials = 300
     keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -1076,7 +1080,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     mulu = spline_input_signal(month_mulu[:24], 30, 1)
     platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
 
-    water_hist = platte
+    water_hist = entebbe
 
     # Synthetic signal production
 
@@ -1102,7 +1106,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = 'platte'
+    number = 'entebbe'
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
@@ -1135,25 +1139,31 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #temp_opt, model_isomap_opt = water_hist_prob_4param(opt_params, **fit_kwargs)
 
 
-    ax2 = fig.add_subplot(4,1,2)
+    ax2 = fig.add_subplot(5,1,2)
     ax2text = 'Synthetic data'
     ax2.text(21, 3, ax2text, fontsize=8)
     cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
     cax2 = fig.colorbar(cimg2)
 
 
-    ax3 = fig.add_subplot(4,1,3)
+    ax3 = fig.add_subplot(5,1,3)
     ax3text = 'Inverse model result PO4 {0}'.format(number)
     ax3.text(21, 3, ax3text, fontsize=8)
     cimg3 = ax3.imshow(np.mean(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
     cax3 = fig.colorbar(cimg3)
 
     residuals = np.mean(inverse_model_PO4, axis=2).T - data_isomap.T
-    ax4 = fig.add_subplot(4,1,4)
+    ax4 = fig.add_subplot(5,1,4)
     ax4text = 'residuals'
     ax4.text(21, 3, ax4text, fontsize=8)
     cimg4 = ax4.imshow(residuals, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
     cax4 = fig.colorbar(cimg4)
+
+    ax5 = fig.add_subplot(5,1,5)
+    ax5text = 'sigma'
+    ax5.text(21, 3, ax5text, fontsize=8)
+    cimg5 = ax5.imshow(np.std(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
+    cax5 = fig.colorbar(cimg5)
 
     fig.savefig('2D_r2o3_18p6_sigma50_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
@@ -1282,7 +1292,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_N_Platte.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Entebbe.csv')
 
     return 0
 

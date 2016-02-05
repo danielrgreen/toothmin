@@ -591,7 +591,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     return remodeled
 
-def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100., data_sigma=0.25, sigma_floor=0.05):
+def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100., data_sigma=0.25, sigma_floor=0.5):
     '''
 
     :param model_isomap:        modeled tooth isotope data
@@ -1121,10 +1121,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
-    number = 'sm_090'
+    number = 'entebbe'
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
-    water_hist = sm_090
+    water_hist = water_hist
 
     # Forward and Inverse result Diffs for histogram plotting
     for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
@@ -1172,7 +1172,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cax3 = fig.colorbar(cimg3)
 
 
-    fig.savefig('1Dpx2o3_{0}_rate2o3_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx2o3_rate2o3_sigma50_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1189,7 +1189,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
 
-    fig.savefig('1Dpx2o3_{0}_rate2o3_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx2o3_rate2o3_sigma50_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1204,7 +1204,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx2o3_rate2o3_18p6_sigma50_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1219,29 +1219,29 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-2., np.max(water_hist)+2.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx2o3_rate2o3_18p6_sigma50_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('1Dpx2o3_rate2o3_18p6_sigma50_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
-    fig.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx2o3_rate2o3_18p6_sigma50_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.set_ylim(0, 220)
-    fig.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx2o3_rate2o3_18p6_sigma50_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sm_090n.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Entebbe.csv')
 
     return 0
 
