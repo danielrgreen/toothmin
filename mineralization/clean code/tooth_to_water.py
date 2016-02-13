@@ -585,9 +585,9 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,0:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
-            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 0) # ***No. at end denotes deletion from top***
+            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 1) # ***No. at end denotes deletion from top***
 
     re_shape = (iso_shape[0], iso_shape[1], len(model_isomap))
     remodeled = np.empty(re_shape, dtype='f8')
@@ -598,7 +598,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     return remodeled
 
-def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100., data_sigma=0.25, sigma_floor=0.5):
+def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100., data_sigma=0.25, sigma_floor=0.05):
     '''
 
     :param model_isomap:        modeled tooth isotope data
@@ -618,7 +618,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, score_max=100
     score = np.sum(score**2)
 
     #prior_score = prior_histogram(mu, data_isomap)
-    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, .50) # rate prior
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, .66) # rate prior
     #prior_score_hist = prior_histogram(mu, data_isomap)
 
     return score+prior_score_rate
@@ -895,7 +895,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     print 'loading tooth model ...'
     tooth_model_lg = ToothModel(model_fname)
-    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1) # Addition typically 5
+    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+10, isomap_shape[1]+10), 10) # Addition typically 5, sampling 10-100
 
     # Set keyword arguments to be used in fitting procedure
     fit_kwargs = kwargs.copy()
@@ -935,7 +935,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 50000
+    trials = 300
     keep_pct = 30. # Percent of trials to record. Typically 20-30.
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -1273,7 +1273,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     first_result_PO4_eq = np.ones(m2_gestation_curve)*M2_inverse_PO4_eq[0]
 
     fig = plt.figure()
-    ax1 = fig.add_subplot(6,1,1)
+    ax1 = fig.add_subplot(7,1,1)
     days = M2_inverse_days
     #ax1.plot(days, sin_180[:days.size], 'k--', linewidth=1.0)
     ax1.plot(days[:m2_gestation_curve], first_result_water, 'b-.', linewidth=2.0)
@@ -1299,47 +1299,47 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #opt_params = np.array([x_opt[0], x_opt[1], x_opt[2], x_opt[3], 3., 34.5, .3])
     #temp_opt, model_isomap_opt = water_hist_prob_4param(opt_params, **fit_kwargs)
 
-    ax2 = fig.add_subplot(6,1,2)
+    ax2 = fig.add_subplot(7,1,2)
     ax2text = '962 data'
     ax2.text(21, 3, ax2text, fontsize=8)
     cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax2 = fig.colorbar(cimg2)
 
-    ax3 = fig.add_subplot(6,1,3)
+    ax3 = fig.add_subplot(7,1,3)
     ax3text = 'Inverse model result - PO4'
     ax3.text(21, 3, ax3text, fontsize=8)
     cimg3 = ax3.imshow(np.mean(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax3 = fig.colorbar(cimg3)
 
     residuals = np.mean(inverse_model_PO4, axis=2) - data_isomap
-    ax4 = fig.add_subplot(6,1,4)
+    ax4 = fig.add_subplot(7,1,4)
     ax4text = 'Inverse model result - blood only'
     ax4.text(21, 3, ax4text, fontsize=8)
     cimg4 = ax4.imshow(np.mean(inverse_model_blood, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax4 = fig.colorbar(cimg4)
 
-    #residuals = np.mean(inverse_model_PO4, axis=2) - data_isomap
-    #ax4 = fig.add_subplot(7,1,4)
-    #ax4text = 'inverse model - data residuals'
-    #ax4.text(21, 3, ax4text, fontsize=8)
-    #cimg4 = ax4.imshow(residuals.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy', vmin=-1.6, vmax=1.6) # Residuals
-    #cax4 = fig.colorbar(cimg4)
-
-    ax5 = fig.add_subplot(6,1,5)
+    ax5 = fig.add_subplot(7,1,5)
     ax5text = 'forward model: bloodhist'
     ax5.text(21, 3, ax5text, fontsize=8)
     cimg5 = ax5.imshow(np.mean(forward_model_M1_blood_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
     forward_PO4_text = 'score = {0}'.format(forward_score)
-    ax6 = fig.add_subplot(6,1,6)
+    ax6 = fig.add_subplot(7,1,6)
     ax6text = 'forward model: PO4 hist from blood'
     ax6.text(21, 3, ax6text, fontsize=8)
     ax6.text(21, 2, forward_PO4_text, fontsize=8)
     cimg6 = ax6.imshow(np.mean(forward_model_M1_PO4_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.) # Residuals
     cax6 = fig.colorbar(cimg6)
 
-    fig.savefig('962trial_14d_rate50_18p6_del_{0}a_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    ax7 = fig.add_subplot(7,1,7)
+    ax7text = 'sigma'
+    ax7.text(21, 3, ax6text, fontsize=8)
+    ax7.text(21, 2, forward_PO4_text, fontsize=8)
+    cimg7 = ax7.imshow(np.std(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
+    cax7 = fig.colorbar(cimg7)
+
+    fig.savefig('962trial_14d_rate66_10samples_{0}a_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
@@ -1366,14 +1366,27 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-24, 0)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('962trial_14d_rate50_18p6_del_{0}b_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962trial_14d_rate66_10samples_{0}b_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    fig.savefig('962trial_14d_rate50_18p6_del_{0}c_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962trial_14d_rate66_10samples_{0}c_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
+
+    fig = plt.figure()
+    minmax = np.percentile(inverse_model_PO4, 100., axis=2) - np.percentile(inverse_model_PO4, 1., axis=2)
+    print np.percentile(inverse_model_PO4, 100., axis=2)
+    print np.percentile(inverse_model_PO4, 1., axis=2)
+    print minmax
+    print minmax.shape
+    ax1text = 'Inverse model min and max'
+    ax1.text(21, 3, ax1text, fontsize=8)
+    cimg1 = ax1.imshow(minmax.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy')
+    cax1 = fig.colorbar(cimg1)
+    fig.savefig('962trial_14d_rate66_10samples_{0}d_gestcurve.svg'.format(t_save), dpi=300, bbox_inches='tight')
+
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)

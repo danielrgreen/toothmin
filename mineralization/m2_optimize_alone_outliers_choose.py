@@ -118,15 +118,24 @@ def optimize_curve(M1_days, M1_data_extension, **fit_kwargs):
 
     # Plot optimized result
     M1_model_extension, M1_data_extension, M1_initiation = extension(x_opt[0], x_opt[1], x_opt[2], days, M1_data_extension)
-    M1_model_extension, M1_data_extension, M1_initiation = extension(x_opt[0], x_opt[1], x_opt[2], days, M1_data_extension)
-    M1_model_extension, M1_data_extension, M1_initiation = extension(x_opt[0], x_opt[1], x_opt[2], days, M1_data_extension)
+
+    a1, s1, o1 = 67.974, 0.003352, -25.414
+    a2, s2, o2 = 74., .0031, -48.
+    a3, s3, o3 = 62., .0037, 0.
+
+    M1_model_extension1, M1_data_extension1, M1_initiation1 = extension(a1, s1, o1, days, M1_data_extension)
+    M1_model_extension2, M1_data_extension2, M1_initiation2 = extension(a2, s2, o2, days, M1_data_extension)
+    M1_model_extension3, M1_data_extension3, M1_initiation3 = extension(a3, s3, o3, days, M1_data_extension)
     M1_diff_extension = np.diff(M1_model_extension) * 1000.
     prior_score = prior(M1_initiation)
     print 'prior score, data score = ', prior_score, minf/prior_score
 
+    print M1_data_extension1
+
     local_method = 'cobyla'
     global_method = 'msds'
     textstr = '%.3f, %.6f, %.3f, \nmin = %.3g, time = %.1f seconds \nm1start = %.2f \n%s, %s' % (x_opt[0], x_opt[1], x_opt[2], minf, run_time, M1_initiation, local_method, global_method)
+    textstr2 = 'blue = %.3f, %.6f, %.3f \ngreen = %.3f, %.6f, %.3f \nred = %.3f, %.6f, %.3f \n' % (a1, s1, o1, a2, s2, o2, a3, s3, o3)
     #textstr2 =
     #textstr3 =
     #textstr4 =
@@ -146,10 +155,10 @@ def optimize_curve(M1_days, M1_data_extension, **fit_kwargs):
 
     print m_day_diffs
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
-    ax.hist(m_day_diffs, bins=np.linspace(min(m_day_diffs), max(m_day_diffs), 10))
-    plt.show()
+    #fig = plt.figure()
+    #ax = fig.add_subplot(1,1,1)
+    #ax.hist(m_day_diffs, bins=np.linspace(min(m_day_diffs), max(m_day_diffs), 10))
+    #plt.show()
 
 
     # M2 extension data histology only
@@ -176,21 +185,21 @@ def optimize_curve(M1_days, M1_data_extension, **fit_kwargs):
     ax2.set_ylim([0,250])
     ax2.set_xlim([-100,550])
     ax1.plot(M1_days, M1_data_extension, marker='o', linestyle='none', color='b', label=r'$M2 \ \mathrm{extension} \ \mathrm{(observed)} $')
-    ax1.plot(days, M1_model_extension1, linestyle='-', color='b', label=r'$M2 \ \mathrm{extension,} \ \mathrm{optimized} $')
-    ax1.plot(days, M1_model_extension2, linestyle='-', color='b', label=r'$M2 \ \mathrm{extension,} \ \mathrm{optimized} $')
-    ax1.plot(days, M1_model_extension3, linestyle='-', color='b', label=r'$M2 \ \mathrm{extension,} \ \mathrm{optimized} $')
+    ax1.plot(days, M1_model_extension1, linestyle='-', color='b', label=r'$M2 \ \mathrm{extension,} \ \mathrm{optimized} $', lw=2)
+    ax1.plot(days, M1_model_extension2, linestyle='-', color='g', label=r'$M2 \ \mathrm{extension,} \ \mathrm{optimized} $')
+    ax1.plot(days, M1_model_extension3, linestyle='-', color='r', label=r'$M2 \ \mathrm{extension,} \ \mathrm{optimized} $')
     ax1.plot(hist_days, hist_extension, marker='o', linestyle='none', color='r', label=r'$962 \ \mathrm{ extension} \ \mathrm{(observed)} $')
     ax1.plot(outlier_days, outlier_extension, marker='o', linestyle='none', color='g', mfc='none')
     min_all, max_all = min(score_param_array[:,0]), max(score_param_array[:,0])
-    for a,b in enumerate(score_param_array[:2000:10,:]):
-        score = b[0]
-        range_score = max_all - min_all
-        r_pct = (score-min_all)/range_score
-        g_pct = 1. - r_pct
-        m1, d1, i1 = extension(b[1], b[2], b[3], days, M1_data_extension)
-        ax1.plot(days, m1, linestyle='-', color=(r_pct, 0, g_pct), alpha=.05)
+    #for a,b in enumerate(score_param_array[:2000:10,:]):
+    #    score = b[0]
+    #    range_score = max_all - min_all
+    #    r_pct = (score-min_all)/range_score
+    #    g_pct = 1. - r_pct
+    #    m1, d1, i1 = extension(b[1], b[2], b[3], days, M1_data_extension)
+    #    ax1.plot(days, m1, linestyle='-', color=(r_pct, 0, g_pct), alpha=.05)
     ax1.set_ylim([0,45])
-    ax1.set_xlim([-100,550])
+    ax1.set_xlim([0,550])
     plt.title('M2 extension over time: synchrotron data')
     ax1.set_xlabel('Days after birth')
     ax1.set_ylabel('Progress from cusp tip in mm')
@@ -200,8 +209,8 @@ def optimize_curve(M1_days, M1_data_extension, **fit_kwargs):
     h1, l1 = ax1.get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
     ax1.legend(h1+h2, l1+l2, loc='center right', fontsize=10)
-    ax1.text(180, 5, textstr, fontsize=8)
-    fig.savefig('m2_opt_86_outlier_100k_{0}.svg'.format(t_save))
+    ax1.text(280, 5, textstr2, fontsize=8)
+    #fig.savefig('m2_opt_86_outlier_100k_{0}.svg'.format(t_save))
 
     plt.show()
     '''

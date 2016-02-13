@@ -59,25 +59,26 @@ def optimize_curve(tooth_days, tooth_extension, **fit_kwargs):
     fit_kwargs['days'] = days
 
     t1 = time()
+    trials = 100
 
     f_objective = lambda x, grad: est_tooth_extension(x, **fit_kwargs)[0]
 
     local_opt = nlopt.opt(nlopt.LN_COBYLA, 3)
     local_opt.set_xtol_abs(.01)
-    local_opt.set_lower_bounds([5., .001, -80.])
-    local_opt.set_upper_bounds([160., .01, 80.])
+    local_opt.set_lower_bounds([5., .002, -80.])
+    local_opt.set_upper_bounds([160., .0075, 80.])
     local_opt.set_min_objective(f_objective)
 
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, 3)
-    global_opt.set_maxeval(200000)
-    global_opt.set_lower_bounds([5., .001, -80.])
-    global_opt.set_upper_bounds([160., .01, 80.])
+    global_opt.set_maxeval(trials)
+    global_opt.set_lower_bounds([5., .002, -80.])
+    global_opt.set_upper_bounds([160., .0075, 80.])
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
     global_opt.set_population(3)
 
     print 'Running global optimizer ...'
-    x_opt = global_opt.optimize([80., .006, 50.])
+    x_opt = global_opt.optimize([68., .0034, -25.])
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
