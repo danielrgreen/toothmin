@@ -31,6 +31,9 @@ from scipy.optimize import curve_fit, minimize, leastsq
 
 from time import time
 
+trial_iteration = [0.]
+score_prior_counter = []
+
 class ToothModel:
     def __init__(self, fname=None):
         if fname == None:
@@ -614,16 +617,18 @@ def compare(model_isomap, model_isomap_2, model_isomap_3, data_isomap, w_iso_his
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
     score = np.sum(score**2)
-    rate_prior = (1./3.)
+
+    trial_iteration[0] += 1.
+    trials = 100000.
+    print trial_iteration[0]
+    first_rate_prior = (1./4.)
+    target_rate_prior = (1./3.)
+    rate_prior = first_rate_prior*(1-(trial_iteration[0]/trials)) + target_rate_prior*(trial_iteration[0]/trials)
+
     #prior_score = prior_histogram(mu, data_isomap)
     prior_score_rate = prior_rate_change(w_iso_hist, rate_prior) # rate prior
     #prior_score_hist = prior_histogram(mu, data_isomap)
-
-    print '2D score = ', score
-    print '2D rate_score = ', prior_score_rate
-    prior_pct = prior_score_rate/(score+prior_score_rate)*100.
-    print '2D percent prior = ', prior_pct
-    prior_pct_list.append(np.array([score, prior_pct]))
+    score_prior_counter.append(np.array([trial_iteration[0], score, rate_prior, prior_score_rate, score]))
 
     return score+prior_score_rate
 
@@ -855,6 +860,8 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
+    data_isomap_mask = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
+    data_mean = np.mean(data_isomap_mask)-20.
 
     print 'loading tooth model ...'
     tooth_model_lg = ToothModel(model_fname)
@@ -903,7 +910,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     # Parameters for time series only
     p_number = 40
     fit_kwargs['time_interval'] = 14.
-    upper_bound,lower_bound,guess = 10.,-30.,-10.
+    upper_bound,lower_bound,guess = data_mean+12.,data_mean-12.,data_mean
     up_bounds,low_bounds,first_guess = [],[],[]
     for i in xrange(p_number):
         up_bounds.append(upper_bound)
@@ -1020,11 +1027,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     save_list = [my_list[i] for i in range(0, keep_pct, keep_pct_jump)]
     list_water_results = [s[1] for s in save_list]
 
-    #pct_prior_list = prior_pct_list.sort(key=getkey)
-    pct_prior_list = np.array(prior_pct_list)
-    print pct_prior_list.shape
-
     hist_list = [z[0] for j,z in enumerate(my_list[i] for i in range(len(my_list)))]
+
+    # Save score data over time
+    score_prior_counter_array = np.array(score_prior_counter)
 
     t_save = time()
 
@@ -1048,7 +1054,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     mulu = spline_input_signal(month_mulu[:24], 30, 1)
     platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
 
-    water_hist = entebbe
+    water_hist = platte
 
     # Synthetic signal production
 
@@ -1074,7 +1080,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = 'entebbe'
+    number = 'platte'
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
@@ -1135,7 +1141,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg5 = ax5.imshow(sigma.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
     cax5 = fig.colorbar(cimg5)
 
-    fig.savefig('2D_r1o3_18p6_sigma10_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r1o3_18p6_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1201,9 +1207,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(0, 220)
     fig.savefig('2D_r1o3_18p6_sigma10_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,4], 'k-', label='multiplied score') # multiplied score
+    ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3], 'b-', label='prior score') # prior score
+    #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,2], 'k-', label='prior rate') # prior rate
+    #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
+    ax1.legend(fontsize=8)
+    fig.savefig('2D_r1o3_18p6_{0}_{1}f.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
+    np.savetxt('2D_r1o3_18p6_{0}_{1}.csv'.format(number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
+
+
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Entebbe.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_N_Platte.csv')
 
     return 0
 
