@@ -861,7 +861,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
     data_isomap_mask = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
-    data_mean = np.mean(data_isomap_mask)-20.
+    data_mean = np.mean(data_isomap_mask)-23.
 
     print 'loading tooth model ...'
     tooth_model_lg = ToothModel(model_fname)
@@ -891,7 +891,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Model a M1 combined with different M2 possibilities
     m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
-    m2_m1_params2 = np.array([62.00, .0037, 0.00, 21.820, 41., .007889, 29.118, 35.]) # 'synch86', outlier, 100k
+    m2_m1_params2 = np.array([62.00, .0037, 0.00, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
     m2_m1_params3 = np.array([74.00, .0031, -48.00, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
 
     fit_kwargs['block_length'] = 1
@@ -910,7 +910,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     # Parameters for time series only
     p_number = 40
     fit_kwargs['time_interval'] = 14.
-    upper_bound,lower_bound,guess = data_mean+12.,data_mean-12.,data_mean
+    upper_bound,lower_bound,guess = data_mean+15.,data_mean-15.,data_mean
     up_bounds,low_bounds,first_guess = [],[],[]
     for i in xrange(p_number):
         up_bounds.append(upper_bound)

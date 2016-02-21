@@ -594,7 +594,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     return remodeled
 
-def compare(model_isomap, model_isomap_2, model_isomap_3, data_isomap, w_iso_hist, score_max=100., data_sigma=0.25, sigma_floor=0.05):
+def compare(model_isomap, model_isomap_2, model_isomap_3, data_isomap, w_iso_hist, score_max=100., data_sigma=0.20, sigma_floor=0.05):
     '''
 
     :param model_isomap:        modeled tooth isotope data
@@ -624,9 +624,10 @@ def compare(model_isomap, model_isomap_2, model_isomap_3, data_isomap, w_iso_his
     time_sigma_box = np.concatenate((model_isomap_1Dreshape, model_isomap_1Dreshape2, model_isomap_1Dreshape3), axis=1)
     time_sigma = np.std(time_sigma_box, axis=1)
 
-    mu = np.mean(model_isomap_1Dreshape, axis=1)
+    mu = np.median(model_isomap_1Dreshape, axis=1)
 
-    sigma = np.sqrt(time_sigma**2 + data_sigma**2. + sigma_floor**2.)
+    sigma = np.sqrt(time_sigma + data_sigma**2 + sigma_floor**2.)
+    print 'sigma = ', sigma
 
     score = (mu - data_isomap_reshape) / sigma
     score[~np.isfinite(score)] = 0.
@@ -634,7 +635,7 @@ def compare(model_isomap, model_isomap_2, model_isomap_3, data_isomap, w_iso_his
     score = np.sum(score**2)
 
     trial_iteration[0] += 1.
-    trials = 100000.
+    trials = 3000.
     print trial_iteration[0]
     first_rate_prior = (1./4.)
     target_rate_prior = (1./3.)
@@ -669,7 +670,7 @@ def prior_rate_change(w_iso_hist, rate):
 
     return prior_score
 
-def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux, **kwargs):
+def water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, PO4_flux, **kwargs):
 
     # Calculate water history on each day
     block_length = int(kwargs.get('block_length', 1))
@@ -686,15 +687,12 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
     assert(isomap_data_x_ct != None)
 
     m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
-    m2_m1_params2 = np.array([62.00, .0037, 0.00, 21.820, 41., .007889, 29.118, 35.]) # 'synch86', outlier, 100k
+    m2_m1_params2 = np.array([62.00, .0037, 0.00, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
     m2_m1_params3 = np.array([74.00, .0031, -48.00, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
 
     m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
     m1_m2_params2 = np.array([21.820, .007889, 29.118, 35., 62.00, .0037, 0.00, 41.]) # 'synch86', outlier, 100k
     m1_m2_params3 = np.array([21.820, .007889, 29.118, 35., 74.00, .0031, -48.00, 41.]) # 'synch86', outlier, 100k
-
-    M2_switch_days = np.array([switch_params[2],switch_params[2]+switch_params[3]])
-    M1_switch_days = tooth_timing_convert(M2_switch_days, *m2_m1_params)
 
     # Declare physiological parameters
     d_O2 = kwargs.get('d_O2', 23.5)
@@ -770,11 +768,7 @@ def water_hist_prob(w_params, **kwargs):
     # Turning w parameters into daily d18O history, excluding switch params
     w_iso_hist = spline_input_signal(iso_hist[:40], 14, 1)
 
-    # Adding switch history onto w_iso_hist
-    switch_params = iso_hist[40:]
-    w_iso_hist[switch_params[2]:switch_params[2]+switch_params[3]] = switch_params[1]
-
-    p, model_isomap = water_hist_likelihood(w_iso_hist, switch_params, 3.0, 34.5, .3, **kwargs)
+    p, model_isomap = water_hist_likelihood(w_iso_hist, 3.0, 34.5, .3, **kwargs)
 
     list_tuple = (p, np.array(w_params))
     my_list.append(list_tuple)
@@ -879,7 +873,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     print 'importing isotope data...'
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
     data_isomap_mask = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
-    data_mean = np.mean(data_isomap_mask)-20.
+    data_mean = np.mean(data_isomap_mask)-23.
 
     print 'loading tooth model ...'
     tooth_model_lg = ToothModel(model_fname)
@@ -909,7 +903,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Model a M1 combined with different M2 possibilities
     m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
-    m2_m1_params2 = np.array([62.00, .0037, 0.00, 21.820, 41., .007889, 29.118, 35.]) # 'synch86', outlier, 100k
+    m2_m1_params2 = np.array([62.00, .0037, 0.00, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
     m2_m1_params3 = np.array([74.00, .0031, -48.00, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
 
     fit_kwargs['block_length'] = 1
@@ -919,7 +913,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 100000
+    trials = 3000
     keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -928,35 +922,28 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     # Parameters for time series only
     p_number = 40
     fit_kwargs['time_interval'] = 14.
-    upper_bound,lower_bound,guess = data_mean+12.,data_mean-12.,data_mean
+    upper_bound,lower_bound,guess = data_mean+15.,data_mean-15.,data_mean
     up_bounds,low_bounds,first_guess = [],[],[]
     for i in xrange(p_number):
         up_bounds.append(upper_bound)
         low_bounds.append(lower_bound)
         first_guess.append(guess)
 
-    # Addition of artificial switch
-    switch_high, switch_low,switch_guess = [1., 1., 1., 1.], [1., 1., 1., 1.], [1., 1., 1., 1.]
-    for j,k in enumerate(switch_high):
-        up_bounds.append(switch_high[j])
-        low_bounds.append(switch_low[j])
-        first_guess.append(switch_guess[j])
-
     local_method = 'LN_COBYLA'
-    local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number+np.size(switch_guess))
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number)
     local_opt.set_xtol_abs(.01)
     local_opt.set_lower_bounds(low_bounds)
     local_opt.set_upper_bounds(up_bounds)
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
-    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number+np.size(switch_guess))
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number)
     global_opt.set_maxeval(trials)
     global_opt.set_lower_bounds(low_bounds)
     global_opt.set_upper_bounds(up_bounds)
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
-    global_opt.set_population(p_number+np.size(switch_guess))
+    global_opt.set_population(p_number)
     print 'Running global optimizer ...'
     t1 = time()
     x_opt = global_opt.optimize(first_guess)
@@ -1063,9 +1050,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     time_sigma_box = np.concatenate((model_isomap_1Dreshape, model_isomap_1Dreshape2, model_isomap_1Dreshape3), axis=1)
     time_sigma = np.std(time_sigma_box, axis=1)
 
-    mu = np.mean(model_isomap_1Dreshape, axis=1)
+    mu = np.median(model_isomap_1Dreshape, axis=1)
 
-    sigma = np.sqrt(time_sigma**2 + 0.20**2. + 0.05**2.)
+    sigma = np.sqrt(time_sigma + 0.20**2 + 0.05**2.)
     
     mu.shape = (sample_number, 1)
     data_isomap_reshape.shape = (sample_number, 1)
@@ -1248,6 +1235,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
     fig.savefig('1Dpx1o3_rate1o3_18p6_{0}_{1}f.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3]/(score_prior_counter_array[:,3]+score_prior_counter_array[:,4])*100, 'k-', label='prior rate') # prior percent
+    #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
+    ax1.legend(fontsize=8)
+    fig.savefig('1Dpx1o3_rate1o3_18p6_{0}_{1}g.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     np.savetxt('1Dpx1o3_rate1o3_18p6_{0}_{1}.csv'.format(number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
 

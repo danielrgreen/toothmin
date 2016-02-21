@@ -608,13 +608,20 @@ def compare(model_isomap, model_isomap_2, model_isomap_3, data_isomap, w_iso_his
     m_model_isomap = np.ma.masked_array(model_isomap, np.isnan(model_isomap))
     m_model_isomap2 = np.ma.masked_array(model_isomap_2, np.isnan(model_isomap_2))
     m_model_isomap3 = np.ma.masked_array(model_isomap_3, np.isnan(model_isomap_3))
+
     m_data = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
+
+    print 'model_isomap_before_reshape'
+    print np.median(m_model_isomap, axis=2)
+    print 'data_isomap_before_reshape'
+    print data_isomap
+
     model_isomap_1D = np.mean(m_model_isomap, axis=1)
     model_isomap_1D2 = np.mean(m_model_isomap2, axis=1)
     model_isomap_1D3 = np.mean(m_model_isomap3, axis=1)
     data_isomap_1D = np.mean(m_data, axis=1)
 
-    sample_number = 18.
+    sample_number = 9.
 
     model_isomap_1Dreshape = np.mean(np.repeat(model_isomap_1D, sample_number, axis=0).reshape(sample_number,27,model_isomap_1D.shape[1]), axis=1)
     model_isomap_1Dreshape2 = np.mean(np.repeat(model_isomap_1D2, sample_number, axis=0).reshape(sample_number,27,model_isomap_1D2.shape[1]), axis=1)
@@ -624,24 +631,32 @@ def compare(model_isomap, model_isomap_2, model_isomap_3, data_isomap, w_iso_his
     time_sigma_box = np.concatenate((model_isomap_1Dreshape, model_isomap_1Dreshape2, model_isomap_1Dreshape3), axis=1)
     time_sigma = np.std(time_sigma_box, axis=1)
 
-    mu = np.mean(model_isomap_1Dreshape, axis=1)
+    mu = np.median(model_isomap_1Dreshape, axis=1)
 
-    sigma = np.sqrt(time_sigma**2 + sigma_floor**2.)
+    sigma = np.sqrt(np.zeros(sample_number) + data_sigma**2 + sigma_floor**2.)
+    print 'data isomap = ', data_isomap_reshape
+    print 'mu = ', mu
+    print 'sigma = ', sigma
 
     score = (mu - data_isomap_reshape) / sigma
-
     score[~np.isfinite(score)] = 0.
+    print 'score 1 = ', score
     score[score > score_max] = score_max
+    print 'score 2 = ', score
     score = np.sum(score**2)
 
     trial_iteration[0] += 1.
-    trials = 100000.
+    trials = 3000.
     print trial_iteration[0]
-    first_rate_prior = (1./4.)
+    first_rate_prior = (1./3.)
     target_rate_prior = (1./3.)
     rate_prior = first_rate_prior*(1-(trial_iteration[0]/trials)) + target_rate_prior*(trial_iteration[0]/trials)
+    print 'rate prior = ', rate_prior
     #prior_score = prior_histogram(mu, data_isomap)
     prior_score_rate = prior_rate_change(w_iso_hist, rate_prior) # Rate prior, Division due to pixel#
+    print 'prior score rate = ', prior_score_rate
+    print 'score sum before prior = ', score
+    print 'prior pct = ', prior_score_rate/(prior_score_rate+score)*100
     #prior_score_hist = prior_histogram(mu, data_isomap)
     score_prior_counter.append(np.array([trial_iteration[0], score, rate_prior, prior_score_rate, score*(110./len(mu))]))
 
@@ -664,17 +679,21 @@ def prior_histogram(model_isomap, data_isomap):
 def prior_rate_change(w_iso_hist, rate):
 
     diff_water = np.diff(w_iso_hist)
+    print 'w_iso_hist = ', w_iso_hist
+    print 'diff = ', diff_water
     #diff_water[int(M2_switch_days[0])-3:int(M2_switch_days[0])+1] = 0.
     #diff_water[int(M2_switch_days[1])-3:int(M2_switch_days[1])+1] = 0.
     prior_score = np.sum((diff_water/rate)**2.)
 
     return prior_score
 
-def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux, **kwargs):
+def water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, PO4_flux, **kwargs):
 
     # Calculate water history on each day
     block_length = int(kwargs.get('block_length', 1))
     M2_inverse_water_hist = calc_water_step2(w_iso_hist, block_length)
+
+    print 'w iso hist in likelihood', w_iso_hist
 
     # Declare tooth growth parameters
     tooth_model = kwargs.get('tooth_model', None)
@@ -693,9 +712,6 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
     m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
     m1_m2_params2 = np.array([21.820, .007889, 29.118, 35., 62.00, .0037, 0.00, 41.]) # 'synch86', outlier, 100k
     m1_m2_params3 = np.array([21.820, .007889, 29.118, 35., 74.00, .0031, -48.00, 41.]) # 'synch86', outlier, 100k
-
-    M2_switch_days = np.array([switch_params[2],switch_params[2]+switch_params[3]])
-    M1_switch_days = tooth_timing_convert(M2_switch_days, *m2_m1_params)
 
     # Declare physiological parameters
     d_O2 = kwargs.get('d_O2', 23.5)
@@ -734,6 +750,9 @@ def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux,
         M1_inverse_PO4_hist_tmp3[d:] = M2_inverse_PO4_eq[k]
     M1_inverse_PO4_hist_3 = M1_inverse_PO4_hist_tmp3
 
+    print 'M1_inverse PO4 hist = '
+    print M1_inverse_PO4_hist
+
     # Create M1 equivalent isomap models for M2 inversion results
     inverse_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_PO4_hist)
     inverse_model_PO4_2 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_PO4_hist_2)
@@ -771,11 +790,13 @@ def water_hist_prob(w_params, **kwargs):
     # Turning w parameters into daily d18O history, excluding switch params
     w_iso_hist = spline_input_signal(iso_hist[:40], 14, 1)
 
-    # Adding switch history onto w_iso_hist
-    switch_params = iso_hist[40:]
-    w_iso_hist[switch_params[2]:switch_params[2]+switch_params[3]] = switch_params[1]
+    #month_platte = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
+    # np.concatenate((month_d180, month_d180)) month_d180[:24]
+    #platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
+    #w_iso_hist = platte
+    #print 'w_iso_hist = ', w_iso_hist
 
-    p, model_isomap = water_hist_likelihood(w_iso_hist, switch_params, 3.0, 34.5, .3, **kwargs)
+    p, model_isomap = water_hist_likelihood(w_iso_hist, 3.0, 34.5, .3, **kwargs)
 
     list_tuple = (p, np.array(w_params))
     my_list.append(list_tuple)
@@ -910,7 +931,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Model a M1 combined with different M2 possibilities
     m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
-    m2_m1_params2 = np.array([62.00, .0037, 0.00, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
+    m2_m1_params2 = np.array([62.00, .0037, 0.00, 21.820, 41., .007889, 29.118, 35.]) # 'synch86', outlier, 100k
     m2_m1_params3 = np.array([74.00, .0031, -48.00, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
 
     fit_kwargs['block_length'] = 1
@@ -920,7 +941,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 100000
+    trials = 3000
     keep_pct = 30. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -936,28 +957,21 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
         low_bounds.append(lower_bound)
         first_guess.append(guess)
 
-    # Addition of artificial switch
-    switch_high, switch_low,switch_guess = [1., 1., 1., 1.], [1., 1., 1., 1.], [1., 1., 1., 1.]
-    for j,k in enumerate(switch_high):
-        up_bounds.append(switch_high[j])
-        low_bounds.append(switch_low[j])
-        first_guess.append(switch_guess[j])
-
     local_method = 'LN_COBYLA'
-    local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number+np.size(switch_guess))
+    local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number)
     local_opt.set_xtol_abs(.01)
     local_opt.set_lower_bounds(low_bounds)
     local_opt.set_upper_bounds(up_bounds)
     local_opt.set_min_objective(f_objective)
 
     global_method = 'G_MLSL_LDS'
-    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number+np.size(switch_guess))
+    global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number)
     global_opt.set_maxeval(trials)
     global_opt.set_lower_bounds(low_bounds)
     global_opt.set_upper_bounds(up_bounds)
     global_opt.set_min_objective(f_objective)
     global_opt.set_local_optimizer(local_opt)
-    global_opt.set_population(p_number+np.size(switch_guess))
+    global_opt.set_population(p_number)
     print 'Running global optimizer ...'
     t1 = time()
     x_opt = global_opt.optimize(first_guess)
@@ -1054,7 +1068,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     model_isomap_1D3 = np.mean(m_model_isomap3, axis=1)
     data_isomap_1D = np.mean(m_data, axis=1)
 
-    sample_number = 18.
+    sample_number = 9.
 
     model_isomap_1Dreshape = np.mean(np.repeat(model_isomap_1D, sample_number, axis=0).reshape(sample_number,27,model_isomap_1D.shape[1]), axis=1)
     model_isomap_1Dreshape2 = np.mean(np.repeat(model_isomap_1D2, sample_number, axis=0).reshape(sample_number,27,model_isomap_1D2.shape[1]), axis=1)
@@ -1064,13 +1078,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     time_sigma_box = np.concatenate((model_isomap_1Dreshape, model_isomap_1Dreshape2, model_isomap_1Dreshape3), axis=1)
     time_sigma = np.std(time_sigma_box, axis=1)
 
-    mu = np.mean(model_isomap_1Dreshape, axis=1)
+    mu = np.median(model_isomap_1Dreshape, axis=1)
 
-    sigma = np.sqrt(time_sigma**2 + 0.05**2.)
-
+    sigma = np.sqrt(np.zeros(sample_number) + 0.20**2 + 0.05**2.)
+    
     mu.shape = (sample_number, 1)
     data_isomap_reshape.shape = (sample_number, 1)
-    sigma.shape = (sample_number, 1)
+    sigma.shape = (sample_number, 1)    
 
     # Real climate data
     #month_d180 = np.array([-1.95, -1.92, -2.94, -3.44, -2.22, -1.10, -0.67, -1.71, -0.81, -1.47, -2.31, -3.19]) # Dar Es Salaam
@@ -1175,7 +1189,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg4 = ax4.imshow(sigma.T, aspect='equal', interpolation='nearest', origin='lower', cmap='RdGy')
     cax4 = fig.colorbar(cimg4)
 
-    fig.savefig('1Dpx2o3_rate2o3_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_median_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1192,7 +1206,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
 
-    fig.savefig('1Dpx2o3_rate2o3_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_median_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1207,7 +1221,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1222,35 +1236,42 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-2., np.max(water_hist)+2.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
-    fig.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.set_ylim(0, 220)
-    fig.savefig('1Dpx2o3_rate2o3_18p6_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_1Dpx1o3_rate1o3_18p6_median_{0}_{1}e.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,4], 'k-', label='multiplied score') # multiplied score
     ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3], 'b-', label='prior score') # prior score
-    #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,2], 'k-', label='prior rate') # prior rate
+    ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3]/(score_prior_counter_array[:,3]+score_prior_counter_array[:,4])*100, 'k-', label='prior rate') # prior percent
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('1Dpx2o3_rate1o3_18p6_{0}_{1}f.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}f.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
-    np.savetxt('1Dpx2o3_rate1o3_18p6_{0}_{1}.csv'.format(number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3]/(score_prior_counter_array[:,3]+score_prior_counter_array[:,4])*100, 'k-', label='prior rate') # prior percent
+    #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
+    ax1.legend(fontsize=8)
+    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}g.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+
+    np.savetxt('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}.csv'.format(number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
 
 def main():
 
@@ -1260,7 +1281,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
 
