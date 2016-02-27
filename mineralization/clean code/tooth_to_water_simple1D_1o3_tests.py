@@ -633,7 +633,7 @@ def compare(model_isomap, model_isomap_2, model_isomap_3, data_isomap, w_iso_his
 
     mu = np.median(model_isomap_1Dreshape, axis=1)
 
-    sigma = np.sqrt(np.zeros(sample_number) + data_sigma**2 + sigma_floor**2.)
+    sigma = np.sqrt(time_sigma + data_sigma**2 + sigma_floor**2.)
     print 'data isomap = ', data_isomap_reshape
     print 'mu = ', mu
     print 'sigma = ', sigma
@@ -1080,7 +1080,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     mu = np.median(model_isomap_1Dreshape, axis=1)
 
-    sigma = np.sqrt(np.zeros(sample_number) + 0.20**2 + 0.05**2.)
+    sigma = np.sqrt(time_sigma + 0.20**2 + 0.05**2.)
     
     mu.shape = (sample_number, 1)
     data_isomap_reshape.shape = (sample_number, 1)
@@ -1106,7 +1106,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     mulu = spline_input_signal(month_mulu[:24], 30, 1)
     platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
 
-    water_hist = platte
+    water_hist = entebbe
 
     #Save my result trials
     my_list.sort(key=getkey)
@@ -1147,7 +1147,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
-    number = 'platte'
+    number = 'entebbe'
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
     water_hist = water_hist
@@ -1189,7 +1189,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg4 = ax4.imshow(sigma.T, aspect='equal', interpolation='nearest', origin='lower', cmap='RdGy')
     cax4 = fig.colorbar(cimg4)
 
-    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_median_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_1Dpx1o3_rate1o3_median_{0}_{1}a.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1206,7 +1206,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
 
-    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_median_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_1Dpx1o3_rate1o3_median_{0}_{1}b.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1221,7 +1221,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_1Dpx1o3_rate1o3_18p6_median_{0}_{1}b2.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1236,17 +1236,17 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-2., np.max(water_hist)+2.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_1Dpx1o3_rate1o3_18p6_median_{0}_{1}b3.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('tests_1Dpx1o3_rate1o3_18p6_median_{0}_{1}c.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
-    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_1Dpx1o3_rate1o3_18p6_median_{0}_{1}d.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1262,20 +1262,20 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3]/(score_prior_counter_array[:,3]+score_prior_counter_array[:,4])*100, 'k-', label='prior rate') # prior percent
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}f.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_1Dpx1o3_rate1o3_18p6_median_{0}_{1}f.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3]/(score_prior_counter_array[:,3]+score_prior_counter_array[:,4])*100, 'k-', label='prior rate') # prior percent
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}g.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('tests_1Dpx1o3_rate1o3_18p6_median_{0}_{1}g.svg'.format(number, t_save), dpi=300, bbox_inches='tight')
 
-    np.savetxt('tests_notimesigma_1Dpx1o3_rate1o3_18p6_median_{0}_{1}.csv'.format(number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
+    np.savetxt('tests_1Dpx1o3_rate1o3_18p6_median_{0}_{1}.csv'.format(number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_N_Platte.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Entebbe.csv')
 
     return 0
 

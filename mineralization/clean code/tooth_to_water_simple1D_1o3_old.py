@@ -614,7 +614,7 @@ def compare(model_isomap, data_isomap, w_iso_hist, score_max=100., data_sigma=0.
 
     print 'sigma = ', sigma
 
-    sigma = np.sqrt(np.zeros(sample_number) + data_sigma**2. + sigma_floor**2.)
+    sigma = np.sqrt(np.zeros(27) + data_sigma**2. + sigma_floor**2.)
 
     print 'sigma 2 =', sigma
 
