@@ -1027,11 +1027,17 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     prior_rate = 1./5.
     fit_kwargs['prior_rate'] = prior_rate
-    trials = 300
+    trials1 = 10000
+    trials2 = 10000
+    trials3 = 10000
     keep_pct = 30. # Percent of trials to record
 
-    keep_pct = int(trials*(keep_pct/100.))
+    keep_pct = int((trials1+trials2+trials3)*(keep_pct/100.))
     keep_pct_jump = int(keep_pct/80.)
+
+    # Parameters for time series only
+    p_number = 40
+    fit_kwargs['time_interval'] = 14.
 
     local_method = 'LN_COBYLA'
     local_opt = nlopt.opt(nlopt.LN_COBYLA, p_number)
@@ -1042,7 +1048,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     global_method = 'G_MLSL_LDS'
     global_opt = nlopt.opt(nlopt.G_MLSL_LDS, p_number)
-    global_opt.set_maxeval(trials)
+    global_opt.set_maxeval(trials1)
     global_opt.set_lower_bounds(min_g)
     global_opt.set_upper_bounds(max_g)
     global_opt.set_min_objective(f_objective)
@@ -1050,7 +1056,18 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     global_opt.set_population(p_number)
     print 'Running global optimizer ...'
     t1 = time()
-    x_opt = global_opt.optimize(guess_g)
+    x_opt1 = global_opt.optimize(guess_g) # Is typically 'first_guess'
+
+    prior_rate = 1./2.
+    fit_kwargs['prior_rate'] = prior_rate
+    global_opt.set_maxeval(trials2)
+    x_opt2 = global_opt.optimize(x_opt1) # Should begin at last result
+
+    prior_rate = 1./1.
+    fit_kwargs['prior_rate'] = prior_rate
+    global_opt.set_maxeval(trials3)
+    x_opt = global_opt.optimize(x_opt1) # Should begin at last result
+    trials = (trials1+trials2+trials3)
 
     minf = global_opt.last_optimum_value()
     print "optimum at", x_opt
@@ -1181,7 +1198,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     mulu = spline_input_signal(month_mulu[:24], 30, 1)
     platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
 
-    water_hist = platte
+    water_hist = mulu
 
     #Save my result trials
     my_list.sort(key=getkey)
@@ -1222,10 +1239,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
-    number = 'platte'
+    number = 'sin_180_45'
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
-    water_hist = water_hist
+    water_hist = sin_180_45
 
     # Forward and Inverse result Diffs for histogram plotting
     for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
@@ -1264,7 +1281,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg4 = ax4.imshow(sigma.T, aspect='equal', interpolation='nearest', origin='lower', cmap='RdGy')
     cax4 = fig.colorbar(cimg4)
 
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}a.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}a.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1281,7 +1298,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
 
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}b.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}b.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1297,7 +1314,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}b2.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}b2.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1312,24 +1329,24 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(np.min(water_hist)-2., np.max(water_hist)+2.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}b3.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}b3.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}c.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}c.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}d.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}d.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.set_ylim(0, 220)
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}e.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}e.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1338,14 +1355,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,2], 'k-', label='prior rate') # prior rate
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}f.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}f.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3]/(score_prior_counter_array[:,3]+score_prior_counter_array[:,4])*100, 'k-', label='prior rate') # prior percent
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}g.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}g.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     normal_samples = normal_sampling(data_mean_1D, 23.5, 25.3, 9)
     fig = plt.figure()
@@ -1361,13 +1378,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax2 = ax1.twiny()
     ax2.plot(np.linspace(0, 42, len(normal_samples)), normal_samples, 'ko')
     ax2.set_xlim(0, 42)
-    fig.savefig('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}h.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dpx1o3_r{0}_18p6_{1}_{2}h.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
-    np.savetxt('testguess_1Dpx1o3_r{0}_18p6_{1}_{2}.csv'.format(prior_rate, number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
+    np.savetxt('1Dpx1o3_r{0}_18p6_{1}_{2}.csv'.format(prior_rate, number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_N_Platte.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sin_180_45.csv')
 
     return 0
 

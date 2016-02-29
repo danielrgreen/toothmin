@@ -792,6 +792,15 @@ def figureplot_PO4_line(mu, switch_mu, switch_start, switch_length, d_O2, d_feed
 
     return fig_tooth_PO4_eq
 
+def tooth_timing_convert_curv2lin(conversion_times, a1, s1, o1, max1, s2, o2, max2):
+
+    t1_ext = a1*spec.erf(s1*(conversion_times-o1))+(max1-a1)
+    t1_pct = t1_ext / max1
+    t2_ext = t1_pct * max2
+    converted_times = (t2_ext-o2)/s2
+
+    return converted_times
+
 def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
     '''
     Takes an array of events in days occurring in one tooth, calculates where
@@ -1167,6 +1176,28 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     model_sigma = np.std(model_isomap_1D, axis=1) # In 2D sampling we multiply by 7 to reflect MCMC results.
     sigma = np.sqrt(time_sigma**2 + 0.20**2. + 0.05**2.)
 
+    # Make linear inverse result. "41" refers to M2 molar height, "416" refers to est. days to crown completion, 500-84 = 416.
+    m2_m2_params_curv2lin = np.array([67.974, 0.003352, -25.414, 41., (41./466.), -8.3, 41.]) # 'synch86', outlier, 100k
+    M2_linear_days = tooth_timing_convert_curv2lin(M2_inverse_days, *m2_m2_params_curv2lin)
+    M2_linear_days = M2_linear_days - M2_linear_days[0]
+    print 'M2 linear days = ', M2_linear_days
+    M2_linear_water_tmp = np.ones(M2_linear_days.size)
+    M2_linear_blood_tmp = np.ones(M2_linear_days.size)
+    M2_linear_PO4_tmp = np.ones(M2_linear_days.size)
+    for k,d in enumerate(M2_linear_days):
+        d = int(d)
+        M2_linear_water_tmp[d:] = M2_inverse_water_hist[k]
+        M2_linear_blood_tmp[d:] = M2_inverse_blood_hist[k]
+        M2_linear_PO4_tmp[d:] = M2_inverse_PO4_eq[k]
+    M2_linear_water = M2_linear_water_tmp
+    print 'M2 linear water = ', M2_linear_water
+    M2_linear_blood = M2_linear_blood_tmp
+    M2_linear_PO4 = M2_linear_PO4_tmp
+
+    M2_linear_water_end = M2_linear_water[466:]
+    M2_linear_blood_end = M2_linear_blood[466:]
+    M2_linear_PO4_end = M2_linear_PO4[466:]
+
     sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
 
     # Real climate data
@@ -1230,10 +1261,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
-    number = 'sin_180_45'
+    number = 'sin_360_90'
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
-    water_hist = sin_180_45
+    water_hist = sin_360_90
 
     # Forward and Inverse result Diffs for histogram plotting
     for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
@@ -1241,15 +1272,25 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     fig = plt.figure()
     ax1 = fig.add_subplot(4,1,1)
     days = M2_inverse_days
-    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # *************** *************** ***************
-    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
+    ax1.plot(days[466:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_water[:466], 'b-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_blood_end, 'r--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_blood[:466], 'r-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_PO4_end, 'g--', linewidth=1.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_PO4[:466], 'g-.', linewidth=1.0)
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
+        s_tmp = np.ones(M2_linear_days.size)
+        for k,d in enumerate(M2_linear_days):
+            d = int(d)
+            s_tmp[d:] = s[k]
+        s = s_tmp
+        s_end = s[466:]
         M2_switch_params = s[40:]
         #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-        ax1.plot(days, s, 'b-', alpha=0.03)
+        ax1.plot(days[:466], s[:466], 'b-', alpha=0.03)
+        ax1.plot(days[466:], s_end, 'b--', alpha=0.02)
     ax1.text(350, -20, textstr, fontsize=8)
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
@@ -1276,76 +1317,106 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg4 = ax4.imshow(sigma.T, aspect='equal', interpolation='nearest', origin='lower', cmap='RdGy')
     cax4 = fig.colorbar(cimg4)
 
-    fig.savefig('1D_r{0}_18p6_{1}_{2}a.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}a.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** ***************** ***********
-    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
+    ax1.plot(days[466:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_water[:466], 'b-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_blood_end, 'r--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_blood[:466], 'r-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_PO4_end, 'g--', linewidth=1.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_PO4[:466], 'g-.', linewidth=1.0)
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
+        s_tmp = np.ones(M2_linear_days.size)
+        for k,d in enumerate(M2_linear_days):
+            d = int(d)
+            s_tmp[d:] = s[k]
+        s = s_tmp
+        s_end = s[466:]
         M2_switch_params = s[40:]
         #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
-        ax1.plot(days, s, 'b-', alpha=0.03)
-    ax1.text(350, -4, textstr, fontsize=8)
+        ax1.plot(days[:466], s[:466], 'b-', alpha=0.03)
+        ax1.plot(days[466:], s_end, 'b--', alpha=0.02)
+    ax1.text(350, -20, textstr, fontsize=8)
     ax1.set_ylim(-35, 15)
     ax1.set_xlim(85, 550)
 
-    fig.savefig('1D_r{0}_18p6_{1}_{2}b.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}b.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
-    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
+    ax1.plot(days[466:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_water[:466], 'b-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_blood_end, 'r--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_blood[:466], 'r-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_PO4_end, 'g--', linewidth=1.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_PO4[:466], 'g-.', linewidth=1.0)
     ax1.plot(days[::14], guess_g, 'ko', markersize=3)
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
-        ax1.plot(days, s, 'b-', alpha=0.03)
+        s_tmp = np.ones(M2_linear_days.size)
+        for k,d in enumerate(M2_linear_days):
+            d = int(d)
+            s_tmp[d:] = s[k]
+        s = s_tmp
+        s_end = s[466:]
+        M2_switch_params = s[40:]
+        #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+        ax1.plot(days[:466], s[:466], 'b-', alpha=0.03)
+        ax1.plot(days[466:], s_end, 'b--', alpha=0.02)
     ax1.text(350, -4, textstr, fontsize=8)
     ax1.set_ylim(min(water_hist)-6., max(water_hist)+6.)
     ax1.set_xlim(84, 550)
-    fig.savefig('1D_r{0}_18p6_{1}_{2}b2.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
-
-    print water_hist[0], water_hist[-1]
-    print len(water_hist)
-    print '1D HEYO!!!!!!!!!!!!', np.min(water_hist)-6., np.max(water_hist)+6.
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}b2.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
-    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_blood_hist, 'r-', linewidth=2.0)
-    ax1.plot(days, M2_inverse_PO4_eq, 'g-.', linewidth=1.0)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
+    ax1.plot(days[466:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_water[:466], 'b-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_blood_end, 'r--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_blood[:466], 'r-', linewidth=2.0)
+    ax1.plot(days[466:], M2_linear_PO4_end, 'g--', linewidth=1.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_PO4[:466], 'g-.', linewidth=1.0)
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
-        ax1.plot(days, s, 'b-', alpha=0.03)
+        s_tmp = np.ones(M2_linear_days.size)
+        for k,d in enumerate(M2_linear_days):
+            d = int(d)
+            s_tmp[d:] = s[k]
+        s = s_tmp
+        s_end = s[466:]
+        M2_switch_params = s[40:]
+        #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+        ax1.plot(days[:466], s[:466], 'b-', alpha=0.03)
+        ax1.plot(days[466:], s_end, 'b--', alpha=0.02)
     ax1.text(350, -4, textstr, fontsize=8)
     print min(water_hist)
     ax1.set_ylim(min(water_hist)-2., max(water_hist)+2.)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('1D_r{0}_18p6_{1}_{2}b3.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}b3.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(0.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    plt.savefig('1D_r{0}_18p6_{1}_{2}c.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    plt.savefig('1Dlin_r{0}_18p6_{1}_{2}c.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-10.0, 10.0, 20), alpha=.6)
-    fig.savefig('1D_r{0}_18p6_{1}_{2}d.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}d.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.set_ylim(0, 220)
-    fig.savefig('1D_r{0}_18p6_{1}_{2}e.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}e.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1354,36 +1425,46 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,2], 'k-', label='prior rate') # prior rate
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('1D_r{0}_18p6_{1}_{2}f.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}f.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3]/(score_prior_counter_array[:,3]+score_prior_counter_array[:,4])*100, 'k-', label='prior rate') # prior percent
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('1D_r{0}_18p6_{1}_{2}g.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}g.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     normal_samples = normal_sampling(data_mean_1D, 23.5, 25.3, 27)
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
-    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=1.0)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # *********** *********** ************
+    ax1.plot(days[466:], M2_linear_water_end, 'b--', linewidth=2.0, alpha=0.5)
+    ax1.plot(days[:466], M2_linear_water[:466], 'b-', linewidth=2.0)
     for s in list_water_results[:-1]:
         s = spline_input_signal(s[:40], 14., 1)
-        ax1.plot(days, s, 'b-', alpha=0.03)
+        s_tmp = np.ones(M2_linear_days.size)
+        for k,d in enumerate(M2_linear_days):
+            d = int(d)
+            s_tmp[d:] = s[k]
+        s = s_tmp
+        s_end = s[466:]
+        M2_switch_params = s[40:]
+        #s[M2_switch_params[2]:M2_switch_params[2]+M2_switch_params[3]] = M2_switch_params[1]
+        ax1.plot(days[:466], s[:466], 'b-', alpha=0.03)
+        ax1.plot(days[466:], s_end, 'b--', alpha=0.02)
     ax1.text(350, -6, textstr, fontsize=8)
     ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
     ax1.set_xlim(84, 550)
     ax2 = ax1.twiny()
     ax2.plot(np.linspace(0, 42, len(normal_samples)), normal_samples, 'ko')
     ax2.set_xlim(0, 42)
-    fig.savefig('1D_r{0}_18p6_{1}_{2}h.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('1Dlin_r{0}_18p6_{1}_{2}h.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
-    np.savetxt('1D_r{0}_18p6_{1}_{2}.csv'.format(prior_rate, number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
+    np.savetxt('1Dlin_r{0}_18p6_{1}_{2}.csv'.format(prior_rate, number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sin_180_45.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sin_360_90.csv')
 
     return 0
 
