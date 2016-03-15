@@ -1115,6 +1115,17 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
+    sm_360 = 2.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    sm_180 = 2.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
+    sm_090 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
+    sm_045 = 2.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+
+    sm_360_180 = (1.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
+    sm_360_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
+    sm_360_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_360
+    sm_180_90 = (1.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_180
+    sm_180_45 = (1.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_180
+
     sin_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
     sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
     sin_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.

@@ -781,7 +781,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    trials = 12000
+    trials = 100
     keep_pct = 10. # Percent of trials to record
 
     keep_pct = int(trials*(keep_pct/100.))
@@ -942,6 +942,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1 = fig.add_subplot(1,1,1)
     blood_hist = blood_delta(23.5, w_iso_hist, 25.3, **kwargs)
     phosphate_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, blood_hist, **kwargs)
+    phosphate_eq = PO4_dissoln_reprecip(5.9, 22., .36, blood_hist, **kwargs)
     days = np.arange(blood_hist.size)
     #ax1.plot(days, real_switch_hist, 'k-.', linewidth=1.0)
     ax1.plot(days, w_iso_hist, 'b-', linewidth=2.0, label=r'$\mathrm{water} \ \delta^{18}\!\mathrm{O} \ \mathrm{(modeled)}$', alpha=1)

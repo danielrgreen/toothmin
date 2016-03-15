@@ -1174,7 +1174,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     mulu = spline_input_signal(month_mulu[:24], 30, 1)
     platte = spline_input_signal(np.concatenate((month_platte, month_platte)), 30, 1)
 
-    water_hist = mulu
+    water_hist = platte
 
     # Synthetic signal production
 
@@ -1200,12 +1200,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = 'mulu'
+    number = 'sm_180'
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
-    water_hist = water_hist
+    water_hist = sm_180
 
     # Forward and Inverse result Diffs for histogram plotting
     for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
@@ -1230,7 +1230,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax2 = fig.add_subplot(5,1,2)
     ax2text = 'Synthetic data'
     ax2.text(3, 5, ax2text, fontsize=8)
-    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr')
+    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=6.4, vmax=12.8)
     cax2 = fig.colorbar(cimg2)
 
     ax3 = fig.add_subplot(5,1,3)
@@ -1334,7 +1334,34 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.hist(for_inv_diff, bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.hist(0.5*np.random.randn(len(for_inv_diff)), bins=np.linspace(-8.0, 8.0, 40), alpha=.6)
     ax1.set_ylim(0, 220)
-    fig.savefig('2D_r{0}_18p6_{1}_{2}e.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('2D_r{0}_18p6_{1}_{2}e1.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+
+    fig = plt.figure()
+    ax2 = fig.add_subplot(1,1,1)
+    zero_line = np.zeros(len(for_inv_diff))
+    ax2.plot(days, for_inv_diff, 'k-')
+    ax2.plot(days, zero_line, 'k--')
+    for_inv_diff_zeros = for_inv_diff
+    for_inv_diff_zeros[-1] = 0
+    for_inv_diff_zeros[0] = 0
+    ax2.fill(days, for_inv_diff_zeros, 'r', alpha=0.3)
+    diff_min = min(for_inv_diff[:550-84])
+    diff_max = max(for_inv_diff[:550-84])
+    ax2.set_ylim(diff_min, diff_max)
+    ax2.set_xlim(84, 550)
+    fig.savefig('2D_r{0}_18p6_{1}_{2}e2.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(days, water_hist[:days.size], 'k--')
+    ax1.plot(days, M2_inverse_water_hist, 'b-')
+    print len(days), len(water_hist[:days.size]), len(M2_inverse_water_hist)
+    ax1.fill_between(days, np.array(water_hist[:days.size]), np.array(M2_inverse_water_hist), facecolor='r', alpha=0.3)
+    signal_min = min(min(M2_inverse_water_hist[:550-84]), min(water_hist[:550-84]))
+    signal_max = max(max(M2_inverse_water_hist[:550-84]), max(water_hist[:550-84]))
+    ax1.set_ylim(signal_min, signal_max)
+    ax1.set_xlim(84, 550)
+    fig.savefig('2D_r{0}_18p6_{1}_{2}e3.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1369,12 +1396,29 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax2.set_ylim(min(water_hist)-6., max(water_hist)+3.)
     fig.savefig('2D_r{0}_18p6_{1}_{2}h.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
+    normal_samples = normal_sampling(data_mean_1D, 23.5, 25.3, 27)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=1.0)
+    for s in list_water_results[:-1]:
+        s = spline_input_signal(s[:40], 14., 1)
+        ax1.plot(days, s, 'b-', alpha=0.03)
+    ax1.text(350, -6, textstr, fontsize=8)
+    ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
+    ax1.set_xlim(84, 550)
+    ax2 = ax1.twiny()
+    ax2.plot(np.linspace(0, 42, len(normal_samples)), normal_samples, 'ko')
+    ax2.set_xlim(0, 42)
+    ax2.set_ylim(min(water_hist)-3., max(water_hist)+2.)
+    fig.savefig('2D_r{0}_18p6_{1}_{2}i.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+
     np.savetxt('2D_r{0}_18p6_{1}_{2}.csv'.format(prior_rate, number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
 
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Mulu.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sm_180.csv')
 
     return 0
 

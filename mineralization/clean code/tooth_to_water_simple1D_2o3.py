@@ -1241,10 +1241,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
-    number = 'mulu'
+    number = 'sm_180'
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
-    water_hist = water_hist
+    water_hist = sm_180
 
     # Forward and Inverse result Diffs for histogram plotting
     for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
@@ -1383,11 +1383,28 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax2.set_ylim(min(water_hist)-6., max(water_hist)+3.)
     fig.savefig('1Dpx2o3_r{0}_18p6_{1}_{2}h.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
 
+    normal_samples = normal_sampling(data_mean_1D, 23.5, 25.3, 18)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(days, water_hist[:days.size], 'k--', linewidth=1.0) # **************** sin curve here **********
+    ax1.plot(days, M2_inverse_water_hist, 'b-', linewidth=1.0)
+    for s in list_water_results[:-1]:
+        s = spline_input_signal(s[:40], 14., 1)
+        ax1.plot(days, s, 'b-', alpha=0.03)
+    ax1.text(350, -6, textstr, fontsize=8)
+    ax1.set_ylim(np.min(water_hist)-6., np.max(water_hist)+6.)
+    ax1.set_xlim(84, 550)
+    ax2 = ax1.twiny()
+    ax2.plot(np.linspace(0, 42, len(normal_samples)), normal_samples, 'ko')
+    ax2.set_xlim(0, 42)
+    ax2.set_ylim(min(water_hist)-3., max(water_hist)+2.)
+    fig.savefig('1Dpx2o3_r{0}_18p6_{1}_{2}i.svg'.format(prior_rate, number, t_save), dpi=300, bbox_inches='tight')
+
     np.savetxt('1Dpx2o3_r{0}_18p6_{1}_{2}.csv'.format(prior_rate, number, t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_Mulu.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sm_180.csv')
 
     return 0
 

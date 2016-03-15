@@ -588,9 +588,9 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
+        model_isomap[k] = model_isomap[k][:,0:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
-            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 1) # ***No. at end denotes deletion from top***
+            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 0) # ***No. at end denotes deletion from top***
 
     re_shape = (iso_shape[0], iso_shape[1], len(model_isomap))
     remodeled = np.empty(re_shape, dtype='f8')
@@ -1049,7 +1049,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Parameters are main d18O, switch d18O, switch onset, switch length
 
-    prior_rate = 2./3.
+    prior_rate = 1./5.
     fit_kwargs['prior_rate'] = prior_rate
     trials1 = 10000
     trials2 = 10000
@@ -1087,12 +1087,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     t1 = time()
     x_opt1 = global_opt.optimize(guess_g)
 
-    prior_rate = 2./3.
+    prior_rate = 1./3.
     fit_kwargs['prior_rate'] = prior_rate
     global_opt.set_maxeval(trials2)
     x_opt2 = global_opt.optimize(x_opt1) # Should begin at last result
 
-    prior_rate = 2./3.
+    prior_rate = 1./2.
     fit_kwargs['prior_rate'] = prior_rate
     global_opt.set_maxeval(trials3)
     x_opt = global_opt.optimize(x_opt1) # Should begin at last result
@@ -1463,7 +1463,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     cimg7 = ax7.imshow(np.std(inverse_model_PO4, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy') # Residuals
     cax7 = fig.colorbar(cimg7)
 
-    fig.savefig('962_mean_p20_p33_p66_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962_mean_p20_p33_p50_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
@@ -1490,13 +1490,13 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.set_ylim(-24, 0)
     ax1.set_xlim(84, 550)
 
-    fig.savefig('962_mean_p20_p33_p66_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962_mean_p20_p33_p50_{0}b.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
     plt.hist(hist_list, bins=np.logspace(1.0, 5.0, 30), alpha=.6)
     plt.gca().set_xscale("log")
-    fig.savefig('962_mean_p20_p33_p66_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962_mean_p20_p33_p50_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
     #plt.show()
 
     fig = plt.figure()
@@ -1509,7 +1509,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax1.text(21, 3, ax1text, fontsize=8)
     cimg1 = ax1.imshow(minmax.T, aspect='auto', interpolation='nearest', origin='lower', cmap='RdGy')
     cax1 = fig.colorbar(cimg1)
-    fig.savefig('962_guess_p20_p33_p66_{0}d.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962_guess_p20_p33_p50_{0}d.svg'.format(t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -1518,14 +1518,14 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,2], 'k-', label='prior rate') # prior rate
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('962_mean_p20_p33_p66_{0}f.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962_mean_p20_p33_p50_{0}f.svg'.format(t_save), dpi=300, bbox_inches='tight')
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
     ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,3]/(score_prior_counter_array[:,3]+score_prior_counter_array[:,4])*100, 'k-', label='prior rate') # prior percent
     #ax1.plot(score_prior_counter_array[:,0], score_prior_counter_array[:,1], 'k-', label='raw score') # score
     ax1.legend(fontsize=8)
-    fig.savefig('962_mean_p20_p33_p66_{0}g.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962_mean_p20_p33_p50_{0}g.svg'.format(t_save), dpi=300, bbox_inches='tight')
 
     normal_samples = normal_sampling(data_mean_1D, 23.5, 25.3, 27)
     fig = plt.figure()
@@ -1555,9 +1555,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     ax2.plot(np.linspace(0, 42, len(normal_samples)), normal_samples, 'ko')
     ax2.set_xlim(0, 42)
     ax2.set_ylim(-24, 0)
-    fig.savefig('962_mean_p20_p33_p66_{0}h.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    fig.savefig('962_mean_p20_p33_p50_{0}h.svg'.format(t_save), dpi=300, bbox_inches='tight')
 
-    np.savetxt('962_mean_p20_p33_p66_{0}.csv'.format(t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
+    np.savetxt('962_mean_p20_p33_p50_{0}.csv'.format(t_save), score_prior_counter_array, fmt='%.4f', delimiter=',')
 
     #residuals_real = np.isfinite(residuals)
     #trial_real = np.isfinite(trial_residuals)
