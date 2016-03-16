@@ -1043,12 +1043,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     t1 = time()
     x_opt1 = global_opt.optimize(guess_g) # Is typically 'first_guess'
 
-    prior_rate = 1./2.
+    prior_rate = 2./3.
     fit_kwargs['prior_rate'] = prior_rate
     global_opt.set_maxeval(trials2)
     x_opt2 = global_opt.optimize(x_opt1) # Should begin at last result
 
-    prior_rate = 1./1.
+    prior_rate = 2./1.
     fit_kwargs['prior_rate'] = prior_rate
     global_opt.set_maxeval(trials3)
     x_opt = global_opt.optimize(x_opt1) # Should begin at last result
@@ -1200,12 +1200,12 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = 'sm_180'
+    number = 'sm_180_45'
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
-    water_hist = sm_180
+    water_hist = sm_180_45
 
     # Forward and Inverse result Diffs for histogram plotting
     for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
@@ -1418,7 +1418,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sm_180.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sm_180_45.csv')
 
     return 0
 

@@ -13,24 +13,33 @@
 # 
 
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 import h5py
-from PIL import Image
-import pylab as Pylb
-import scipy.special as spec
 import nlopt
-from time import time
+from PIL import Image
+import inspect
 
-
-from scipy.interpolate import interp1d
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from scipy.ndimage.filters import gaussian_filter1d, gaussian_filter
 from scipy.misc import imresize
 from blood_delta import calc_blood_step, calc_water_step2, calc_water_gaussian, calc_blood_gaussian, blood_delta, tooth_phosphate_reservoir
 from blood_delta_experimentation import PO4_dissoln_reprecip
+import scipy.special as spec
+
+from blood_delta import calc_blood_gaussian
 from scipy.optimize import curve_fit, minimize, leastsq
+
+from time import time
+
+trial_iteration = [0.]
+score_prior_counter = []
+
+def lineno():
+    '''
+    Returns the current line number in our program.
+    '''
+    return inspect.currentframe().f_back.f_lineno
 
 class ToothModel:
     def __init__(self, fname=None):
@@ -115,6 +124,7 @@ class ToothModel:
     def _pix2imgu(self, isotope):
         print 'compressing to 2D model...'
         isotope = np.mean(isotope, axis=1)
+        print isotope.shape
         print 'making isomap...'
         Nx, Ny = np.max(self.locations, axis=0) + 1
         n_pix = self.locations.shape[0]
@@ -255,19 +265,19 @@ class ToothModel:
             
             pct_min_diff_days[:,:,a1:a2] = (pct_min_diff[:,:,k] / dt)[:,:,None] # All checks out except 0th, 1st, 2nd val
 
-        print 'calculating cumulative mineral increase in tooth over time...' # takes 100 seconds
+        #print 'calculating cumulative mineral increase in tooth over time...' # takes 100 seconds
         pct_min_diff_days[np.isnan(pct_min_diff_days)] = 0.
         pct_min_days = np.cumsum(pct_min_diff_days, axis=2) # All checks out except 0th, 1st, 2nd val
         pct_min_days[pct_min_days==0.] = np.nan
 
-        print 'multiplying daily mineral additions by daily isotope ratios...' # takes 100 seconds
+        #print 'multiplying daily mineral additions by daily isotope ratios...' # takes 100 seconds
         isotope = np.cumsum(
             blood_step[None, None, :]
             * pct_min_diff_days,
             axis=2
         ) # Works at and after 3rd day. Something weird (all zero values?) happens before that.
 
-        print 'calculating isotope ratios in tooth for each day of growth...' # takes 60-100 seconds
+        #print 'calculating isotope ratios in tooth for each day of growth...' # takes 60-100 seconds
         isotope /= pct_min_days
 
         if mode == 'sample':
@@ -325,8 +335,8 @@ def gen_mnzt_movie(tooth_model, outfname):
         img[k] = img_interp(t)
 
     img = np.diff(img, axis=0)
-    sigma_t = 8
-    sigma_x, sigma_y = 1, 1
+    sigma_t = 4
+    sigma_x, sigma_y = 0, 0
     img = gaussian_filter(img, (sigma_t,sigma_x,sigma_y), mode='nearest')
     
     idx = np.isfinite(img)
@@ -336,8 +346,8 @@ def gen_mnzt_movie(tooth_model, outfname):
     fig = plt.figure(figsize=(6,3), dpi=100)
     ax = fig.add_subplot(1,1,1)
     plt.tick_params(
-        axis='none',
-        which='none',
+        axis='x',
+        which='both',
         bottom='off',
         top='off',
         labelbottom='off'
@@ -348,8 +358,7 @@ def gen_mnzt_movie(tooth_model, outfname):
         origin='lower',
         interpolation='nearest',
         vmin=0.,
-        vmax=vmax,
-        aspect=5
+        vmax=vmax
     )
     
     for k,t in enumerate(ages[:-1]):
@@ -360,13 +369,13 @@ def gen_mnzt_movie(tooth_model, outfname):
         #img = img_interp(t)
         im.set_data(img[k].T) #was(img[k].T)
 
-        ax.set_title(r'$\mathrm{Sheep} \ \mathrm{molar} \ \mathrm{mineralization,} \ t = %03d \ \mathrm{days}$' % t, fontsize=12)
-        plt.axis('off')
-        fig.savefig(fn, dpi=300)
+        ax.set_title(r'$t = %d \ \mathrm{days}$' % t, fontsize=14)
+        
+        fig.savefig(fn, dpi=100)
 
 def gen_isomap_movie(tooth_model, blood_step):
 
-    print 'generating movie...' #
+    print 'generating movie...'
     img = tooth_model.gen_isotope_image(blood_step, mode='sample')
     
     sigma_t = 0
@@ -504,6 +513,9 @@ def load_iso_data(fname):
       iso_shape      Shape of the tooth image
       iso_data_x_ct  Number of nans in each column
     '''
+
+    'data.csv'
+
     iso_data = np.loadtxt(fname, delimiter=',').T
     iso_data[iso_data==0.] = np.nan
     iso_data = iso_data[:,::-1]
@@ -514,7 +526,6 @@ def load_iso_data(fname):
     #iso_data, iso_data_x_ct = count_number(iso_shape, iso_data)
 
     return iso_data, iso_shape, iso_data_x_ct
-
 
 def wizard(array, shape):
     '''
@@ -560,28 +571,6 @@ def grow_nan(iso_column, number_delete):
 
     return iso_column
 
-def gen_isomaps_fullsize(tooth_model, blood_step, day=-1):
-    '''
-    Takes mineralization model and blood isotope model to create modeled tooth isotope data,
-    then downsamples these to the same resolution as real tooth isotope data, so that real
-    and modeled results can be compared. Also returns full size model.
-    :param iso_shape:           tuple, shape of real isotope data
-    :param iso_data:            real tooth isotope data as string or array of floats
-    :param tooth_model:         Class object including information about tooth mineralization
-    :param blood_step:          string of blood isotope ratios per day as floats
-    :param day:                 day of mineralization at which to carry out comparison with data
-    :returns:                   modeled tooth isotope data at full scale, and also scaled to real
-                                data size (with the appropriate number of nans).
-    '''
-
-    model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
-    for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6
-        for c in xrange(model_isomap[k].shape[0]):
-            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2)
-
-    return model_isomap
-
 def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
     '''
     Takes mineralization model and blood isotope model to create modeled tooth isotope data,
@@ -594,14 +583,14 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
     :param blood_step:          string of blood isotope ratios per day as floats
     :param day:                 day of mineralization at which to carry out comparison with data
     :return:                    modeled tooth isotope data scaled to real data size, with the
-                                appropriate number of nans.
+                                appropriate number of nans, and and isotope data
     '''
 
-    model_isomap = tooth_model.gen_isotope_image(blood_step, mode=10)
+    model_isomap = tooth_model.gen_isotope_image(blood_step[:day], mode=10) # did go from [:day+1] for some reason?
     for k in xrange(len(model_isomap)):
-        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6
+        model_isomap[k] = model_isomap[k][:,1:,day] + 18.6 #*** No. in middle denotes deletion from bottom PHOSPHATE_OFFSET*** was 18.8
         for c in xrange(model_isomap[k].shape[0]):
-            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 2)
+            model_isomap[k][c,:] = grow_nan(model_isomap[k][c,:], 1) # ***No. at end denotes deletion from top***
 
     re_shape = (iso_shape[0], iso_shape[1], len(model_isomap))
     remodeled = np.empty(re_shape, dtype='f8')
@@ -612,7 +601,7 @@ def gen_isomaps(iso_shape, iso_data_x_ct, tooth_model, blood_step, day=-1):
 
     return remodeled
 
-def compare(model_isomap, data_isomap, score_max=3., data_sigma=0.15, sigma_floor=0.05):
+def compare(model_isomap, data_isomap, w_iso_hist, M2_switch_days, prior_rate, score_max=100., data_sigma=0.25, sigma_floor=0.05):
     '''
 
     :param model_isomap:        modeled tooth isotope data
@@ -629,59 +618,196 @@ def compare(model_isomap, data_isomap, score_max=3., data_sigma=0.15, sigma_floo
     score = (mu - data_isomap) / sigma
     score[~np.isfinite(score)] = 0.
     score[score > score_max] = score_max
+    score = np.sum(score**2)
 
-    return -np.sum(score**2)
+    #prior_score = prior_histogram(mu, data_isomap)
+    prior_score_rate = prior_rate_change(w_iso_hist, M2_switch_days, prior_rate) # rate prior
+    #prior_score_hist = prior_histogram(mu, data_isomap)
 
+    trial_iteration[0] += 1.
+    print trial_iteration[0]
 
-def water_hist_likelihood(w_iso_hist, **kwargs):
+    #prior_score = prior_histogram(mu, data_isomap)
+    #prior_score_hist = prior_histogram(mu, data_isomap)
+    score_prior_counter.append(np.array([trial_iteration[0], score, prior_rate, prior_score_rate, score]))
+
+    return score+prior_score_rate
+
+def prior_histogram(model_isomap, data_isomap):
+
+    model_real = np.isfinite(model_isomap)
+    data_real = np.isfinite(data_isomap)
+    min_max = ((np.min([np.min(model_isomap[model_real]), np.min(data_isomap[data_real])])), np.max([np.max(model_isomap[model_real]), np.max(data_isomap[data_real])]))
+    model_hist = np.histogram(model_isomap[model_real], bins=10, range=min_max)
+    data_hist = np.histogram(data_isomap[data_real], bins=10, range=min_max)
+
+    hist_sigma = 0.3
+    prior_score = (model_hist[0] - data_hist[0]) / hist_sigma
+    prior_score = (np.sum(prior_score**2)) + np.sum(prior_score[0])
+
+    return prior_score
+
+def prior_rate_change(w_iso_hist, M2_switch_days, rate):
+
+    diff_water = np.diff(w_iso_hist)
+    diff_water[int(M2_switch_days[0])-3:int(M2_switch_days[0])+2] = 0.
+    diff_water[int(M2_switch_days[1])-3:int(M2_switch_days[1])+2] = 0.
+    prior_score = np.sum((diff_water/rate)**2.)
+
+    return prior_score
+
+def water_hist_likelihood(w_iso_hist, switch_params, PO4_t, PO4_pause, PO4_flux, **kwargs):
+
     # Calculate water history on each day
-    #block_length = int(kwargs.get('block_length'))
-    #w_iso_hist = calc_water_step2(w_iso_hist, block_length)
+    block_length = int(kwargs.get('block_length', 1))
+    M2_inverse_water_hist = calc_water_step2(w_iso_hist, block_length)
 
-    # Water to blood history
-    d_O2 = kwargs.get('d_O2', 23.5)
-    d_feed = kwargs.get('d_feed', 25.3)
-    metabolic_kw = kwargs.get('metabolic_kw', {})
-    blood_hist = blood_delta(d_O2, w_iso_hist, d_feed, **metabolic_kw)
-    phosphate_eq = PO4_dissoln_reprecip(3., 34.5, .3, blood_hist, **kwargs) #***** 17.609, 34.515, 54.922 *****
+    # Calculate start time for model
+    m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
+    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
+    m1_gestation_times = np.array([-49., 0.])
+    m1_gestation = m1_gestation_times[1]-m1_gestation_times[0]
+    m2_gestation_times_curve = tooth_timing_convert([-49., 0.], *m1_m2_params)
+    m2_gestation_curve = int(m2_gestation_times_curve[1] - m2_gestation_times_curve[0])
+    m2_gestation_simple = int(m1_gestation*(341./275.))
 
-    # Access tooth model
+    # Declare tooth growth parameters
     tooth_model = kwargs.get('tooth_model', None)
     assert(tooth_model != None)
-
-    # Access tooth data
     isomap_shape = kwargs.get('isomap_shape', None)
     data_isomap = kwargs.get('data_isomap', None)
     isomap_data_x_ct = kwargs.get('isomap_data_x_ct', None)
+    prior_rate = kwargs.get('prior_rate', None)
     assert(isomap_shape != None)
     assert(data_isomap != None)
     assert(isomap_data_x_ct != None)
+    M2_switch_days = np.array([switch_params[2],switch_params[2]+switch_params[3]])
+    #M1_switch_days = tooth_timing_convert(M2_switch_days, *m2_m1_params)
 
-    # Calculate model tooth isomap
-    model_isomap = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, phosphate_eq)
-
-    return compare(model_isomap, data_isomap), model_isomap
-
-def water_hist_likelihood_fl(w_iso_hist, **kwargs):
-    # Calculate water history on each day
-    #block_length = int(kwargs.get('block_length'))
-    #w_iso_hist = calc_water_step2(w_iso_hist, block_length)
-
-    # Water to blood history
+    # Declare physiological parameters
     d_O2 = kwargs.get('d_O2', 23.5)
     d_feed = kwargs.get('d_feed', 25.3)
     metabolic_kw = kwargs.get('metabolic_kw', {})
-    blood_hist = blood_delta(d_O2, w_iso_hist, d_feed, **metabolic_kw)
-    phosphate_eq = PO4_dissoln_reprecip(17.609, 34.515, .54922, blood_hist, **kwargs) #***** 17.609, 34.515, 54.922 *****
 
-    # Access tooth model
-    tooth_model = kwargs.get('tooth_model', None)
-    assert(tooth_model != None)
+    # Generate blood and PO4 from proposed water
+    M2_inverse_days = np.arange(84., np.size(M2_inverse_water_hist)+84.)
+    M2_inverse_blood_hist = blood_delta(23.5, M2_inverse_water_hist, 25.3, **metabolic_kw)
+    M2_inverse_PO4_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, M2_inverse_blood_hist, **kwargs)
+    # Create M1 days, water, blood and phosphate histories from M2 inversion results
+    M1_inverse_days = tooth_timing_convert(M2_inverse_days+m2_gestation_curve, *m2_m1_params)
+    M1_inverse_days = M1_inverse_days - M1_inverse_days[0]
+    #M1_inverse_water_hist_tmp = np.ones(M1_inverse_days.size)
+    #M1_inverse_blood_hist_tmp = np.ones(M1_inverse_days.size)
+    M1_inverse_PO4_hist_tmp = np.ones(M1_inverse_days.size)
+    for k,d in enumerate(M1_inverse_days):
+        d = int(d)
+        #M1_inverse_water_hist_tmp[d:] = M2_inverse_water_hist[k]
+        #M1_inverse_blood_hist_tmp[d:] = M2_inverse_blood_hist[k]
+        M1_inverse_PO4_hist_tmp[d:] = M2_inverse_PO4_eq[k]
+    #M1_inverse_water_hist = M1_inverse_water_hist_tmp
+    #M1_inverse_blood_hist = M1_inverse_blood_hist_tmp
+    M1_inverse_PO4_hist = M1_inverse_PO4_hist_tmp
 
-    # Calculate model tooth isomap
-    model_isomap = gen_isomaps_fullsize(tooth_model, phosphate_eq)
+    '''
+    textstr1 = 'forward, inverse m2 blood history'
+    textstr2 = 'forward, inverse m1 blood history'
+    fig = plt.figure()
+    ax1 = fig.add_subplot(2,1,1)
+    #ax1.plot(np.arange(np.size(forward_962_blood_hist)), forward_962_blood_hist, 'r-', label='m2 blood forward', linewidth=1.0)
+    ax1.plot(np.arange(np.size(M2_inverse_blood_hist)), M2_inverse_blood_hist, 'r-.', label='m2 blood inverse', linewidth=1.0)
+    ax1.text(0, -28, textstr1, fontsize=8)
+    ax1.set_ylim(-30, 10)
+    ax1.set_xlim(-50, 750)
+    ax1.legend(fontsize=8)
+    ax1.grid('on')
+    ax2 = fig.add_subplot(2,1,2)
+    #ax2.plot(np.arange(np.size(forward_962_blood_hist_m1)), forward_962_blood_hist_m1, 'r-', label='m1 blood forward', linewidth=1.0)
+    ax2.plot(np.arange(np.size(M1_inverse_blood_hist)), M1_inverse_blood_hist, 'r-.', label='m1 blood inverse', linewidth=1.0)
+    ax2.text(0, -28, textstr2, fontsize=8)
+    ax2.set_ylim(-30, 10)
+    ax2.set_xlim(-50, 750)
+    ax2.legend(fontsize=8)
+    ax2.grid('on')
+    #fig.savefig('inverse m1 m2 line 691.svg')
+    #plt.show()
 
-    return model_isomap
+    #return 0
+    '''
+
+    # Create M1 equivalent isomap models for M2 inversion results
+    #inverse_model_blood = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_blood_hist)
+    inverse_model_PO4 = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, M1_inverse_PO4_hist)
+
+    # Calculate score comparing inverse to real
+    score = compare(inverse_model_PO4, data_isomap, w_iso_hist, M2_switch_days, prior_rate)
+
+    return score, inverse_model_PO4
+
+def water_hist_prob_4param(w_params, **kwargs):
+
+    PO4_t = w_params[4]
+    PO4_pause = w_params[5]
+    PO4_flux = w_params[6]
+    w_params = w_params[:4]
+    w_iso_hist = water_4_param(*w_params)
+    p, model_isomap = water_hist_likelihood(w_iso_hist, PO4_t, PO4_pause, PO4_flux, **kwargs)
+
+    #prior_score = prior(w_params)
+    #p += prior
+
+    list_params = np.array([w_params[0], w_params[1], w_params[2], w_params[3], PO4_t, PO4_pause, PO4_flux])
+    list_tuple = (p, list_params)
+    my_list.append(list_tuple)
+
+    return p, model_isomap
+
+def water_hist_prob(w_params, **kwargs):
+
+    iso_hist = np.ones(np.size(w_params))
+    for i,j in enumerate(w_params):
+        iso_hist[i] = j
+
+    # Turning w parameters into daily d18O history, excluding switch params
+    w_iso_hist = spline_input_signal(iso_hist[:40], 14, 1)
+
+    # Adding switch history onto w_iso_hist
+    switch_params = iso_hist[40:]
+    w_iso_hist[switch_params[2]:switch_params[2]+switch_params[3]] = switch_params[1]
+
+    p, model_isomap = water_hist_likelihood(w_iso_hist, switch_params, 3.0, 34.5, 0.3, **kwargs)
+
+    list_tuple = (p, np.array(w_params))
+    my_list.append(list_tuple)
+
+    return p, model_isomap
+
+def score_v_score(w_iso_hist, fit_kwargs, step_size=0.1):
+    f_min = lambda x: water_hist_likelihood(x, **fit_kwargs)
+    score1 = f_min(w_iso_hist)
+    iso2 = w_iso_hist + np.random.normal(loc=0., scale=step_size, size=w_iso_hist.size)
+    score2 = f_min(iso2)
+    return w_iso_hist, iso2, score1, score2
+
+def water_4_param(mu, switch_mu, switch_start, switch_length):
+    length_overall = np.ones(450.)
+    w_iso_hist = length_overall * mu
+    switch_start = int(switch_start)
+    switch_length = int(switch_length)
+    w_iso_hist[switch_start:switch_start+switch_length] = switch_mu
+
+    return w_iso_hist
+
+def figureplot_PO4_line(mu, switch_mu, switch_start, switch_length, d_O2, d_feed, PO4_t, PO4_pause, PO4_flux):
+    length_overall = np.ones(450.)
+    w_iso_hist = length_overall * mu
+    switch_start = int(switch_start)
+    switch_length = int(switch_length)
+    w_iso_hist[switch_start:switch_start+switch_length] = switch_mu
+
+    blood_hist = blood_delta(d_O2, w_iso_hist, d_feed)
+    fig_tooth_PO4_eq = PO4_dissoln_reprecip(PO4_t, PO4_pause, PO4_flux, blood_hist)
+
+    return fig_tooth_PO4_eq
 
 def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
     '''
@@ -709,61 +835,10 @@ def tooth_timing_convert(conversion_times, a1, s1, o1, max1, a2, s2, o2, max2):
 
     return converted_times
 
+def getkey(item):
+    return item[0]
 
-#def generate_input_signal(fname, time_unit=1., signal_type=water, smoothing=0.):
-#    '''
-#    This function is not written yet.
-#    Inputs
-#    fname       filename where blood or water data will be retrieved.
-#    time_unit   the number of days requested per data point.
-#    signal_type specify whether mineralization model will take blood data directly
-#                or water data and convert to blood.
-#    smoothing   request if input data should be smoothed on scale of 0-10.
-#    PO4_reset   specify if PO4 resetting should occur.
-#
-#    Outputs
-#    blood_hist  outputs daily blood isotope history
-#    '''
-#    blood_hist = np.arange(10)
-#
-#    return blood_hist
-
-
-def spline_962_input(smoothness):
-    '''
-    Has blood and water data from sheep 962 arranged from birth and outputs a
-    day-by-day spline-smoothed version.
-    '''
-
-    days_data = np.array([1.0, 31.0, 46.0, 58.0, 74.0, 102.0, 131.0, 162.0, 170.0, 198.0, 199.0, 200.0, 201.0, 202.0, 204.0, 204.0, 206.0, 208.0, 212.0, 212.0, 216.0, 219.0, 220.0, 221.0, 222.0, 232.0, 240.0, 261.0, 262.0, 272.0, 281.0, 282.0, 283.0, 284.0, 286.0, 290.0, 292.0, 298.0, 298.0, 310.0, 322.0, 358.0, 383.0, 411.0, 423.0, 453.0, 469.0, 483.0, 496.0])
-    blood_days = np.array([58.0, 74.0, 102.0, 131.0, 162.0, 199.0, 201.0, 202.0, 204.0, 208.0, 212.0, 219.0, 222.0, 232.0, 261.0, 262.0, 281.0, 283.0, 284.0, 290.0, 298.0, 310.0, 322.0, 358.0, 383.0, 423.0, 453.0, 483.0])
-    water_days = np.array([1.0, 31.0, 46.0, 74.0, 131.0, 170.0, 198.0, 199.0, 200.0, 201.0, 216.0, 219.0, 220.0, 221.0, 222.0, 261.0, 262.0, 272.0, 322.0, 358.0, 383.0, 411.0, 423.0, 469.0, 483.0, 496.0])
-    blood_data = np.array([-5.71, -5.01, -4.07, -3.96, -4.53, -3.95, -4.96, -8.56, -10.34, -12.21, -13.09, -13.49, -13.16, -12.93, -13.46, -13.29, -5.68, -4.87, -4.76, -4.97, -4.60, -4.94, -5.45, -9.34, -5.56, -6.55, -4.25, -4.31])
-    water_data = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -17.63, -5.93, -13.66, -13.67, -6.83, -6.65, -6.98])
-    ice_33 = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -9.87, -5.93, -8.89, -9.36, -6.83, -6.65, -6.98])
-    ice_50 = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -11.89, -5.93, -10.15, -10.51, -6.83, -6.65, -6.98])
-    ice_66 = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -13.67, -5.93, -11.21, -11.45, -6.83, -6.65, -6.98])
-
-    days = np.arange(1., np.max(days_data), 1.)
-
-    water_spl = InterpolatedUnivariateSpline(water_days, water_data, k=smoothness)
-    blood_spl = InterpolatedUnivariateSpline(blood_days, blood_data, k=smoothness)
-    i33_spl = InterpolatedUnivariateSpline(water_days, ice_33, k=smoothness)
-    i50_spl = InterpolatedUnivariateSpline(water_days, ice_50, k=smoothness)
-    i66_spl = InterpolatedUnivariateSpline(water_days, ice_66, k=smoothness)
-    plt.plot(water_days, water_data, 'bo', ms=5)
-    plt.plot(blood_days, blood_data, 'ro', ms=5)
-    plt.plot(days, water_spl(days), 'b', lw=2, alpha=0.6)
-    plt.plot(days, blood_spl(days), 'r', lw=2, alpha=0.6)
-    #plt.show()
-    days_spl = days
-    water_spl = np.array(water_spl(days))
-    blood_spl = np.array(blood_spl(days))
-    i33_spl = np.array(i33_spl(days))
-    i50_spl = np.array(i50_spl(days))
-    i66_spl = np.array(i66_spl(days))
-
-    return water_spl, blood_spl, days_spl, i33_spl, i50_spl, i66_spl
+my_list = []
 
 def spline_input_signal(iso_values, value_days, smoothness):
     '''
@@ -798,302 +873,314 @@ def spline_input_signal(iso_values, value_days, smoothness):
 
     return water_spl
 
+def spline_962_input(smoothness):
+
+    days_data = np.array([1.0, 31.0, 46.0, 58.0, 74.0, 102.0, 131.0, 162.0, 170.0, 198.0, 199.0, 200.0, 201.0, 202.0, 204.0, 204.0, 206.0, 208.0, 212.0, 212.0, 216.0, 219.0, 220.0, 221.0, 222.0, 232.0, 240.0, 261.0, 262.0, 272.0, 281.0, 282.0, 283.0, 284.0, 286.0, 290.0, 292.0, 298.0, 298.0, 310.0, 322.0, 358.0, 383.0, 411.0, 423.0, 453.0, 469.0, 483.0, 496.0])
+    blood_days = np.array([58.0, 74.0, 102.0, 131.0, 162.0, 199.0, 201.0, 202.0, 204.0, 208.0, 212.0, 219.0, 222.0, 232.0, 261.0, 262.0, 281.0, 283.0, 284.0, 290.0, 298.0, 310.0, 322.0, 358.0, 383.0, 423.0, 453.0, 483.0])
+    water_days = np.array([1.0, 31.0, 46.0, 74.0, 131.0, 170.0, 198.0, 199.0, 200.0, 201.0, 216.0, 219.0, 220.0, 221.0, 222.0, 261.0, 262.0, 272.0, 322.0, 358.0, 383.0, 411.0, 423.0, 469.0, 483.0, 496.0])
+    blood_data = np.array([-5.71, -5.01, -4.07, -3.96, -4.53, -3.95, -4.96, -8.56, -10.34, -12.21, -13.09, -13.49, -13.16, -12.93, -13.46, -13.29, -5.68, -4.87, -4.76, -4.97, -4.60, -4.94, -5.45, -9.34, -5.56, -6.55, -4.25, -4.31])
+    water_data = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -17.63, -5.93, -13.66, -13.67, -6.83, -6.65, -6.98])
+    days = np.arange(84., np.max(days_data)+84., 1.)
+
+    water_spl = InterpolatedUnivariateSpline(water_days, water_data, k=smoothness)
+    blood_spl = InterpolatedUnivariateSpline(blood_days, blood_data, k=smoothness)
+    #plt.plot(water_days, water_data, 'bo', ms=5)
+    #plt.plot(blood_days, blood_data, 'ro', ms=5)
+    #plt.plot(days, water_spl(days), 'b', lw=2, alpha=0.6)
+    #plt.plot(days, blood_spl(days), 'r', lw=2, alpha=0.6)
+    #plt.show()
+    days_spl = days
+    water_spl = np.array(water_spl(days))
+    blood_spl = np.array(blood_spl(days))
+
+    return blood_spl, days_spl
+
+def d2R(delta, standard=0.0020052):
+    '''
+    Convert isotope delta to Ratio.
+
+    :param delta: delta of isotope
+    :param standard: Ratio in standard (default: d18O/d16O in SMOW)
+    :return: Ratio of isotope
+    '''
+    return (delta/1000. + 1.) * standard
+
+def R2d(Ratio, standard=0.0020052):
+    '''
+    Convert isotope Ratio to delta.
+
+    :param Ratio: Ratio of isotope
+    :param standard: Ratio in standard (default: d18O/d16O in SMOW)
+    :return: delta of isotope
+    '''
+    return (Ratio/standard - 1.) * 1000.
+
+def guess_first(d_tooth, d_O2, d_feed, sample_number):
+
+    d_tooth_reshape = np.mean(np.repeat(d_tooth, sample_number, axis=0).reshape(sample_number,d_tooth.shape[0]), axis=1)
+    d_tooth_reshape -= 18.6
+
+    # Get defaults
+    f_H2O = 0.69
+    f_O2 = 0.181
+    alpha_O2 = 0.990
+    f_feed = 0.129
+
+    f_H2O_en = 0.69
+    alpha_H2O_ef = .990
+    f_H2O_ef = 0.129
+    alpha_CO2_H2O = 1.040
+    f_CO2 = 0.181
+
+    # Calculate tooth water equilibrium for each sample
+
+    R_water = (
+        (alpha_CO2_H2O * f_CO2 * d2R(d_tooth_reshape))
+        + (alpha_H2O_ef * f_H2O_ef * d2R(d_tooth_reshape))
+        + (f_H2O_en * d2R(d_tooth_reshape))
+        - (d2R(d_O2) * alpha_O2 * f_O2)
+        - (d2R(d_feed) * f_feed)
+    )
+
+    R_water /= f_H2O
+
+    R_water = R2d(R_water)
+
+    guess_multiplier = 720. / (len(R_water)*2.2)
+    data_guess_days = spline_input_signal(R_water, int(guess_multiplier), 1)
+    intermediate = np.append(data_guess_days, np.linspace(data_guess_days[-1], np.mean(data_guess_days), 30.))
+    first_guess = np.append(intermediate, np.ones(720.-len(intermediate))*np.mean(data_guess_days))
+
+    return first_guess
+
+def normal_sampling(d_tooth, d_O2, d_feed, sample_number):
+
+    d_tooth_reshape = np.mean(np.repeat(d_tooth, sample_number, axis=0).reshape(sample_number,d_tooth.shape[0]), axis=1)
+    d_tooth_reshape -= 18.6
+
+    # Get defaults
+    f_H2O = 0.69
+    f_O2 = 0.181
+    alpha_O2 = 0.990
+    f_feed = 0.129
+
+    f_H2O_en = 0.69
+    alpha_H2O_ef = .990
+    f_H2O_ef = 0.129
+    alpha_CO2_H2O = 1.040
+    f_CO2 = 0.181
+
+    # Calculate tooth water equilibrium for each sample
+
+    R_water = (
+        (alpha_CO2_H2O * f_CO2 * d2R(d_tooth_reshape))
+        + (alpha_H2O_ef * f_H2O_ef * d2R(d_tooth_reshape))
+        + (f_H2O_en * d2R(d_tooth_reshape))
+        - (d2R(d_O2) * alpha_O2 * f_O2)
+        - (d2R(d_feed) * f_feed)
+    )
+
+    R_water /= f_H2O
+
+    normal_samples = R2d(R_water)
+
+    return normal_samples
 
 def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
+    '''
+    '''
 
+    t_save = time()
 
     print 'importing isotope data...'
-
     data_isomap, isomap_shape, isomap_data_x_ct = load_iso_data(data_fname)
+    data_isomap_mask = np.ma.masked_array(data_isomap, np.isnan(data_isomap))
+    data_mean_1D = np.mean(data_isomap_mask, axis=1)
 
     print 'loading tooth model ...'
-    tooth_model = ToothModel(model_fname)
-
-    fit_kwargs = kwargs.copy()
-
-    # M1-M2 conversion parameters
-    m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
-    #m2_m1_params = np.array([78.940, 0.003379, -49.708, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outliers, 100k
-    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
-    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 78.940, 0.003379, -49.708, 41.]) # 'synch86', outliers, 100k
-
-    # Real climate data
-    #month_d180 = np.array([-1.95, -1.92, -2.94, -3.44, -2.22, -1.10, -0.67, -1.71, -0.81, -1.47, -2.31, -3.19]) # Dar Es Salaam
-    #month_d180 = np.array([-0.21, 0.30, -0.04, 0.25, -0.75, -0.19, -3.16, -4.53, -0.95, 0.29, -1.26, -1.73]) # Addis Ababa
-    #month_d180 = np.array([-1.39, -0.35, -2.42, -3.25, -3.08, -1.44, -0.98, -1.88, -1.33, -3.10, -3.80, -1.63]) # Entebbe, Uganda
-    #month_d180 = np.array([-6.31, -7.09, -4.87, -3.33, -1.83, -1.22, -1.08, -0.47, -0.17, -0.48, -2.92, -5.90]) # Harare, Zimbabwe
-    #month_d180 = np.array([-2.98, -2.20, -4.74, -5.94, -2.64, -3.80, -0.25, -1.80, -1.25, -4.15, -5.80, -5.42]) # Kinshasa, DRC
-    #month_d180 = np.array([-1.58, -1.54, -1.81, -3.08, -3.40, -3.69, -3.38, -3.78, -2.46, -2.19, -2.12, -1.79]) # Cape Town
-    #month_d180 = np.array([-4.31, -3.50, -4.14, -4.68, -4.87, -5.11, -4.77, -4.80, -4.71, -4.50, -4.53, -4.77]) # Marion Island
-    #month_d180 = np.array([0.00, -2.40, -1.75, -3.70, -3.90, -6.20, -7.75, -8.10, -6.25, -3.30, -4.75, -8.95, -2.10, -0.40, -4.55, -3.25, -5.75, -3.70, -8.60, -7.10, -8.50, -5.30, -4.55, -3.10, -2.75	-4.60, -2.00, -3.10, -5.25, -6.10]) # Hong Kong
-    #month_d180 = np.array([-2.75, -5.35, -2.70, -1.60, -6.30, -7.25, -9.00, -8.10, -9.50, -5.30, -5.75, -4.00]) # Liuzhou
-    #month_d180 = np.array([-5.30, -4.73, -7.44, -4.38, -4.39, -7.07, -9.76, -3.99, -3.95, -5.81, -8.98, -9.89, -8.62, -8.88, -8.25, -8.21, -9.74, -6.83, -6.69, -6.38, -10.33, -7.95, -5.72, -10.52, -10.74, -7.48, -9.30, -8.50, -12.66, -10.52, -10.82, -6.01, -8.34, -5.51, -7.03, -5.75, -8.14, -6.85, -4.82, -7.31, -8.79, -4.77, -6.14, -2.96, -2.31, -5.13, -9.31, -8.88, -9.22, -9.08, -7.51, -7.72, -10.29, -10.38, -9.69, -8.64, -10.66, -7.85, -6.94]) # Mulu, Borneo
-    #week_d180 = np.array([-19.40, -19.4, -19.4, -19.4, -15.9, -15.9, -15.9, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -23.1, -16.5, -16.5, -8.8, -8.8, -10.6, -10.6, -2.5, -9.3, -6.7, -8.2, -1.6, -6, -7, -4.4, -8.8, -6.5, -6.1, -6.1, -6.1, -0.6, 1.7, -4.5, -4.5, -4.5, -12.4, -12.4, -9.7, -12.2, -12.2, -12.2, -15.1, -15.1, -11, -11, -11, -30.5, -30.5, -30.5])  # North Platte Nebraska
-    month_d180 = np.array([-18.50, -17.93, -12.16, -12.08, -6.88, -7.00, -7.49, -5.60, -8.87, -13.91, -14.20, -23.70]) # North Platte, Nebraska
-
-    # np.concatenate((month_d180,month_d180)), month_d180[:24]
-    water_hist = spline_input_signal(np.concatenate((month_d180,month_d180)), 30, 1)
-
-    # Small tooth model generation
-    tooth_model_sm = tooth_model.downsample_model((isomap_shape[0]+5, isomap_shape[1]+5), 1)
+    tooth_model_lg = ToothModel(model_fname)
+    tooth_model = tooth_model_lg.downsample_model((isomap_shape[0]+10, isomap_shape[1]+10), 1) # Addition typically 5, sampling 10-100
 
     # Set keyword arguments to be used in fitting procedure
+    fit_kwargs = kwargs.copy()
 
-    fit_kwargs['tooth_model'] = tooth_model_sm
+    fit_kwargs['tooth_model'] = tooth_model
     fit_kwargs['data_isomap'] = data_isomap
     fit_kwargs['isomap_shape'] = isomap_shape
     fit_kwargs['isomap_data_x_ct'] = isomap_data_x_ct
 
-    # Synthetic signal production
+    # Blood and water isotope measurements from sheep 962
+    blood_day_measures = np.array([(59., -5.71), (201., -4.96), (205., -10.34), (209., -12.21), (213., -13.14), (217., -13.49), (221., -13.16), (241., -13.46), (263., -13.29), (281., -4.87), (291., -4.97), (297., -4.60), (311., -4.94)])
+    blood_days = np.array([i[0] for i in blood_day_measures])
+    blood_measures = np.array([i[1] for i in blood_day_measures])
+    water_iso_day_measures = np.array([(201., -6.6), (201., -19.4), (221., -19.3), (263., -19.4)])
+    water_iso_days = np.array([i[0] for i in water_iso_day_measures])
+    water_iso_measures = np.array([i[1] for i in water_iso_day_measures])
 
-    sm_360 = 2.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
-    sm_180 = 2.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
-    sm_090 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
-    sm_045 = 2.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+    # Newer blood and water isotope data sheep 962
+    blood_days_962 = np.array([58.0, 74.0, 102.0, 131.0, 162.0, 199.0, 201.0, 202.0, 204.0, 208.0, 212.0, 219.0, 222.0, 232.0, 261.0, 262.0, 281.0, 283.0, 284.0, 290.0, 298.0, 310.0, 322.0, 358.0, 383.0, 423.0, 453.0, 483.0])
+    water_days_962 = np.array([1.0, 31.0, 46.0, 74.0, 131.0, 170.0, 198.0, 199.0, 200.0, 201.0, 216.0, 219.0, 220.0, 221.0, 222.0, 261.0, 262.0, 272.0, 322.0, 358.0, 383.0, 411.0, 423.0, 469.0, 483.0, 496.0])
+    blood_data_962 = np.array([-5.71, -5.01, -4.07, -3.96, -4.53, -3.95, -4.96, -8.56, -10.34, -12.21, -13.09, -13.49, -13.16, -12.93, -13.46, -13.29, -5.68, -4.87, -4.76, -4.97, -4.60, -4.94, -5.45, -9.34, -5.56, -6.55, -4.25, -4.31])
+    water_data_962 = np.array([-8.83, -8.83, -6.04, -6.19, -6.85, -7.01, -6.61, -6.61, -19.41, -19.41, -19.31, -19.31, -19.31, -19.31, -19.31, -19.31, -6.32, -6.32, -5.94, -17.63, -5.93, -13.66, -13.67, -6.83, -6.65, -6.98])
 
-    sm_360_180 = (1.0*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sm_360
-    sm_360_90 = (1.0*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_360
-    sm_360_45 = (1.0*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_360
-    sm_180_90 = (1.0*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sm_180
-    sm_180_45 = (1.0*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sm_180
+    # Model a M1 combined with different M2 possibilities
+    #m2_m1_params = np.array([74.492, .003575, -34.184, 41., 21.820, .007889, 29.118, 35.]) # 'hist84', 100k
+    #m2_m1_params = np.array([66.649, .004054, 8.399, 41., 21.820, .007889, 29.118, 35.]) # 'hist96', 100k
+    #m2_m1_params = np.array([69.155, .003209, -33.912, 41., 21.820, .007889, 29.118, 35.]) # 'synch84', 100k
+    m2_m1_params = np.array([67.974, 0.003352, -25.414, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outlier, 100k
+    #m2_m1_params = np.array([78.940, 0.003379, -49.708, 41., 21.820, .007889, 29.118, 35.]) # 'synch86', outliers, 100k
+    #m2_m1_params = np.array([85.571, .003262, -58.095, 41., 21.820, .007889, 29.118, 35.]) # 'synch98', 100k
+    #m2_m1_params = np.array([90.469, .004068, -16.811, 41., 21.820, .007889, 29.118, 35.]) # 'synch114', 100k
 
-    sin_360 = 10.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
-    sin_180 = 10.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
-    sin_090 = 10.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
-    sin_045 = 10.*np.sin((2*np.pi/45.)*(np.arange(600.)))-11.
+    fit_kwargs['block_length'] = 1
+    #record_scores = np.empty((trials,2), dtype='f4')
 
-    sin_360_180 = (5.*np.sin((2*np.pi/180.)*(np.arange(600.)))) + sin_360
-    sin_360_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_360
-    sin_360_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_360
-    sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
-    sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
+    data_guess = guess_first(data_mean_1D, 23.5, 25.3, 27)
+    minmax = max(data_guess) - min(data_guess)
+    minmax_diff = 1.2*np.log(minmax) + 4.
 
-    number = 'sm_360_90'
+    p_number = 40
+    #guess_g = list(data_guess[:560:14]) # For intelligent guesses
+    guess_g = list(np.ones(p_number)*np.mean(data_guess)) # For mean guesses
+    max_g = [x + minmax_diff for x in guess_g]
+    min_g = [x - minmax_diff for x in guess_g]
 
-    # Make water, blood and PO4 history from synthetic water input
+    # Model a M1 combined with different M2 possibilities
+
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 74.492, .003575, -34.184, 41.]) # 'hist84', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 66.649, .004054, 8.399, 41.]) # 'hist96', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 69.155, .003209, -33.912, 41.]) # 'synch84', 100k
+    m1_m2_params = np.array([21.820, .007889, 29.118, 35., 67.974, 0.003352, -25.414, 41.]) # 'synch86', outlier, 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 78.940, 0.003379, -49.708, 41.]) # 'synch86', outliers, 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 85.571, .003262, -58.095, 41.]) # 'synch98', 100k
+    #m1_m2_params = np.array([21.820, .007889, 29.118, 35., 90.469, .004068, -16.811, 41.]) # 'synch114', 100k
+
+    # Calculate start time for model
+    m1_gestation_times = np.array([-49., 0.])
+    m1_gestation = m1_gestation_times[1]-m1_gestation_times[0]
+    m2_gestation_times_curve = tooth_timing_convert([-49., 0.], *m1_m2_params)
+    m2_gestation_curve = int(m2_gestation_times_curve[1] - m2_gestation_times_curve[0])
+    m2_gestation_simple = int(m1_gestation*(341./275.))
+
+    # Make trial forward data *******FORWARD BASED ON EXPECTATIONS PRIOR TO INVERSION*******
+    forward_962_blood_hist,days_spl_962 = spline_962_input(1)
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
-    water_hist = sm_360_90 # <----- ******** WATER HISTORY HERE *********
-    days = np.arange(84., len(water_hist)+84.)
-    blood_hist = blood_delta(23.5, water_hist, 25.3, **forward_metabolic_kw)
-    PO4_hist = PO4_dissoln_reprecip(3., 34.5, .3, blood_hist, **kwargs)
+    forward_962_phosphate_eq = PO4_dissoln_reprecip(3.0, 34.5, 0.3, forward_962_blood_hist, **kwargs)
+    forward_962_phosphate_opt = PO4_dissoln_reprecip(5.9, 22.0, 0.35, forward_962_blood_hist, **kwargs)
 
-    # Convert to M1 timing and space
-    #m2days, m2water_hist, m2blood_hist, m2PO4_hist = days[84:], water_hist[84:], blood_hist[84:], PO4_hist[84:]
-    m1_days = tooth_timing_convert(days, *m2_m1_params)
-    m1_days = m1_days - m1_days[0]
-    days_tmp, water_tmp, blood_tmp, PO4_tmp = np.ones(m1_days.size), np.ones(m1_days.size), np.ones(m1_days.size), np.ones(m1_days.size)
-    for k,d in enumerate(m1_days):
+    # Create M1-equivalent days, water, blood and PO4 eq
+    m1_days_spl_962 = tooth_timing_convert(days_spl_962, *m2_m1_params) # Days here are 84+
+    m1_days_spl_962 = m1_days_spl_962 - m1_days_spl_962[0] # This sets the M1 day array to begin at 0.
+    blood_spl_tmp = np.ones(m1_days_spl_962.size)
+    PO4_spl_tmp = np.ones(m1_days_spl_962.size)
+    PO4_opt_tmp = np.ones(m1_days_spl_962.size)
+    for k,d in enumerate(m1_days_spl_962):
         d = int(d)
-        water_tmp[d:],blood_tmp[d:],PO4_tmp[d:] = water_hist[k], blood_hist[k], PO4_hist[k]
-    m1water_hist, m1blood_hist, m1PO4_hist = water_tmp, blood_tmp, PO4_tmp
-    print 'M2 water hist = ', water_hist
-    print 'M1 water hist = ', m1water_hist
+        blood_spl_tmp[d:] = forward_962_blood_hist[k]
+        PO4_spl_tmp[d:] = forward_962_phosphate_eq[k]
+        PO4_opt_tmp[d:] = forward_962_phosphate_opt[k]
+    forward_962_blood_hist_m1 = blood_spl_tmp
+    forward_962_PO4_hist_m1 = PO4_spl_tmp
+    forward_962_PO4_opt_m1 = PO4_opt_tmp
 
-    #TESTING TO MAKE SURE ALL'S WORKING
-    #fig = plt.figure()
-    #ax1 = fig.add_subplot(1,1,1)
-    #days = np.arange(sin_180.size)
-    #ax1.plot(days, sin_180, 'k--', linewidth=1.0)
-    #ax1.plot(days, m1water_hist, 'b-', linewidth=2.0)
-    #ax1.plot(days, m1blood_hist, 'r-', linewidth=2.0)
-    #ax1.plot(days, m1PO4_hist, 'g-.', linewidth=1.0)
-    #plt.show()
+    # Configure forward M1 history taking into account Gestation time in model
+    # This will take average gestation values, remove them, apply them to first value of history
 
-    #return 0
+    forward_962_blood_hist_m1_gest = np.append(np.mean(forward_962_blood_hist_m1[:m1_gestation]), forward_962_blood_hist_m1[m1_gestation:])
+    forward_962_PO4_hist_m1_gest = np.append(np.mean(forward_962_PO4_hist_m1[:m1_gestation]), forward_962_PO4_hist_m1[m1_gestation:])
+    forward_962_PO4_opt_m1_gest = np.append(np.mean(forward_962_PO4_opt_m1[:m1_gestation]), forward_962_PO4_opt_m1[m1_gestation:])
 
-    # Create M1 isomaps
-    #blood_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1blood_hist)
-    PO4_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, m1PO4_hist)
+    forward_model_M1_blood_hist = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_blood_hist_m1_gest)
+    forward_model_M1_PO4_hist = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_hist_m1_gest)
+    forward_model_M1_PO4_opt = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model, forward_962_PO4_opt_m1_gest)
 
-    '''
-    # Generate blood d18O and tooth d18O isomap from drinking water history, with score compared to measured data
-    score_sm_w, model_isomap_sm_w = water_hist_likelihood(water_spl, **fit_kwargs)
-    score_i33, model_isomap_i33 = water_hist_likelihood(i33_spl, **fit_kwargs)
-    score_i50, model_isomap_i50 = water_hist_likelihood(i50_spl, **fit_kwargs)
-    score_i66, model_isomap_i66 = water_hist_likelihood(i66_spl, **fit_kwargs)
-    mu_sm_w = np.median(model_isomap_sm_w, axis=2)
-    sigma_sm_w = np.std(model_isomap_sm_w, axis=2)
-    sigma_sm_w = np.sqrt(sigma_sm_w**2. + 0.15**2 + 0.05**2)
-    #resid_img = (mu - data_isomap) / sigma
+    fig = plt.figure()
+    ax1 = fig.add_subplot(7,1,1)
+    #ax1.plot(days, sin_180[:days.size], 'k--', linewidth=1.0)
+    ax1.plot(days_spl_962, forward_962_blood_hist, 'r-', linewidth=1.0)
+    ax1.plot(blood_days_962, blood_data_962, 'r*', linewidth=1.0)
+    ax1.plot(water_days_962, water_data_962, 'b*', linewidth=1.0)
+    ax1.text(0, -26, 'text', fontsize=8)
+    ax1.set_ylim(-30, 10)
+    ax1.set_xlim(-50, 750)
 
-    # Generate tooth isomap from blood measurements
-    forward_metabolic_kw = kwargs.get('metabolic_kw', {})
-    forward_phosphate_eq_b_PO4 = PO4_dissoln_reprecip(3., 34.5, .3, blood_spl, **kwargs)
-    forward_blood_model = gen_isomaps(isomap_shape, isomap_data_x_ct, tooth_model_sm, forward_phosphate_eq_b_PO4) # This takes the blood history from 962 scaled to the M1 without also downscaling the blood turnover
-
-    plt.plot(m1_days_spl, water_spl, 'b', lw=2)
-    plt.plot(m1_days_spl, blood_spl, 'r', lw=2)
-    plt.plot(m1_days_spl, forward_phosphate_eq_b_PO4, 'g', lw=2)
-    plt.show()
-
-    m_mu_sm = np.ma.masked_array(mu_sm_w, np.isnan(mu_sm_w))
-    mu_sm_r = np.mean(m_mu_sm, axis=1)
-    small_sample = np.ones(int(mu_sm_r.size/2))
-    for k,d in enumerate(small_sample):
-        small_sample[k] = (mu_sm_r[(k*2)]+mu_sm_r[(k*2)+1])/2
-    mu_sm_r = small_sample
-    mu_sm_r.shape = (mu_sm_r.size, 1)
-    print mu_sm_r.shape
-
-    # Save generated isomap as CSV file
-    #save_tooth = mu_sm.T
-    #save_tooth[np.isnan(save_tooth)] = 0.
-    #np.savetxt('m2_predicted_a_hist_half=3.csv', np.flipud(save_tooth), delimiter=',', fmt='%.2f')
-
-    mu_sm_w[mu_sm_w==0.] = np.nan
-
-    print score_sm_w
-    textstr = '%.1f' % score_sm_w
-    '''
-
-    t_save = time()
-
-    font = {'family' : 'normal',
-            'weight' : 'bold',
-            'size'   : 4}
-
-    matplotlib.rc('font', **font)
-
-    save_PO4_array = np.flipud(np.mean(PO4_model, axis=2).T)
-    #save_blood_array = np.flipud(np.mean(blood_model, axis=2).T)
-    save_PO4_array[np.isnan(save_PO4_array)] = 0.00
-    #save_blood_array[np.isnan(save_blood_array)] = 0.00
-    np.savetxt('PO4_{0}_{1}.csv'.format(number, t_save), save_PO4_array, delimiter=',', fmt='%.2f')
-    #np.savetxt('blood_{0}_{1}.csv'.format(number, t_save), save_blood_array, delimiter=',', fmt='%.2f')
-
-    fig = plt.figure(figsize=(2,2), dpi=300)
-    ax1 = fig.add_subplot(2,1,1)
-    ax1text = 'M2->M1 PO4_{0}'.format(number)
-    ax1.text(4, 3, ax1text, fontsize=4)
-    cimg1 = ax1.imshow(np.mean(PO4_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
-    cax1 = fig.colorbar(cimg1)
-    #ax2 = fig.add_subplot(2,1,2)
-    #ax2text = 'M2->M1 Blood_{0}'.format(number)
-    #ax2.text(4, 3, ax2text, fontsize=4)
-    #cimg2 = ax2.imshow(np.mean(blood_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', cmap='bwr')
-    #cax2 = fig.colorbar(cimg2)
-
-    fig.savefig('PO4_and_Blood_{0}_{1}a.svg'.format(number, t_save), dpi=300)
-    #plt.show()
-
-    fig = plt.figure(figsize=(2,2), dpi=300)
-    ax1 = fig.add_subplot(2,1,1)
-    ax1text = 'M2->M1 PO4_and_Blood_{0}'.format(number)
-    ax1.text(19, -20, ax1text, fontsize=4)
-    ax1.plot(days, water_hist, 'b-', linewidth=1.0)
-    ax1.plot(days, blood_hist, 'r-', linewidth=1.0)
-    ax1.plot(days, PO4_hist, 'g-.', linewidth=1.0)
-    ax2 = fig.add_subplot(2,1,2)
-    ax2text = 'M2->M1 PO4_and_Blood_{0} in M1 timing'.format(number)
-    ax2.text(19, -20, ax2text, fontsize=4)
-    ax2.plot(days, m1water_hist, 'b-', linewidth=1.0)
-    ax2.plot(days, m1blood_hist, 'r-', linewidth=1.0)
-    ax2.plot(days, m1PO4_hist, 'g-.', linewidth=1.0)
-    fig.savefig('PO4_and_Blood_{0}_{1}b.svg'.format(number, t_save), dpi=300)
-    #plt.show()
-
-    '''
-    ax1 = fig.add_subplot(6,1,1)
-    ax1text = 'forward model from water data 100% ice'
-    ax1.text(19, 3, ax1text, fontsize=8)
-    cimg1 = ax1.imshow(mu_sm_w.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
-    cax1 = fig.colorbar(cimg1)
-
-    ax2 = fig.add_subplot(6,1,2)
-    ax2text = 'data'
-    ax2.text(19, 3, ax2text, fontsize=8)
-    cimg2 = ax2.imshow(data_isomap.T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
+    ax2 = fig.add_subplot(7,1,2)
+    ax2text = '962 data'
+    ax2.text(21, 3, ax2text, fontsize=8)
+    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax2 = fig.colorbar(cimg2)
 
-    ax3 = fig.add_subplot(6,1,3)
-    ax3text = 'forward model from blood data'
-    ax3.text(19, 3, ax3text, fontsize=8)
-    cimg3 = ax3.imshow(np.mean(forward_blood_model, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
+    ax3 = fig.add_subplot(7,1,3)
+    ax3text = 'Blood forward'
+    ax3.text(21, 3, ax3text, fontsize=8)
+    cimg3 = ax3.imshow(np.mean(forward_model_M1_blood_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax3 = fig.colorbar(cimg3)
 
-    ax4 = fig.add_subplot(6,1,4)
-    ax4text = 'forward model 33% ice'
-    ax4.text(19, 3, ax4text, fontsize=8)
-    cimg4 = ax4.imshow(np.mean(model_isomap_i33, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
+    ax4 = fig.add_subplot(7,1,4)
+    ax4text = 'PO4 first guess'
+    ax4.text(21, 3, ax4text, fontsize=8)
+    cimg4 = ax4.imshow(np.mean(forward_model_M1_PO4_hist, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax4 = fig.colorbar(cimg4)
 
-    ax5 = fig.add_subplot(6,1,5)
-    ax5text = 'forward model 50% ice'
-    ax5.text(19, 3, ax5text, fontsize=8)
-    cimg5 = ax5.imshow(np.mean(model_isomap_i50, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
+    ax5 = fig.add_subplot(7,1,5)
+    ax5text = 'PO4 optimized'
+    ax5.text(21, 3, ax5text, fontsize=8)
+    cimg5 = ax5.imshow(np.mean(forward_model_M1_PO4_opt, axis=2).T, aspect='auto', interpolation='nearest', origin='lower', cmap='bwr', vmin=9., vmax=15.)
     cax5 = fig.colorbar(cimg5)
 
-    ax6 = fig.add_subplot(6,1,6)
-    ax6text = 'forward model 66% ice'
-    ax6.text(19, 3, ax6text, fontsize=8)
-    cimg6 = ax6.imshow(np.mean(model_isomap_i66, axis=2).T, aspect='equal', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap='bwr')
-    cax6 = fig.colorbar(cimg6)
+    fig.savefig('data_v_model_opt_{0}a.svg'.format(t_save), dpi=300, bbox_inches='tight')
 
-    t_save = time()
-    fig.savefig('spline_water_snow_2015_11_14_18p6_w_ice_blood_w_PO4.svg'.format(t_save), dpi=300)
-    plt.show()
+    #residuals = np.mean(inverse_model_PO4, axis=2) - data_isomap
 
-    r_mu_sm = np.ravel(mu_sm)
-    r_mu_sm = r_mu_sm[~np.isnan(r_mu_sm)]
+    #residuals_real = np.isfinite(residuals)
+    #trial_real = np.isfinite(trial_residuals)
+    #opt_real = np.isfinite(opt_residuals)
+    #data_real = np.isfinite(data_isomap)
 
-    r_mu_fl = np.ravel(mu_fl)
-    r_mu_fl = r_mu_fl[~np.isnan(r_mu_fl)]
+    #min_max = (
+    #            np.min(
+    #            [np.min(residuals[residuals_real]),
+    #            np.min(trial_residuals[trial_real]),
+    #            np.min(opt_residuals[opt_real]),
+    #            np.min(data_isomap[data_real])]),
+    #            np.max(
+    #            [np.max(residuals[residuals_real]),
+    #            np.max(trial_residuals[trial_real]),
+    #            np.max(opt_residuals[opt_real]),
+    #            np.max(data_isomap[data_real])]) )
 
-    small_large_diff_pct = (np.max(r_mu_sm)-np.min(r_mu_sm)) / (np.max(r_mu_fl)-np.min(r_mu_fl)) * 100.
-    print small_large_diff_pct
+    #trial_weights = np.ones_like(trial_residuals[trial_real])/len(trial_residuals[trial_real])
+    #residuals_weights = np.ones_like(residuals[residuals_real])/len(residuals[residuals_real])
+    #opt_weights = np.ones_like(opt_residuals[opt_real])/len(opt_residuals[opt_real])
 
-    plt.hist(mu_sm_r, bins=(np.linspace(6., 16., 24)), histtype='stepfilled', normed=True, color='#0040FF', alpha=.8, label='Low')
-    #plt.hist(r_mu_sm, bins=(np.linspace(8., 15., 25)), histtype='stepfilled', normed=True, color='#0040FF', alpha=1, label='Medium')
-    plt.hist(r_mu_fl, bins=(np.linspace(6., 16., 24)), histtype='stepfilled', normed=True, color='#FF0040', alpha=.8, label='High')
-    plt.xlabel(r'$\delta ^{18} \mathrm{O}$')
-    plt.ylabel('Percent pixels')
-    plt.legend(loc='upper left')
-    plt.savefig('hist_13pm_60d@80d_april_2015_%.2f.pdf' % small_large_diff_pct, dpi=300)
-    plt.show()
-    '''
+    #normals = np.random.normal(0., .25, 100000)
+    #normal_weights = np.ones_like(normals)/len(normals)
 
+    #xg = np.linspace(-3,3,1000)
+    #gaus = 1/(np.sqrt(2*np.pi)) * np.exp(-(xg**2)/(2*(.25**2)))
+
+    #fig = plt.figure()
+    #ax1 = fig.add_subplot(3,1,1)
+    #ax1.hist(trial_residuals[trial_real], bins=(np.linspace(-3., 3., 24)), weights=trial_weights, histtype='stepfilled', normed=False, color='#0040FF', alpha=.8, label='Low')
+    #ax1.plot(xg, gaus, 'k--')
+    #ax1.hist(normals, bins=(np.linspace(-3,3,24)), weights=normal_weights, alpha=.3)
+    #ax1.set_ylim(0, .45)
+    #ax2 = fig.add_subplot(3,1,3)
+    #ax2.hist(residuals[residuals_real], bins=(np.linspace(-3., 3., 24)), weights=residuals_weights, histtype='stepfilled', normed=False, color='#0040FF', alpha=.8, label='Low')
+    #ax2.plot(xg, gaus, 'k--')
+    #ax2.hist(normals, bins=(np.linspace(-3,3,24)), weights=normal_weights, alpha=.3)
+    #ax2.set_ylim(0, .45)
+    #ax3 = fig.add_subplot(3,1,2)
+    #ax3.hist(opt_residuals[opt_real], bins=(np.linspace(-3., 3., 24)), weights=opt_weights, histtype='stepfilled', normed=False, color='#0040FF', alpha=.8, label='Low')
+    #ax3.plot(xg, gaus, 'k--')
+    #ax3.hist(normals, bins=(np.linspace(-3,3,24)), weights=normal_weights, alpha=.3)
+    #ax3.set_ylim(0, .45)
+    #fig.savefig('PO4eq18p6_50k_new5_{0}c.svg'.format(t_save), dpi=300, bbox_inches='tight')
+    #plt.show()
 
 def main():
-    fit_tooth_data('/Users/darouet/Desktop/tooth_example.csv')
 
-    '''
-    #print 'importing isotope data...'
-    #iso_shape, iso_data, iso_data_x_ct = import_iso_data()
-
-    print 'loading tooth model ...'
-    tooth_model = ToothModel('equalsize_jul2015a.h5')
-
-    #tooth_model_sm = tooth_model.downsample_model((iso_shape[0]+5, iso_shape[1]+5), 1)
-
-    print 'Generating movies...'
-    gen_mnzt_movie(tooth_model, 'frames/fullres')
-    #gen_mnzt_movie(tooth_model_sm, 'frames/50x30')
-
-    print 'importing blood isotope history...'
-    water_step, blood_step = calc_blood_step()
-
-    model_isomap, data_isomap, remodeled = gen_isomaps(iso_shape, iso_data, iso_data_x_ct, tooth_model_sm, blood_step)
-    model_isomap = np.array(model_isomap)
-
-    score = compare(remodeled, data_isomap)
-    print 'score = ', score
-
-    print 'plotting figures...'
-    fig = plt.figure(dpi=100)
-    ax1 = plt.subplot(3,1,1)
-    cimg1 = ax1.imshow(model_isomap[1,:,:].T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
-    cax1 = fig.colorbar(cimg1)
-    ax2 = plt.subplot(3,1,2)
-    cimg2 = ax2.imshow(data_isomap.T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
-    cax2 = fig.colorbar(cimg2)
-    ax3 = plt.subplot(3,1,3)
-    cimg3 = ax3.imshow(remodeled[:,:,1].T, aspect='auto', interpolation='nearest', origin='lower', vmin=9., vmax=15., cmap=plt.get_cmap('bwr'))
-    cax2 = fig.colorbar(cimg2)
-    plt.show()
-    '''
-    #gen_min_movie(tooth_model)
-    #gen_isomap_movie(tooth_model_sm, blood_step)
-
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/962_tooth_iso_data.csv') # 962_tooth_iso_data
 
     return 0
 
