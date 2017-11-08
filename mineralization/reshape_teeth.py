@@ -43,7 +43,7 @@ from fit_positive_function import TMonotonicPointModel
 
 # user inputs
 
-which_tooth = 30 # Tooth to be evaluated
+which_tooth = 4 # Tooth to be evaluated
 voxelsize = 46. # voxel resolution of your scan in microns?
 species = 'Ovis_aries' # the species used for this model
 calibration_type = 'undefined' # pixel to density calibration method
@@ -187,10 +187,12 @@ def main():
     alignedimg = []
     Nx, Ny = [], []
     age = []
-    
+    name_list = []
+
     for i,fname in enumerate(args.images):
-        print 'Processing %s ...' % fname
-        
+        print i, 'Processing %s ...' % fname
+        name_list.append(fname[7:19])
+
         img = load_image(fname)
         img = np.flipud(img)
         img_arr.append(img)
@@ -231,18 +233,39 @@ def main():
         Nx.append(tmp_x)
         Ny.append(tmp_y)
 
-    
+    img_arr[which_tooth] *= 2.**16
+    img_arr[which_tooth] *= 0.00028045707501
+    img_arr[which_tooth] -= 1.48671229207043
+    #img_arr[which_tooth] /= 3.15 # Converts to fraction maximum theoretical density HAp
+    img_arr[which_tooth][img_arr[which_tooth]<.5] = np.nan
+
+    alignedimg[which_tooth] *= 2.**16
+    alignedimg[which_tooth] *= 0.00028045707501
+    alignedimg[which_tooth] -= 1.48671229207043
+    #alignedimg[which_tooth] /= 3.15 # Converts to fraction maximum theoretical density HAp
+    alignedimg[which_tooth][alignedimg[which_tooth]<.5] = np.nan
+
     fig = plt.figure()
     ax1 = plt.subplot2grid((2,1), (0,0), colspan=2)
-    ax1.set_title('Sampled tooth %.2i' % which_tooth)
-    cimg1 = ax1.imshow(img_arr[which_tooth], origin='lower', aspect='auto', interpolation='none')
+    ax1.set_title('Density {0}'.format(name_list[which_tooth]))
+    cimg1 = ax1.imshow(img_arr[which_tooth], origin='lower', aspect='equal', interpolation='none')
     cax1 = fig.colorbar(cimg1)
 
     ax2 = plt.subplot2grid((2,1), (1,0), colspan=2)
-    ax2.set_title('Reshaped tooth %.2i' % which_tooth)
-    cimg2 = ax2.imshow(alignedimg[which_tooth], origin='lower', aspect='auto', interpolation='none')
+    ax2.set_title('Resampled {0}'.format(name_list[which_tooth]))
+    cimg2 = ax2.imshow(alignedimg[which_tooth], origin='center', aspect='auto', interpolation='none')
     cax2 = fig.colorbar(cimg2)
 
+    #ax2 = plt.subplot2grid((2,1), (2,0), colspan=2)
+    #ax2.set_title('Resampled {0}'.format(name_list[which_tooth]))
+    #cimg2 = ax2.imshow(alignedimg[which_tooth], origin='lower', aspect='auto', interpolation='none')
+    #cax2 = fig.colorbar(cimg2)
+
+    print name_list
+
+    t_save = time.time()
+
+    fig.savefig('scan_{0}_{1}.svg'.format(name_list[which_tooth], t_save), dpi=300, bbox_inches='tight')
     plt.show()
 
     

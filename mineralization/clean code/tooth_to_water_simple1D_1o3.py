@@ -1214,6 +1214,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
+    bg_360 = 4.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    bg_360_90 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.))) + bg_360
+
     sm_360 = 2.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
     sm_180 = 2.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
     sm_090 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
@@ -1239,10 +1242,10 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     textstr = 'min= %.2f, time= %.1f \n trials= %.1f, trials/sec= %.2f \n%s, %s' % (minf, run_time, trials, eval_p_sec, local_method, global_method)
     print textstr
 
-    number = 'sm_180_45'
+    number = 'bg_360_90'
     #np.savetxt('{0}_{1}.csv'.format(number, t_save), np.array(save_list), delimiter=',', fmt='%.2f')
 
-    water_hist = sm_180_45
+    water_hist = bg_360_90
 
     # Forward and Inverse result Diffs for histogram plotting
     for_inv_diff = M2_inverse_water_hist - water_hist[:len(M2_inverse_water_hist)]
@@ -1402,7 +1405,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
 def main():
 
-    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_sm_180_45.csv')
+    fit_tooth_data('/Users/darouet/Documents/code/mineralization/clean code/PO4_bg_360_90.csv')
 
     return 0
 

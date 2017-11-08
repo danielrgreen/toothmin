@@ -846,6 +846,9 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
 
     # Synthetic signal production
 
+    bg_360 = 4.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
+    bg_360_90 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.))) + bg_360
+
     sm_360 = 2.*np.sin((2*np.pi/360.)*(np.arange(600.)))-11.
     sm_180 = 2.*np.sin((2*np.pi/180.)*(np.arange(600.)))-11.
     sm_090 = 2.*np.sin((2*np.pi/90.)*(np.arange(600.)))-11.
@@ -868,7 +871,7 @@ def fit_tooth_data(data_fname, model_fname='equalsize_jul2015a.h5', **kwargs):
     sin_180_90 = (5.*np.sin((2*np.pi/90.)*(np.arange(600.)))) + sin_180
     sin_180_45 = (5.*np.sin((2*np.pi/45.)*(np.arange(600.)))) + sin_180
 
-    number = 'sm_360_90'
+    number = 'bg_360_90'
 
     # Make water, blood and PO4 history from synthetic water input
     forward_metabolic_kw = kwargs.get('metabolic_kw', {})
